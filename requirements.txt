@@ -1,0 +1,8 @@
+anthropic>=0.34.0
+openai>=1.40.0
+requests>=2.31.0
+pyyaml>=6.0.0
+# Testing
+pytest>=8.0.0
+pytest-mock>=3.14.0
+responses>=0.25.0

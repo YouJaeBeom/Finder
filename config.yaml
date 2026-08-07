@@ -1,0 +1,71 @@
+# Paper Digest Configuration
+# Secrets (NOTION_TOKEN, ANTHROPIC_API_KEY / OPENAI_API_KEY) come from environment variables
+# — never put secrets in this file.
+
+# ── Notion ──────────────────────────────────────────────────────────────────
+# The page ID from your Notion workspace where the database will be created.
+# Get it from the page URL: notion.so/<workspace>/<PAGE_ID>
+notion_parent_page_id: "REPLACE_WITH_YOUR_NOTION_PAGE_ID"
+
+# ── Research keywords ────────────────────────────────────────────────────────
+# Papers matching any keyword (case-insensitive, title or abstract) are ranked.
+keywords:
+  - "large language model"
+  - "LLM"
+  - "instruction tuning"
+  - "RLHF"
+  - "reinforcement learning from human feedback"
+  - "chain of thought"
+  - "retrieval augmented generation"
+  - "RAG"
+  - "alignment"
+  - "in-context learning"
+  - "prompt engineering"
+  - "fine-tuning"
+  - "neural machine translation"
+  - "natural language processing"
+  - "transformer"
+  - "language model"
+  - "hallucination"
+  - "factuality"
+  - "code generation"
+  - "reasoning"
+
+# ── Tracked venues (for batch mode) ──────────────────────────────────────────
+tracked_venues:
+  - "ACL 2026"
+  - "EMNLP 2026"
+  - "NAACL 2026"
+  - "ICLR 2026"
+  - "NeurIPS 2026"
+  - "ICML 2026"
+
+# ── Research profile ─────────────────────────────────────────────────────────
+# Describe your research focus. The LLM uses this for relevance scoring AND
+# for writing the "내 연구와의 연결점" section of each note.
+research_profile: |
+  내 연구는 대형 언어 모델(LLM)의 정렬(alignment)과 안전성에 초점을 맞추고 있습니다.
+  특히 RLHF(인간 피드백을 통한 강화 학습), 지시 추종(instruction following),
+  그리고 모델이 도움이 되면서도 해롭지 않도록 하는 방법에 관심이 있습니다.
+  또한 LLM의 추론 능력 향상, 환각(hallucination) 감소,
+  그리고 실제 응용에서의 신뢰성 향상에도 관심을 가지고 있습니다.
+  최근에는 검색 증강 생성(RAG)과 코드 생성 분야에서 LLM 활용 방법을 연구하고 있습니다.
+
+# ── arXiv categories ─────────────────────────────────────────────────────────
+arxiv_categories:
+  - cs.CL   # Computation and Language
+  - cs.AI   # Artificial Intelligence
+  - cs.LG   # Machine Learning
+
+# ── Collection window ─────────────────────────────────────────────────────────
+days_back: 7
+
+# ── Cost controls ─────────────────────────────────────────────────────────────
+max_papers_to_rank: 1500  # truncate by score estimate if exceeded
+top_n: 10                 # maximum Notion pages per weekly run (5-10 target)
+
+# ── LLM provider ─────────────────────────────────────────────────────────────
+llm:
+  provider: "anthropic"          # "anthropic" | "openai"
+  ranking_model: "claude-haiku-4-5"    # cheap bulk ranking
+  notes_model: "claude-opus-5"       # high-quality note generation

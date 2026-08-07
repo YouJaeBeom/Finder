@@ -1,0 +1,42 @@
+# Paper Digest — example configuration for forking
+# Copy this to config.yaml and fill in your values.
+# Secrets (NOTION_TOKEN, ANTHROPIC_API_KEY / OPENAI_API_KEY) always come from
+# environment variables or GitHub Secrets — never put them here.
+
+notion_parent_page_id: "YOUR_NOTION_PAGE_ID_HERE"
+
+keywords:
+  - "large language model"
+  - "machine learning"
+  - "your-research-keyword-here"
+
+tracked_venues:
+  - "ACL 2026"
+  - "NeurIPS 2026"
+
+research_profile: |
+  Describe your research focus here in 2-5 sentences.
+  The LLM uses this both for relevance scoring and for generating the
+  "내 연구와의 연결점" section in each Korean note.
+  Be specific about your methods, datasets, and open questions.
+
+arxiv_categories:
+  - cs.CL
+  - cs.AI
+  - cs.LG
+
+days_back: 7
+max_papers_to_rank: 1500
+top_n: 10
+
+llm:
+  # Supported providers: "anthropic" | "openai"
+  provider: "anthropic"
+  # Cheap model for bulk ranking (low cost, many calls)
+  ranking_model: "claude-haiku-4-5"
+  # High-quality model for Korean note generation (fewer calls)
+  notes_model: "claude-opus-5"
+  # --- OpenAI alternative ---
+  # provider: "openai"
+  # ranking_model: "gpt-4o-mini"
+  # notes_model: "gpt-4o"
