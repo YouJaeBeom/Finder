@@ -1,0 +1,270 @@
+goal: >-
+  Build a configuration-driven Python tool that collects new papers weekly from arXiv
+  and OpenAlex, filters by keywords, ranks relevance with a low-cost LLM, generates
+  Korean full research notes with a high-performance LLM for the top 5-10 papers into
+  a Notion database the tool auto-creates, and supports manual-trigger batch mode to
+  update existing entries' Venue to accepted when conference proceedings are published.
+
+task_type: code
+
+brownfield_context:
+  project_type: greenfield
+  context_references: []
+  existing_patterns: []
+  existing_dependencies: []
+
+constraints:
+  - All user-specific parameters (keywords, tracked venues, research profile, paper count
+    limits, LLM provider/model, Notion parent page ID) must reside in a config file - no
+    hardcoding in source code
+  - LLM provider abstraction layer supporting Anthropic and OpenAI, switchable via config;
+    ranking model and note-generation model separately configurable; default Anthropic
+    (claude-haiku-4-5 ranking, claude-opus-5 notes)
+  - Deployment on GitHub Actions; secrets (Notion token, LLM API keys per provider) managed
+    via GitHub Secrets; deduplication state file (seen_ids.json) committed to repo requiring
+    workflow write permission
+  - Collection sources limited to arXiv (cs.CL / cs.AI / cs.LG) and OpenAlex - both free,
+    no API key, no institutional subscription required; no per-publisher API implementations;
+    ACM DL scraping/crawling prohibited (ToS violation risk)
+  - arXiv "new" means first submission within last 7 days; v2+ revisions are excluded from
+    collection
+  - OpenAlex "new" means from_publication_date within the last 7 days - explicitly NOT
+    from_created_date, which reflects OpenAlex ingestion time and would fire on backfilled
+    records unrelated to the current week
+  - OpenAlex serves abstracts as abstract_inverted_index (token -> position list), not plain
+    text; reconstruct to plain text before ranking. Papers with no recoverable abstract are
+    excluded from ranking rather than ranked on title alone
+  - "Paper identity via multi-identifier matching: arXiv ID, DOI, and normalized title
+    (lowercase + strip whitespace/punctuation) all stored per paper; any single match =
+    same paper"
+  - "Conditional failure alerting: keyword filter candidates exist but LLM ranking passes
+    0 papers -> exit 1 triggering GitHub Actions failure email; 0 keyword candidates ->
+    normal exit (genuinely quiet week)"
+  - "Cost control via paper count limits in config: max_papers_to_rank (default 1500) and
+    top_n (default 10 for weekly runs, 10 for batch-mode new additions); exceeding max
+    truncates by estimated relevance"
+  - Every run writes run-report.json as a GitHub Actions artifact recording pages_created,
+    venue_updated, sections_filled per created page, and duplicates_created; this report is
+    the machine-checkable acceptance evidence for the tool
+  - "Notion DB auto-created on first run from parent page ID in config with schema: Title,
+    Venue (e.g. ACL 2026), Score (0-10), Tags (matched keywords), Date (collection date)"
+  - All LLM-generated content in Korean; relevance score exposed in both DB property and
+    page header
+  - Batch mode is Venue update of existing pages + limited new additions (top_n cap), not
+    mass re-ranking; triggered only via manual workflow_dispatch - no automatic proceedings
+    detection
+  - "Precision over recall: false positives (irrelevant papers surfacing in Notion) are a
+    worse failure than false negatives (missed relevant papers); target 80%+ precision at
+    5-10 papers per weekly run, judged by the user rather than automated"
+  - Personal + lab sharing scope via fork + config swap; not external SaaS; no multi-user
+    auth system
+  - Research profile field in config drives both LLM ranking relevance judgment and the
+    "내 연구와의 연결점" note section
+  - "Known risk (accepted): Elsevier and Springer Nature have removed non-OA abstracts from
+    OpenAlex, so abstract coverage may erode over time; the reconstruct-then-exclude rule
+    bounds the blast radius to reduced recall rather than degraded ranking"
+
+acceptance_criteria:
+  - description: >-
+      A real weekly run against live arXiv and OpenAlex produces 5-10 Notion pages, each
+      carrying Title/Venue/Score/Tags/Date properties and a Korean research note body whose
+      four sections (한 줄 요약, 핵심 기여, 방법, 내 연구와의 연결점) are all populated, with the
+      연결점 section written against the research profile from config
+    verify: python -m paper_digest run --mode weekly
+    artifacts:
+      - run-report.json
+    expect: >-
+      run-report.json reports pages_created between 5 and 10 inclusive, and sections_filled
+      == 4 for every created page
+  - description: >-
+      Re-running the same collection period creates no duplicate Notion pages, and a paper
+      arriving from both arXiv and OpenAlex in the same run is recorded once - enforced by
+      multi-identifier matching (arXiv ID, DOI, normalized title) against the committed
+      seen_ids.json state file
+    verify: python -m paper_digest run --mode weekly
+    artifacts:
+      - run-report.json
+      - seen_ids.json
+    expect: >-
+      On a second consecutive run over the same period, run-report.json reports
+      duplicates_created == 0 and pages_created == 0
+  - description: >-
+      Batch mode stamps accepted venue onto papers already in the Notion DB (e.g. arXiv
+      preprint -> ACL 2026) and adds at most top_n genuinely new papers, without re-ranking
+      the full proceedings
+    verify: python -m paper_digest run --mode batch --venue "ACL 2026"
+    artifacts:
+      - run-report.json
+    expect: >-
+      run-report.json reports venue_updated > 0 for previously collected papers and
+      pages_created <= top_n
+  - description: >-
+      A second researcher can fork the repo, edit only the config file (keywords, tracked
+      venues, research profile, paper limits, LLM provider/model pair for Anthropic or
+      OpenAI, Notion parent page ID) and run it - the tool auto-creates the Notion DB with
+      the correct schema under the configured parent page on first run
+    verify: python -m paper_digest init
+    artifacts:
+      - config.example.yaml
+    expect: >-
+      A Notion database is created under the configured parent page with properties Title,
+      Venue, Score, Tags, Date; no source file edits are required to change keywords,
+      venues, research profile, limits, or LLM provider
+
+ontology_schema:
+  name: ResearchPaperDigest
+  description: >-
+    Domain model for academic papers collected from arXiv and OpenAlex, ranked for
+    relevance by LLM, and summarized as Korean research notes in Notion with cross-source
+    deduplication and venue lifecycle tracking
+  fields:
+    - name: identifiers
+      type: object
+      description: >-
+        Composite paper identity containing arxiv_id (string, nullable), doi (string,
+        nullable), and normalized_title (string) for cross-source deduplication; any
+        single field match means same paper
+      required: true
+    - name: title
+      type: string
+      description: Original paper title as retrieved from source
+      required: true
+    - name: authors
+      type: array
+      description: List of author name strings
+      required: false
+    - name: venue
+      type: string
+      description: >-
+        Publication venue label (e.g. 'arXiv preprint', 'ACL 2026'); mutable - updated by
+        batch mode when the paper is accepted to a conference
+      required: true
+    - name: venue_status
+      type: string
+      description: >-
+        Venue lifecycle state, one of 'preprint' or 'accepted'; gives batch mode an explicit
+        predicate to update on instead of string-matching venue labels
+      required: true
+    - name: abstract
+      type: string
+      description: >-
+        Paper abstract used as the primary input for LLM relevance ranking; for OpenAlex
+        records this is reconstructed from abstract_inverted_index. Null when unrecoverable,
+        in which case the paper is excluded from ranking
+      required: false
+    - name: relevance_score
+      type: number
+      description: LLM-assigned relevance score from 0 to 10 based on match to user research profile
+      required: true
+    - name: matched_keywords
+      type: array
+      description: Keyword tags from config that matched during the filtering stage
+      required: true
+    - name: collection_date
+      type: string
+      description: ISO date when the paper was first collected into the pipeline
+      required: true
+    - name: source
+      type: array
+      description: >-
+        Origins this paper was seen in - entries are 'arxiv' and/or 'openalex'. An array
+        rather than a scalar because the same paper legitimately arrives from both sources
+        and the dedup merge must not lose provenance
+      required: true
+    - name: research_note
+      type: object
+      description: >-
+        LLM-generated Korean research note with four section fields: one_line_summary,
+        key_contributions (array of 3 items), method, and relevance_to_profile
+      required: true
+    - name: notion_page_id
+      type: string
+      description: Notion page ID assigned after creation, used as handle for batch venue updates
+      required: true
+    - name: research_profile
+      type: string
+      description: >-
+        User's research description from config, provided as context to LLM for relevance
+        ranking and 내 연구와의 연결점 section generation
+      required: true
+
+evaluation_principles:
+  - name: precision
+    description: >-
+      Papers surfaced in Notion are genuinely worth reading. A false positive (irrelevant
+      paper occupying a slot) is a worse failure than a false negative (missed paper).
+      Target: 80%+ of the 5-10 weekly papers judged worth reading by the user. This is a
+      human judgment, not an automated check.
+    weight: 1.0
+  - name: configurability
+    description: >-
+      Another researcher can fork the repo, edit only the config file (keywords, venues,
+      research profile, limits, LLM provider/model, Notion parent page ID), and get working
+      output without touching source code.
+    weight: 0.9
+  - name: note_quality
+    description: >-
+      The Korean note body gives enough context that the user can decide on the paper
+      without opening the original. The 내 연구와의 연결점 section must actually contrast the
+      paper against the configured research profile, not restate the abstract.
+    weight: 0.9
+  - name: idempotency
+    description: >-
+      Re-running the same collection period produces no duplicate Notion pages, and the
+      same paper arriving via both arXiv and OpenAlex is recognized as one entry.
+    weight: 0.8
+  - name: cost_discipline
+    description: >-
+      The two-tier model split is preserved (bulk ranking on the low-cost model, note
+      generation on the high-performance model) and paper-count limits bound spend
+      deterministically without a dollar-estimation layer.
+    weight: 0.7
+  - name: failure_visibility
+    description: >-
+      A silently degraded run is detectable. Zero output with non-zero candidates raises a
+      GitHub Actions failure; zero candidates exits cleanly without a false alarm; every run
+      leaves a run-report.json artifact.
+    weight: 0.7
+
+exit_conditions:
+  - name: successful_run
+    description: >-
+      Pipeline completes all stages - collection, filtering, ranking, note generation,
+      Notion write - and creates or updates the expected number of pages
+    criteria: >-
+      All stages finish without unrecoverable error, at least one Notion page is created or
+      updated, and run-report.json is written as a workflow artifact
+  - name: empty_domain_week
+    description: >-
+      Keyword filter yields zero candidates from both arXiv and OpenAlex - no papers
+      matching any configured keyword were published this period
+    criteria: >-
+      Candidate count after keyword filtering is zero; pipeline exits normally (exit 0)
+      with no Notion writes and no alert
+  - name: ranking_anomaly
+    description: >-
+      Keyword filter found candidates but LLM ranking passed zero papers above the
+      relevance cutoff - possible misconfiguration, overly aggressive cutoff, or LLM API
+      degradation
+    criteria: >-
+      Candidate count > 0 but final ranked pass count = 0; pipeline exits with exit 1
+      triggering GitHub Actions failure notification email
+  - name: api_failure
+    description: >-
+      arXiv, OpenAlex, Notion, or LLM provider API returns an unrecoverable error during
+      any stage
+    criteria: >-
+      Unhandled API error after retries; pipeline exits with exit 1 and logs the failing
+      stage and error detail
+
+metadata:
+  seed_id: seed_2ba8a8477019
+  version: 1.0.1
+  created_at: '2026-08-07T12:28:41.073109Z'
+  ambiguity_score: 0.074
+  interview_id: interview_20260807_064653
+  parent_seed_id: null
+  generation_mode: normal
+  degraded: false
+  unresolved_slots: []
+  recovery_reason: null
