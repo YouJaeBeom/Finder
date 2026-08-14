@@ -1,1 +1,137 @@
-[]
+[
+  {
+    "arxiv_id": null,
+    "doi": "10.1007/s10462-026-11657-9",
+    "normalized_title": "enhancing large language model reasoning with reward models an analytical survey",
+    "url": null,
+    "content_type": "paper",
+    "notion_page_id": "3bc1256e-0561-81ac-ba3c-c4f7a0252e5f",
+    "title": "Enhancing large language model reasoning with reward models: an analytical survey"
+  },
+  {
+    "arxiv_id": null,
+    "doi": "10.1145/3770855.3817575",
+    "normalized_title": "rag vs graphrag a systematic evaluation and key insights",
+    "url": null,
+    "content_type": "paper",
+    "notion_page_id": "3bc1256e-0561-81d0-a1d9-e7efbcc29ce6",
+    "title": "RAG vs. GraphRAG: A Systematic Evaluation and Key Insights"
+  },
+  {
+    "arxiv_id": null,
+    "doi": "10.5281/zenodo.21837226",
+    "normalized_title": "what two gates buy you selectiverisk guarantees and the nonidentifiability of abstention cascades product laws error diversity and why unlabeled logs can certify coverage but never risk",
+    "url": null,
+    "content_type": "paper",
+    "notion_page_id": "3bc1256e-0561-81aa-89b4-ff3ed9a89bb5",
+    "title": "What Two Gates Buy You: Selective-Risk Guarantees and the Non-Identifiability of Abstention Cascades — Product Laws, Error Diversity, and Why Unlabeled Logs Can Certify Coverage but Never Risk"
+  },
+  {
+    "arxiv_id": null,
+    "doi": "10.5281/zenodo.20129113",
+    "normalized_title": "the intent gap a taxonomy of realuser failure modes in frontier ai agents",
+    "url": null,
+    "content_type": "paper",
+    "notion_page_id": "3bc1256e-0561-81f5-b200-d56cf88df1f5",
+    "title": "The Intent Gap: A Taxonomy of Real-User Failure Modes in Frontier AI Agents"
+  },
+  {
+    "arxiv_id": null,
+    "doi": "10.1145/3770855.3818028",
+    "normalized_title": "dice dynamic incontext example selection in llm agents via efficient knowledge transfer",
+    "url": null,
+    "content_type": "paper",
+    "notion_page_id": "3bc1256e-0561-81cd-ab22-d4105092ac99",
+    "title": "DICE: Dynamic In-Context Example Selection in LLM Agents via Efficient Knowledge Transfer"
+  },
+  {
+    "arxiv_id": null,
+    "doi": "10.5281/zenodo.21822225",
+    "normalized_title": "what can be established about human irreducibility levels instruments and their controls",
+    "url": null,
+    "content_type": "paper",
+    "notion_page_id": "3bc1256e-0561-814f-83c5-efaeac24ac67",
+    "title": "What Can Be Established About Human Irreducibility: Levels, Instruments, and Their Controls"
+  },
+  {
+    "arxiv_id": null,
+    "doi": "10.1109/icip61757.2026.11630204",
+    "normalized_title": "dont lag rag trainingfree adversarial detection using rag",
+    "url": null,
+    "content_type": "paper",
+    "notion_page_id": "3bc1256e-0561-81ca-b1f2-f067a2758e29",
+    "title": "Don’t LAG, RAG: Training-Free Adversarial Detection Using RAG"
+  },
+  {
+    "arxiv_id": null,
+    "doi": "10.5281/zenodo.21836502",
+    "normalized_title": "caax v3 intention is all you need a manifesto for goaldriven ai",
+    "url": null,
+    "content_type": "paper",
+    "notion_page_id": "3bc1256e-0561-81d7-9d0b-c262f8e79776",
+    "title": "CAA-X V3: Intention is All You Need — A Manifesto for Goal-Driven AI"
+  },
+  {
+    "arxiv_id": null,
+    "doi": "10.6084/m9.figshare.32305332",
+    "normalized_title": "aimediated cognition field guide recognizing how ai enters thought memory interpretation and judgment",
+    "url": null,
+    "content_type": "paper",
+    "notion_page_id": "3bc1256e-0561-8183-9a3f-c90f009b67f2",
+    "title": "AI-Mediated Cognition Field Guide: Recognizing How AI Enters Thought, Memory, Interpretation, and Judgment"
+  },
+  {
+    "arxiv_id": null,
+    "doi": "10.5281/zenodo.21855188",
+    "normalized_title": "the anchor protects what it names selection mechanics and recall collapse in compact context compression for autoregressive language models",
+    "url": null,
+    "content_type": "paper",
+    "notion_page_id": "3bc1256e-0561-81e9-a970-efb89d4a3857",
+    "title": "The Anchor Protects What It Names: Selection Mechanics and Recall Collapse in Compact Context Compression for Autoregressive Language Models"
+  },
+  {
+    "arxiv_id": null,
+    "doi": null,
+    "normalized_title": "as ai eats the web the internets collective memory is disappearing",
+    "url": "https://thewalrus.ca/google-search-is-dying/",
+    "content_type": "news",
+    "notion_page_id": "3bc1256e-0561-81fa-8311-e1a8698188af",
+    "title": "As AI eats the web, the internet’s collective memory is disappearing"
+  },
+  {
+    "arxiv_id": null,
+    "doi": null,
+    "normalized_title": "google will now allow users to remove visible watermark from its ai generations",
+    "url": "https://techcrunch.com/2026/08/14/google-will-now-allow-users-to-remove-visible-watermark-from-its-ai-generations/",
+    "content_type": "news",
+    "notion_page_id": "3bc1256e-0561-81a7-9b32-ee60da11630c",
+    "title": "Google will now allow users to remove visible watermark from its AI generations"
+  },
+  {
+    "arxiv_id": null,
+    "doi": null,
+    "normalized_title": "2025 goty clair obscur expedition 33 is down to 33",
+    "url": "https://www.theverge.com/gadgets/980261/clair-obscur-pixel-11-gaming-laptop-4k-bluray-deal-sale",
+    "content_type": "news",
+    "notion_page_id": "3bc1256e-0561-81ef-baee-d89df9db0035",
+    "title": "2025 GOTY Clair Obscur: Expedition 33 is down to $33"
+  },
+  {
+    "arxiv_id": null,
+    "doi": null,
+    "normalized_title": "openai and anthropic in price war as chinese ai rivals gain ground",
+    "url": "https://arstechnica.com/ai/2026/08/openai-and-anthropic-in-price-war-as-chinese-ai-rivals-gain-ground/",
+    "content_type": "news",
+    "notion_page_id": "3bc1256e-0561-818b-9b09-e4a52cbd3fe3",
+    "title": "OpenAI and Anthropic in price war as Chinese AI rivals gain ground"
+  },
+  {
+    "arxiv_id": null,
+    "doi": null,
+    "normalized_title": "openais head of ethics leaves less than a year after joining",
+    "url": "https://www.ft.com/content/e49dfb75-f841-4466-a577-f7aaff8779a0",
+    "content_type": "news",
+    "notion_page_id": "3bc1256e-0561-81c0-8b91-e7e442936c02",
+    "title": "OpenAI’s head of ethics leaves less than a year after joining"
+  }
+]
