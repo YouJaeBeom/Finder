@@ -146,16 +146,33 @@ def _find_database_under_page(parent_page_id: str, token: str) -> Optional[str]:
         cursor = data.get("next_cursor")
 
 
-def read_properties(db_id: str, token: str) -> Set[str]:
-    """The column names the database currently has."""
+def _fetch_database(db_id: str, token: str) -> Optional[dict]:
+    """The database object, or None if it is gone or sitting in the trash.
+
+    Deleting a database in Notion moves it to the trash; the API still reads
+    and writes it happily. A cached ID pointing at a trashed database therefore
+    fails silently in the worst way — runs report success while every page
+    lands somewhere invisible.
+    """
     resp = requests.get(
         f"{NOTION_BASE_URL}/databases/{db_id}", headers=_headers(token), timeout=30
     )
+    if resp.status_code == 404:
+        return None
     _check(resp, "read database schema")
-    return set(resp.json().get("properties", {}))
+
+    data = resp.json()
+    if data.get("in_trash") or data.get("archived"):
+        return None
+    return data
 
 
-def _sync_schema(db_id: str, token: str) -> Set[str]:
+def read_properties(db_id: str, token: str) -> Set[str]:
+    """The column names the database currently has."""
+    return set((_fetch_database(db_id, token) or {}).get("properties", {}))
+
+
+def _sync_schema(db_id: str, token: str, existing: Set[str]) -> Set[str]:
     """Bring an existing database's columns up to the current schema.
 
     Returns the column names that exist afterwards — callers write only those,
@@ -170,8 +187,6 @@ def _sync_schema(db_id: str, token: str) -> Set[str]:
     because one column could not be added is a wildly disproportionate outcome
     — better to write the columns that do exist and say what was skipped.
     """
-    existing = read_properties(db_id, token)
-
     # `existing` stays the columns that are really there, so the failure path
     # can report them honestly. `planned` is what would exist if the patch
     # lands, and is what the add-missing pass is computed against — otherwise a
@@ -236,16 +251,27 @@ def ensure_database(
         (configured_db_id, "config.yaml"),
         (state.get("notion_database_id"), "state.json"),
     ):
-        if db_id:
-            logger.info("Reusing Notion database from %s: %s", origin, db_id)
-            _remember_database(state, db_id)
-            return db_id, _sync_schema(db_id, token)
+        if not db_id:
+            continue
+        database = _fetch_database(db_id, token)
+        if database is None:
+            # Deleted in Notion, or trashed. Reusing it would write every page
+            # into the trash and still report success.
+            logger.warning(
+                "%s names database %s, which no longer exists in Notion — "
+                "looking for a live one instead", origin, db_id,
+            )
+            continue
+        logger.info("Reusing Notion database from %s: %s", origin, db_id)
+        _remember_database(state, db_id)
+        return db_id, _sync_schema(db_id, token,
+                                   set(database.get("properties", {})))
 
     if found := _find_database_under_page(parent_page_id, token):
         logger.info("Found existing '%s' database under the parent page: %s",
                     _DB_TITLE, found)
         _remember_database(state, found)
-        return found, _sync_schema(found, token)
+        return found, _sync_schema(found, token, read_properties(found, token))
 
     logger.info("Creating Notion database under parent page %s", parent_page_id)
     payload = {

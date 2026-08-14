@@ -168,3 +168,58 @@ class TestDedupStore:
 
         p2 = make_paper(title="Attention Is ALL You Need")
         assert store.is_seen(p2)
+
+
+class TestStateBelongsToADatabase:
+    """"Seen" means "already written to *this* database".
+
+    When the database is deleted and a new one is created, every past record
+    points at pages that are not in the new database. Honouring them would
+    leave it permanently empty — which is exactly what happened: a run reported
+    success and created nothing, because everything was still marked delivered.
+    """
+
+    def _write(self, tmp_path, payload) -> str:
+        path = tmp_path / "seen_ids.json"
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        return str(path)
+
+    def _record(self) -> dict:
+        return {"arxiv_id": "2401.00001", "doi": None,
+                "normalized_title": "a paper", "url": None, "title": "A Paper"}
+
+    def test_records_are_ignored_when_the_database_changed(self, tmp_path):
+        path = self._write(tmp_path, {"database_id": "old-db",
+                                      "records": [self._record()]})
+        store = DedupStore(path, database_id="new-db")
+
+        assert store.is_seen(make_paper(arxiv_id="2401.00001")) is False
+
+    def test_records_still_apply_to_the_same_database(self, tmp_path):
+        path = self._write(tmp_path, {"database_id": "same-db",
+                                      "records": [self._record()]})
+        store = DedupStore(path, database_id="same-db")
+
+        assert store.is_seen(make_paper(arxiv_id="2401.00001")) is True
+
+    def test_a_legacy_bare_list_is_adopted_by_the_current_database(self, tmp_path):
+        """State written before the file carried a database ID."""
+        path = self._write(tmp_path, [self._record()])
+        store = DedupStore(path, database_id="whatever-db")
+
+        assert store.is_seen(make_paper(arxiv_id="2401.00001")) is True
+
+    def test_persist_stamps_the_database_id(self, tmp_path):
+        path = str(tmp_path / "seen_ids.json")
+        store = DedupStore(path, database_id="db-1")
+        store.mark_seen(make_paper(arxiv_id="2401.00002"))
+        store.persist()
+
+        data = json.loads(open(path, encoding="utf-8").read())
+        assert data["database_id"] == "db-1"
+        assert len(data["records"]) == 1
+
+    def test_no_database_id_given_keeps_every_record(self, tmp_path):
+        path = self._write(tmp_path, {"database_id": "old-db",
+                                      "records": [self._record()]})
+        assert DedupStore(path).is_seen(make_paper(arxiv_id="2401.00001")) is True

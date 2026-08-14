@@ -274,7 +274,10 @@ class TestWeeklyPipelineIntegration:
         seen_path = self._tmp / "seen_ids.json"
         assert seen_path.exists()
         data = json.loads(seen_path.read_text())
-        assert isinstance(data, list) and len(data) > 0
+        assert len(data["records"]) > 0
+        # Stamped with the database the records belong to, so a later run
+        # against a different database knows they no longer apply.
+        assert data["database_id"] == "mock-db-id-abc123"
 
     def test_run_report_json_written(self):
         self._run()

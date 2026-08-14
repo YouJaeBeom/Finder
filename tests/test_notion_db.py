@@ -271,3 +271,64 @@ class TestWritingAgainstAPartialSchema:
     def test_no_schema_given_means_send_everything(self):
         """Callers that don't know the schema keep the old behaviour."""
         assert "Status" in self._create(None)
+
+
+class TestDeletedDatabase:
+    """Deleting a database in Notion moves it to the trash, and the API still
+    reads and writes it. A cached ID pointing there fails in the worst way: the
+    run reports success while every page lands somewhere invisible."""
+
+    def _trashed(self) -> MagicMock:
+        payload = dict(FULL_SCHEMA)
+        payload["in_trash"] = True
+        return _resp(payload)
+
+    def test_a_trashed_database_is_not_reused(self, _tmp_cwd):
+        Path("state.json").write_text(json.dumps({"notion_database_id": "trashed-db"}))
+
+        def fake_get(url, headers=None, params=None, timeout=None):
+            if "/blocks/" in url:
+                return _resp(_children())  # nothing live under the parent either
+            return self._trashed()
+
+        with (
+            patch("paper_digest.notion_writer.requests.get", side_effect=fake_get),
+            patch("paper_digest.notion_writer.requests.post",
+                  return_value=_resp({"id": "fresh-db"})),
+        ):
+            db_id, _ = ensure_database("parent", "tok")
+
+        assert db_id == "fresh-db", "a trashed database must not be written to"
+        assert json.loads(Path("state.json").read_text())["notion_database_id"] == "fresh-db"
+
+    def test_a_deleted_database_falls_back_to_the_one_under_the_page(self, _tmp_cwd):
+        Path("state.json").write_text(json.dumps({"notion_database_id": "gone-db"}))
+        gone = MagicMock(status_code=404)
+
+        def fake_get(url, headers=None, params=None, timeout=None):
+            if "/blocks/" in url:
+                return _resp(_children(("live-db", _DB_TITLE)))
+            if url.endswith("gone-db"):
+                return gone
+            return _resp(FULL_SCHEMA)
+
+        with (
+            patch("paper_digest.notion_writer.requests.get", side_effect=fake_get),
+            patch("paper_digest.notion_writer.requests.post") as post,
+        ):
+            db_id, _ = ensure_database("parent", "tok")
+
+        assert db_id == "live-db"
+        post.assert_not_called()
+
+    def test_a_live_database_is_still_reused(self):
+        live = dict(FULL_SCHEMA)
+        live["in_trash"] = False
+        with (
+            patch("paper_digest.notion_writer.requests.get", return_value=_resp(live)),
+            patch("paper_digest.notion_writer.requests.post") as post,
+        ):
+            db_id, _ = ensure_database("parent", "tok", configured_db_id="live-db")
+
+        assert db_id == "live-db"
+        post.assert_not_called()

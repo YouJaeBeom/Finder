@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from .models import Paper
 
@@ -13,22 +13,37 @@ logger = logging.getLogger(__name__)
 STATE_FILE = "seen_ids.json"
 
 
-def _load_seen(path: str = STATE_FILE) -> List[dict]:
-    """Load existing seen-paper records from the state file."""
+def _load_seen(path: str = STATE_FILE) -> Tuple[Optional[str], List[dict]]:
+    """Load the state file as (database_id, records).
+
+    Files written before the store was tied to a database are a bare list; they
+    read back with no database ID, which is treated as "belongs to whatever
+    database we are using now".
+    """
     p = Path(path)
     if not p.exists():
-        return []
+        return None, []
     try:
-        return json.loads(p.read_text(encoding="utf-8"))
+        data = json.loads(p.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as exc:
         logger.warning("Could not read %s: %s — treating as empty", path, exc)
-        return []
+        return None, []
+
+    if isinstance(data, list):  # legacy format
+        return None, data
+    return data.get("database_id"), data.get("records", [])
 
 
-def _save_seen(records: List[dict], path: str = STATE_FILE) -> None:
+def _save_seen(
+    records: List[dict],
+    path: str = STATE_FILE,
+    database_id: Optional[str] = None,
+) -> None:
     """Persist seen-paper records to the state file."""
     Path(path).write_text(
-        json.dumps(records, ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps({"database_id": database_id, "records": records},
+                   ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
 
 
@@ -70,11 +85,31 @@ def _matches(paper: Paper, record: dict) -> bool:
 
 
 class DedupStore:
-    """Tracks collected papers to prevent cross-run duplicates."""
+    """Tracks collected papers to prevent cross-run duplicates.
 
-    def __init__(self, path: str = STATE_FILE) -> None:
+    "Seen" means "already written to *this* database". Pointing the tool at a
+    different database — because the old one was deleted, or because the ID was
+    repinned — makes every past record meaningless: the pages it refers to are
+    not in the new database, so suppressing them would leave it permanently
+    empty. The store therefore resets when the database changes.
+    """
+
+    def __init__(self, path: str = STATE_FILE,
+                 database_id: Optional[str] = None) -> None:
         self.path = path
-        self._records: List[dict] = _load_seen(path)
+        self.database_id = database_id
+
+        stored_db_id, records = _load_seen(path)
+        if database_id and stored_db_id and stored_db_id != database_id:
+            logger.warning(
+                "Dedup state belongs to database %s but this run writes to %s "
+                "— starting fresh, since nothing written to the old database "
+                "is in the new one",
+                stored_db_id, database_id,
+            )
+            records = []
+
+        self._records: List[dict] = records
         # Build lookup sets for O(1) matching
         self._arxiv_ids: set = {r["arxiv_id"] for r in self._records if r.get("arxiv_id")}
         self._dois: set = {r["doi"] for r in self._records if r.get("doi")}
@@ -118,7 +153,7 @@ class DedupStore:
 
     def persist(self) -> None:
         """Write the current state to disk."""
-        _save_seen(self._records, self.path)
+        _save_seen(self._records, self.path, self.database_id)
 
 
 def _merge_into(existing: Paper, duplicate: Paper) -> None:

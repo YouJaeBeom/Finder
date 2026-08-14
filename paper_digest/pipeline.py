@@ -139,7 +139,7 @@ def run_weekly(config_path: str = "config.yaml") -> int:
     logger.info("%d candidates after keyword filtering", candidates_count)
 
     # ── 4. Cross-run deduplication ────────────────────────────────────────────
-    dedup_store = DedupStore()
+    dedup_store = DedupStore(database_id=db_id)
     new_candidates = [p for p in candidates if not dedup_store.is_seen(p)]
     duplicates_skipped = len(candidates) - len(new_candidates)
     logger.info(
@@ -346,7 +346,7 @@ def run_batch(config_path: str = "config.yaml", venue: Optional[str] = None) -> 
     preprint_pages = query_preprint_pages(db_id, cfg.notion_token)
     venue_updated_count = 0
 
-    dedup_store = DedupStore()
+    dedup_store = DedupStore(database_id=db_id)
     for page in preprint_pages:
         page_id = page["id"]
         try:
