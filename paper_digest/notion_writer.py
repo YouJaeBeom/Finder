@@ -73,10 +73,12 @@ def ensure_database(parent_page_id: str, token: str) -> str:
         "icon": {"type": "emoji", "emoji": "📚"},
         "properties": {
             "Title": {"title": {}},
-            "Venue": {"select": {}},
+            "Type": {"select": {}},       # "논문" | "뉴스" — papers and news share one DB
+            "Venue": {"select": {}},      # paper: ACL 2026 / arXiv preprint; news: source site
             "Score": {"number": {"format": "number"}},
             "Tags": {"multi_select": {}},
             "Date": {"date": {}},
+            "URL": {"url": {}},
         },
     }
     resp = requests.post(
@@ -110,21 +112,29 @@ def _heading2(text: str) -> dict:
 
 
 def _build_page_content(paper: Paper) -> List[dict]:
-    """Build Notion block children representing the Korean research note."""
+    """Build Notion block children for the Korean note.
+
+    Papers get four sections; news gets three — "방법" is a paper concept and an
+    empty heading on a news page reads as a bug.
+    """
     note: Optional[ResearchNote] = paper.research_note
     score = paper.relevance_score
+    is_news = paper.content_type == "news"
 
     blocks: List[dict] = []
 
     # Score header
     blocks.append(_heading2(f"📊 관련도 점수: {score:.0f}/10"))
 
+    if paper.url:
+        blocks.append(_text_block(f"🔗 {paper.url}"))
+
     # Section 1: 한 줄 요약
     blocks.append(_heading2("한 줄 요약"))
     blocks.append(_text_block(note.one_line_summary if note else ""))
 
-    # Section 2: 핵심 기여
-    blocks.append(_heading2("핵심 기여"))
+    # Section 2: 핵심 기여 / 핵심 내용
+    blocks.append(_heading2("핵심 내용" if is_news else "핵심 기여"))
     if note and note.key_contributions:
         for i, contrib in enumerate(note.key_contributions[:3], 1):
             blocks.append(
@@ -138,11 +148,12 @@ def _build_page_content(paper: Paper) -> List[dict]:
     else:
         blocks.append(_text_block("(내용 없음)"))
 
-    # Section 3: 방법
-    blocks.append(_heading2("방법"))
-    blocks.append(_text_block(note.method if note else ""))
+    # Section 3: 방법 — papers only
+    if not is_news:
+        blocks.append(_heading2("방법"))
+        blocks.append(_text_block(note.method if note else ""))
 
-    # Section 4: 내 연구와의 연결점
+    # Final section: 내 연구와의 연결점
     blocks.append(_heading2("내 연구와의 연결점"))
     blocks.append(_text_block(note.relevance_to_profile if note else ""))
 
@@ -160,18 +171,21 @@ def _build_page_content(paper: Paper) -> List[dict]:
 # ── Page creation ──────────────────────────────────────────────────────────────
 
 def create_page(paper: Paper, db_id: str, token: str) -> str:
-    """Create a Notion page for a paper. Returns the new page ID."""
+    """Create a Notion page for a paper or news item. Returns the new page ID."""
     tags = [{"name": kw} for kw in paper.matched_keywords[:10]]
 
     properties: dict = {
         "Title": {
             "title": [{"text": {"content": paper.title[:2000]}}]
         },
+        "Type": {"select": {"name": "뉴스" if paper.content_type == "news" else "논문"}},
         "Venue": {"select": {"name": paper.venue[:100]}},
         "Score": {"number": paper.relevance_score},
         "Tags": {"multi_select": tags},
         "Date": {"date": {"start": paper.collection_date}},
     }
+    if paper.url:
+        properties["URL"] = {"url": paper.url}
 
     children = _build_page_content(paper)
 

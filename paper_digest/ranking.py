@@ -37,15 +37,33 @@ Papers:
 """
 
 
+def _is_rankable(paper: Paper) -> bool:
+    """Whether an item carries enough text for the ranking model.
+
+    Papers need an abstract: a title alone is not enough to judge research
+    relevance, and an abstract-less paper is the OpenAlex takedown case the
+    requirements chose to drop rather than rank blind.
+
+    News items are rankable on the title. Hacker News serves no article body at
+    all, and news headlines are written to be self-describing — requiring a body
+    would discard the entire HN source.
+    """
+    if paper.content_type == "news":
+        return bool(paper.title)
+    return bool(paper.abstract)
+
+
 def _build_papers_block(papers: List[Paper]) -> str:
-    """Serialize papers for the ranking prompt."""
+    """Serialize items for the ranking prompt."""
     lines = []
     for i, p in enumerate(papers):
-        abstract_preview = (p.abstract or "")[:500]
-        lines.append(
-            f"[{i}] Title: {p.title}\n"
-            f"    Abstract: {abstract_preview}"
-        )
+        kind = "News" if p.content_type == "news" else "Paper"
+        body = (p.abstract or "")[:500]
+        body_label = "Summary" if p.content_type == "news" else "Abstract"
+        entry = f"[{i}] ({kind}) Title: {p.title}"
+        if body:
+            entry += f"\n    {body_label}: {body}"
+        lines.append(entry)
     return "\n\n".join(lines)
 
 
@@ -92,15 +110,16 @@ def rank_papers(
 ) -> List[Paper]:
     """Rank papers by relevance to the research profile and return top-N.
 
-    Papers with no abstract are excluded before ranking.
+    Papers with no abstract are excluded before ranking; news items rank on
+    their title (see _is_rankable).
     If candidates > 0 but all score below *_MIN_SCORE*, the function raises
     RuntimeError to signal a ranking anomaly (pipeline should exit 1).
     """
-    # Exclude papers with no abstract
-    rankable = [p for p in papers if p.abstract]
+    # Papers without abstracts are excluded; news ranks on title (see _is_rankable)
+    rankable = [p for p in papers if _is_rankable(p)]
 
     if not rankable:
-        logger.info("No papers with abstracts to rank")
+        logger.info("No rankable items (papers require an abstract)")
         return []
 
     # Truncate to max_papers_to_rank

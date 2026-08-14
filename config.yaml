@@ -69,3 +69,32 @@ llm:
   provider: "anthropic"          # "anthropic" | "openai"
   ranking_model: "claude-haiku-4-5"    # cheap bulk ranking
   notes_model: "claude-opus-5"       # high-quality note generation
+
+# ── IT news (optional) ───────────────────────────────────────────────────────
+# Off by default. When enabled, news is collected in the same weekly run and
+# written to the same Notion DB with Type = "뉴스" (papers are "논문").
+news:
+  enabled: true
+
+  hacker_news:
+    enabled: true
+    min_points: 100      # community score floor — free first-pass filter
+
+  # Any RSS or Atom feed. Adding a publication is a config edit, not a code change.
+  rss_feeds:
+    - "https://techcrunch.com/feed/"
+    - "https://www.theverge.com/rss/index.xml"
+    - "https://feeds.arstechnica.com/arstechnica/technology-lab"
+
+  top_n: 5               # max news pages per weekly run
+
+  # Optional. Falls back to the paper keywords above when omitted — IT news
+  # usually wants a broader net than a paper query does.
+  keywords:
+    - "AI"
+    - "LLM"
+    - "OpenAI"
+    - "Anthropic"
+    - "GPU"
+    - "chip"
+    - "open source"

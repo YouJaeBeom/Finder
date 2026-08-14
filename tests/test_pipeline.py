@@ -156,9 +156,9 @@ def run_pipeline_mocked(config_path: str) -> tuple:
     }
 
     with (
-        patch("paper_digest.collectors.arxiv.collect_arxiv_papers", return_value=arxiv_papers),
-        patch("paper_digest.collectors.openalex.collect_openalex_papers", return_value=openalex_papers),
-        patch("paper_digest.llm.factory.create_provider", return_value=mock_llm),
+        patch("paper_digest.pipeline.collect_arxiv_papers", return_value=arxiv_papers),
+        patch("paper_digest.pipeline.collect_openalex_papers", return_value=openalex_papers),
+        patch("paper_digest.pipeline.create_provider", return_value=mock_llm),
         patch("paper_digest.notion_writer.requests.post", side_effect=mock_notion_post),
         patch("paper_digest.notion_writer.requests.patch", return_value=mock_notion_patch_resp),
         patch.dict(os.environ, env_vars),

@@ -18,6 +18,24 @@ class LLMConfig:
 
 
 @dataclass
+class NewsConfig:
+    """IT news collection settings.
+
+    News is off by default so an existing paper-only config keeps working
+    unchanged after upgrading.
+    """
+
+    enabled: bool = False
+    hacker_news_enabled: bool = True
+    hacker_news_min_points: int = 100
+    rss_feeds: List[str] = field(default_factory=list)
+    top_n: int = 5
+    # Falls back to the paper keywords when left empty — IT news usually wants a
+    # broader net than a paper query does, so it can be overridden separately.
+    keywords: List[str] = field(default_factory=list)
+
+
+@dataclass
 class Config:
     """Full application configuration."""
 
@@ -42,6 +60,9 @@ class Config:
     # LLM configuration
     llm: LLMConfig = field(default_factory=LLMConfig)
 
+    # IT news collection (opt-in)
+    news: NewsConfig = field(default_factory=NewsConfig)
+
     # Secrets — loaded from environment at runtime
     notion_token: str = ""
     anthropic_api_key: str = ""
@@ -60,6 +81,17 @@ def load_config(path: str = "config.yaml") -> Config:
         notes_model=llm_data.get("notes_model", "claude-opus-5"),
     )
 
+    news_data = data.get("news", {}) or {}
+    hn_data = news_data.get("hacker_news", {}) or {}
+    news_cfg = NewsConfig(
+        enabled=news_data.get("enabled", False),
+        hacker_news_enabled=hn_data.get("enabled", True),
+        hacker_news_min_points=hn_data.get("min_points", 100),
+        rss_feeds=news_data.get("rss_feeds", []) or [],
+        top_n=news_data.get("top_n", 5),
+        keywords=news_data.get("keywords", []) or [],
+    )
+
     cfg = Config(
         notion_parent_page_id=data.get("notion_parent_page_id", ""),
         keywords=data.get("keywords", []),
@@ -70,6 +102,7 @@ def load_config(path: str = "config.yaml") -> Config:
         max_papers_to_rank=data.get("max_papers_to_rank", 1500),
         top_n=data.get("top_n", 10),
         llm=llm_cfg,
+        news=news_cfg,
         # Secrets always come from the environment, never from the config file
         notion_token=os.environ.get("NOTION_TOKEN", ""),
         anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY", ""),

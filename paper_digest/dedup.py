@@ -38,6 +38,8 @@ def _make_record(paper: Paper) -> dict:
         "arxiv_id": paper.identifiers.arxiv_id,
         "doi": paper.identifiers.doi,
         "normalized_title": paper.identifiers.normalized_title,
+        "url": paper.identifiers.url,
+        "content_type": paper.content_type,
         "notion_page_id": paper.notion_page_id,
         "title": paper.title,
     }
@@ -51,6 +53,10 @@ def _matches(paper: Paper, record: dict) -> bool:
         return True
 
     if pid.doi and record.get("doi") and pid.doi == record["doi"]:
+        return True
+
+    # News items carry no arXiv ID or DOI — the link is their identity.
+    if pid.url and record.get("url") and pid.url == record["url"]:
         return True
 
     if (
@@ -75,6 +81,7 @@ class DedupStore:
         self._titles: set = {
             r["normalized_title"] for r in self._records if r.get("normalized_title")
         }
+        self._urls: set = {r["url"] for r in self._records if r.get("url")}
 
     def is_seen(self, paper: Paper) -> bool:
         """Return True if this paper is already in the dedup store."""
@@ -82,6 +89,8 @@ class DedupStore:
         if pid.arxiv_id and pid.arxiv_id in self._arxiv_ids:
             return True
         if pid.doi and pid.doi in self._dois:
+            return True
+        if pid.url and pid.url in self._urls:
             return True
         if pid.normalized_title and pid.normalized_title in self._titles:
             return True
@@ -94,6 +103,8 @@ class DedupStore:
             self._arxiv_ids.add(pid.arxiv_id)
         if pid.doi:
             self._dois.add(pid.doi)
+        if pid.url:
+            self._urls.add(pid.url)
         if pid.normalized_title:
             self._titles.add(pid.normalized_title)
         self._records.append(_make_record(paper))

@@ -5,10 +5,15 @@ import logging
 import sys
 from typing import List, Optional
 
+from dataclasses import replace
+
 from .collectors.arxiv import collect_arxiv_papers
+from .collectors.hackernews import collect_hackernews_stories
+from .collectors.rss import collect_rss_entries
 from .collectors.openalex import collect_openalex_papers
 from .config import Config, load_config
 from .dedup import DedupStore, deduplicate_collected
+from .llm.base import LLMProvider
 from .llm.factory import create_provider
 from .models import Paper
 from .notes import generate_notes
@@ -100,18 +105,6 @@ def run_weekly(config_path: str = "config.yaml") -> int:
     candidates_count = len(candidates)
     logger.info("%d candidates after keyword filtering", candidates_count)
 
-    if candidates_count == 0:
-        logger.info("No keyword candidates this week — clean exit (quiet week)")
-        write_report(
-            papers_created=[],
-            venue_updated=0,
-            duplicates_created=0,
-            candidates_found=0,
-            papers_ranked=0,
-            mode="weekly",
-        )
-        return 0
-
     # ── 4. Cross-run deduplication ────────────────────────────────────────────
     dedup_store = DedupStore()
     new_candidates = [p for p in candidates if not dedup_store.is_seen(p)]
@@ -120,79 +113,76 @@ def run_weekly(config_path: str = "config.yaml") -> int:
         "%d new candidates (%d already seen)", len(new_candidates), duplicates_skipped
     )
 
+    # From here the paper side can come up empty without ending the run: news is
+    # a separate delivery and must not be suppressed by a quiet paper week.
+    # paper_exit carries the paper pipeline's verdict to the end.
+    paper_exit = 0
+    top_papers: List[Paper] = []
+    provider: Optional[LLMProvider] = None
+
     if not new_candidates:
-        logger.info("All candidates already seen — no new pages to create")
-        write_report(
-            papers_created=[],
-            venue_updated=0,
-            duplicates_created=duplicates_skipped,
-            candidates_found=candidates_count,
-            papers_ranked=0,
-            mode="weekly",
-        )
-        return 0
+        if candidates_count == 0:
+            logger.info("No keyword candidates this week (quiet week)")
+        else:
+            logger.info("All candidates already seen — no new pages to create")
+    else:
+        # ── 5. LLM ranking ────────────────────────────────────────────────────
+        logger.info("=== Stage 4: LLM ranking (%s / %s) ===",
+                    cfg.llm.provider, cfg.llm.ranking_model)
+        provider = create_provider(cfg)
 
-    # ── 5. LLM ranking ───────────────────────────────────────────────────────
-    logger.info("=== Stage 4: LLM ranking (%s / %s) ===",
-                cfg.llm.provider, cfg.llm.ranking_model)
-    provider = create_provider(cfg)
-
-    try:
-        top_papers = rank_papers(new_candidates, cfg, provider)
-    except RuntimeError as exc:
-        logger.error("Ranking anomaly: %s", exc)
-        write_report(
-            papers_created=[],
-            venue_updated=0,
-            duplicates_created=duplicates_skipped,
-            candidates_found=candidates_count,
-            papers_ranked=len(new_candidates),
-            mode="weekly",
-        )
-        return 1
-
-    if not top_papers:
-        # Ranking anomaly: keyword candidates existed but nothing cleared the
-        # relevance cutoff. Exit 1 so the GitHub Actions run is marked failed and
-        # the failure email fires — a misconfigured cutoff or a degraded LLM API
-        # must not pass silently. (A genuinely quiet week has zero candidates and
-        # already returned 0 above.)
-        logger.error(
-            "Ranking anomaly: %d candidates ranked but none passed the cutoff",
-            len(new_candidates),
-        )
-        write_report(
-            papers_created=[],
-            venue_updated=0,
-            duplicates_created=duplicates_skipped,
-            candidates_found=candidates_count,
-            papers_ranked=len(new_candidates),
-            mode="weekly",
-        )
-        return 1
-
-    # ── 6. Note generation ────────────────────────────────────────────────────
-    logger.info("=== Stage 5: Note generation (%s / %s) ===",
-                cfg.llm.provider, cfg.llm.notes_model)
-    generate_notes(top_papers, cfg, provider)
-
-    # ── 7. Notion write ───────────────────────────────────────────────────────
-    logger.info("=== Stage 6: Notion write ===")
-    db_id = ensure_database(cfg.notion_parent_page_id, cfg.notion_token)
-
-    created_papers: List[Paper] = []
-    for paper in top_papers:
         try:
-            page_id = create_page(paper, db_id, cfg.notion_token)
-            paper.notion_page_id = page_id
-            dedup_store.mark_seen(paper)
-            created_papers.append(paper)
-        except Exception as exc:
-            logger.error("Failed to create Notion page for '%s': %s", paper.title[:60], exc)
+            top_papers = rank_papers(new_candidates, cfg, provider)
+        except RuntimeError as exc:
+            logger.error("Ranking anomaly: %s", exc)
+            top_papers = []
+            paper_exit = 1
+        else:
+            if not top_papers:
+                # Keyword candidates existed but nothing cleared the cutoff. Exit 1
+                # so the Actions run is marked failed and the alert fires — a
+                # misconfigured cutoff or a degraded LLM API must not pass
+                # silently. A genuinely quiet week has zero candidates and keeps 0.
+                logger.error(
+                    "Ranking anomaly: %d candidates ranked but none passed the cutoff",
+                    len(new_candidates),
+                )
+                paper_exit = 1
+
+    # ── 6/7. Notes + Notion write ─────────────────────────────────────────────
+    created_papers: List[Paper] = []
+    db_id: Optional[str] = None
+
+    if top_papers or cfg.news.enabled:
+        db_id = ensure_database(cfg.notion_parent_page_id, cfg.notion_token)
+
+    if top_papers:
+        logger.info("=== Stage 5: Note generation (%s / %s) ===",
+                    cfg.llm.provider, cfg.llm.notes_model)
+        generate_notes(top_papers, cfg, provider)
+
+        logger.info("=== Stage 6: Notion write ===")
+        for paper in top_papers:
+            try:
+                page_id = create_page(paper, db_id, cfg.notion_token)
+                paper.notion_page_id = page_id
+                dedup_store.mark_seen(paper)
+                created_papers.append(paper)
+            except Exception as exc:
+                logger.error("Failed to create Notion page for '%s': %s",
+                             paper.title[:60], exc)
+
+    # ── 8. IT news (opt-in) ───────────────────────────────────────────────────
+    # Runs after the papers so a news-side failure can never cost us the paper
+    # pages that were already written.
+    if cfg.news.enabled and provider is None:
+        provider = create_provider(cfg)
+    created_news = _run_news_stage(cfg, provider, dedup_store, db_id)
+    created_papers.extend(created_news)
 
     dedup_store.persist()
 
-    # ── 8. Report ─────────────────────────────────────────────────────────────
+    # ── 9. Report ─────────────────────────────────────────────────────────────
     report = write_report(
         papers_created=created_papers,
         venue_updated=0,
@@ -203,11 +193,89 @@ def run_weekly(config_path: str = "config.yaml") -> int:
     )
 
     logger.info(
-        "=== Done: %d pages created, %d duplicates skipped ===",
+        "=== Done: %d pages created (%d news), %d duplicates skipped ===",
         report["pages_created"],
+        len(created_news),
         report["duplicates_created"],
     )
-    return 0
+    return paper_exit
+
+
+def _run_news_stage(
+    cfg: Config,
+    provider: LLMProvider,
+    dedup_store: DedupStore,
+    db_id: str,
+) -> List[Paper]:
+    """Collect, rank and write IT news. Returns the items written to Notion.
+
+    Deliberately never raises and never changes the run's exit code: the
+    exit-code contract in the requirements is about the paper pipeline, and a
+    flaky RSS feed must not fail a run whose papers landed fine. News trouble is
+    logged as a warning instead.
+    """
+    if not cfg.news.enabled or db_id is None:
+        return []
+
+    logger.info("=== Stage 7: IT news ===")
+    collected: List[Paper] = []
+
+    try:
+        if cfg.news.hacker_news_enabled:
+            collected.extend(collect_hackernews_stories(
+                min_points=cfg.news.hacker_news_min_points,
+                days_back=cfg.days_back,
+            ))
+        if cfg.news.rss_feeds:
+            collected.extend(collect_rss_entries(
+                feed_urls=cfg.news.rss_feeds,
+                days_back=cfg.days_back,
+            ))
+    except Exception as exc:
+        logger.warning("News collection failed: %s", exc)
+        return []
+
+    if not collected:
+        logger.info("News: nothing collected this run")
+        return []
+
+    unique_news = deduplicate_collected(collected)
+    news_keywords = cfg.news.keywords or cfg.keywords
+    candidates = _filter_by_keywords(unique_news, news_keywords)
+    fresh = [item for item in candidates if not dedup_store.is_seen(item)]
+    logger.info(
+        "News: %d collected, %d unique, %d matched keywords, %d new",
+        len(collected), len(unique_news), len(candidates), len(fresh),
+    )
+    if not fresh:
+        return []
+
+    news_cfg = replace(cfg, top_n=cfg.news.top_n)
+    try:
+        top_news = rank_papers(fresh, news_cfg, provider)
+    except RuntimeError as exc:
+        # Nothing cleared the cutoff. For papers this is an alert; for news it is
+        # a quiet week in the feeds, so it stays a warning.
+        logger.warning("News ranking passed nothing: %s", exc)
+        return []
+
+    if not top_news:
+        return []
+
+    generate_notes(top_news, cfg, provider)
+
+    written: List[Paper] = []
+    for item in top_news:
+        try:
+            item.notion_page_id = create_page(item, db_id, cfg.notion_token)
+            dedup_store.mark_seen(item)
+            written.append(item)
+        except Exception as exc:
+            logger.error("Failed to create Notion page for news '%s': %s",
+                         item.title[:60], exc)
+
+    logger.info("News: %d pages created", len(written))
+    return written
 
 
 # ── Batch mode ─────────────────────────────────────────────────────────────────
