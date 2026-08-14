@@ -1,32 +1,14 @@
 {
-  "database_id": "3bc1256e-0561-81f3-949f-c83360c2b6fa",
+  "database_id": "3bc1256e-0561-8145-8882-f5fcb1e46eea",
   "records": [
-    {
-      "arxiv_id": null,
-      "doi": "10.1007/s10462-026-11657-9",
-      "normalized_title": "enhancing large language model reasoning with reward models an analytical survey",
-      "url": null,
-      "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-81ac-ba3c-c4f7a0252e5f",
-      "title": "Enhancing large language model reasoning with reward models: an analytical survey"
-    },
     {
       "arxiv_id": null,
       "doi": "10.1145/3770855.3817575",
       "normalized_title": "rag vs graphrag a systematic evaluation and key insights",
       "url": null,
       "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-81d0-a1d9-e7efbcc29ce6",
+      "notion_page_id": "3bc1256e-0561-81f0-a06f-db6f7e2f4ae9",
       "title": "RAG vs. GraphRAG: A Systematic Evaluation and Key Insights"
-    },
-    {
-      "arxiv_id": null,
-      "doi": "10.5281/zenodo.21837226",
-      "normalized_title": "what two gates buy you selectiverisk guarantees and the nonidentifiability of abstention cascades product laws error diversity and why unlabeled logs can certify coverage but never risk",
-      "url": null,
-      "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-81aa-89b4-ff3ed9a89bb5",
-      "title": "What Two Gates Buy You: Selective-Risk Guarantees and the Non-Identifiability of Abstention Cascades — Product Laws, Error Diversity, and Why Unlabeled Logs Can Certify Coverage but Never Risk"
     },
     {
       "arxiv_id": null,
@@ -34,35 +16,17 @@
       "normalized_title": "the intent gap a taxonomy of realuser failure modes in frontier ai agents",
       "url": null,
       "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-81f5-b200-d56cf88df1f5",
+      "notion_page_id": "3bc1256e-0561-81d8-8d68-e544509daf39",
       "title": "The Intent Gap: A Taxonomy of Real-User Failure Modes in Frontier AI Agents"
     },
     {
       "arxiv_id": null,
-      "doi": "10.1145/3770855.3818028",
-      "normalized_title": "dice dynamic incontext example selection in llm agents via efficient knowledge transfer",
+      "doi": "10.1287/mnsc.2025.00761",
+      "normalized_title": "consumer inferences from product rankings the role of beliefs in search behavior",
       "url": null,
       "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-81cd-ab22-d4105092ac99",
-      "title": "DICE: Dynamic In-Context Example Selection in LLM Agents via Efficient Knowledge Transfer"
-    },
-    {
-      "arxiv_id": null,
-      "doi": "10.5281/zenodo.21822225",
-      "normalized_title": "what can be established about human irreducibility levels instruments and their controls",
-      "url": null,
-      "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-814f-83c5-efaeac24ac67",
-      "title": "What Can Be Established About Human Irreducibility: Levels, Instruments, and Their Controls"
-    },
-    {
-      "arxiv_id": null,
-      "doi": "10.1109/icip61757.2026.11630204",
-      "normalized_title": "dont lag rag trainingfree adversarial detection using rag",
-      "url": null,
-      "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-81ca-b1f2-f067a2758e29",
-      "title": "Don’t LAG, RAG: Training-Free Adversarial Detection Using RAG"
+      "notion_page_id": "3bc1256e-0561-8176-a471-d1f9b99776ad",
+      "title": "Consumer Inferences from Product Rankings: The Role of Beliefs in Search Behavior"
     },
     {
       "arxiv_id": null,
@@ -70,26 +34,26 @@
       "normalized_title": "caax v3 intention is all you need a manifesto for goaldriven ai",
       "url": null,
       "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-81d7-9d0b-c262f8e79776",
+      "notion_page_id": "3bc1256e-0561-817f-911d-fc3b1fd1bb6f",
       "title": "CAA-X V3: Intention is All You Need — A Manifesto for Goal-Driven AI"
     },
     {
       "arxiv_id": null,
-      "doi": "10.6084/m9.figshare.32305332",
-      "normalized_title": "aimediated cognition field guide recognizing how ai enters thought memory interpretation and judgment",
+      "doi": "10.1142/s1469026826500367",
+      "normalized_title": "from noise to knowledge distill social media opinions on rumor detection exploiting llms",
       "url": null,
       "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-8183-9a3f-c90f009b67f2",
-      "title": "AI-Mediated Cognition Field Guide: Recognizing How AI Enters Thought, Memory, Interpretation, and Judgment"
+      "notion_page_id": "3bc1256e-0561-8154-9ed0-f470c186dee2",
+      "title": "From Noise to Knowledge: Distill Social Media Opinions on Rumor Detection Exploiting LLMs"
     },
     {
       "arxiv_id": null,
-      "doi": "10.5281/zenodo.21855188",
-      "normalized_title": "the anchor protects what it names selection mechanics and recall collapse in compact context compression for autoregressive language models",
+      "doi": "10.5281/zenodo.21833853",
+      "normalized_title": "validator v11 reference implementation of the canal transparency protocol ptcctp",
       "url": null,
       "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-81e9-a970-efb89d4a3857",
-      "title": "The Anchor Protects What It Names: Selection Mechanics and Recall Collapse in Compact Context Compression for Autoregressive Language Models"
+      "notion_page_id": "3bc1256e-0561-811f-a544-ed0a51e20dbc",
+      "title": "Validator v1.1 — Reference Implementation of the Canal Transparency Protocol (PTC/CTP)"
     },
     {
       "arxiv_id": null,
@@ -97,7 +61,7 @@
       "normalized_title": "as ai eats the web the internets collective memory is disappearing",
       "url": "https://thewalrus.ca/google-search-is-dying/",
       "content_type": "news",
-      "notion_page_id": "3bc1256e-0561-81fa-8311-e1a8698188af",
+      "notion_page_id": "3bc1256e-0561-818b-b58f-e95fdc4cc000",
       "title": "As AI eats the web, the internet’s collective memory is disappearing"
     },
     {
@@ -106,71 +70,8 @@
       "normalized_title": "google will now allow users to remove visible watermark from its ai generations",
       "url": "https://techcrunch.com/2026/08/14/google-will-now-allow-users-to-remove-visible-watermark-from-its-ai-generations/",
       "content_type": "news",
-      "notion_page_id": "3bc1256e-0561-81a7-9b32-ee60da11630c",
+      "notion_page_id": "3bc1256e-0561-8141-9357-d2db7dbab982",
       "title": "Google will now allow users to remove visible watermark from its AI generations"
-    },
-    {
-      "arxiv_id": null,
-      "doi": null,
-      "normalized_title": "2025 goty clair obscur expedition 33 is down to 33",
-      "url": "https://www.theverge.com/gadgets/980261/clair-obscur-pixel-11-gaming-laptop-4k-bluray-deal-sale",
-      "content_type": "news",
-      "notion_page_id": "3bc1256e-0561-81ef-baee-d89df9db0035",
-      "title": "2025 GOTY Clair Obscur: Expedition 33 is down to $33"
-    },
-    {
-      "arxiv_id": null,
-      "doi": null,
-      "normalized_title": "openai and anthropic in price war as chinese ai rivals gain ground",
-      "url": "https://arstechnica.com/ai/2026/08/openai-and-anthropic-in-price-war-as-chinese-ai-rivals-gain-ground/",
-      "content_type": "news",
-      "notion_page_id": "3bc1256e-0561-818b-9b09-e4a52cbd3fe3",
-      "title": "OpenAI and Anthropic in price war as Chinese AI rivals gain ground"
-    },
-    {
-      "arxiv_id": null,
-      "doi": null,
-      "normalized_title": "openais head of ethics leaves less than a year after joining",
-      "url": "https://www.ft.com/content/e49dfb75-f841-4466-a577-f7aaff8779a0",
-      "content_type": "news",
-      "notion_page_id": "3bc1256e-0561-81c0-8b91-e7e442936c02",
-      "title": "OpenAI’s head of ethics leaves less than a year after joining"
-    },
-    {
-      "arxiv_id": null,
-      "doi": "10.1145/3789240.3829170",
-      "normalized_title": "repllm toward automatically reproducing network research results",
-      "url": null,
-      "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-8168-b67f-c557ea20fd69",
-      "title": "RepLLM: Toward Automatically Reproducing Network Research Results"
-    },
-    {
-      "arxiv_id": null,
-      "doi": "10.1145/3839233",
-      "normalized_title": "large language models and social media information integrity opportunities challenges and research directions",
-      "url": null,
-      "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-810b-ba0b-d59abccc3ac8",
-      "title": "Large Language Models and Social Media Information Integrity: Opportunities, Challenges, and Research Directions"
-    },
-    {
-      "arxiv_id": null,
-      "doi": null,
-      "normalized_title": "nine pbs sues iron mountain over blocked access to archival data",
-      "url": "https://current.org/2026/08/nine-pbs-sues-iron-mountain-over-blocked-access-to-archival-data/",
-      "content_type": "news",
-      "notion_page_id": "3bc1256e-0561-81cf-8cac-d4b47ed85267",
-      "title": "Nine PBS sues Iron Mountain over blocked access to archival data"
-    },
-    {
-      "arxiv_id": null,
-      "doi": null,
-      "normalized_title": "does mark zuckerberg really believe ai is for everyone",
-      "url": "https://techcrunch.com/video/does-mark-zuckerberg-really-believe-ai-is-for-everyone/",
-      "content_type": "news",
-      "notion_page_id": "3bc1256e-0561-81fc-aaaf-cc140a586af1",
-      "title": "Does Mark Zuckerberg really believe AI is ‘for everyone’?"
     },
     {
       "arxiv_id": null,
@@ -178,17 +79,17 @@
       "normalized_title": "you can now turn off google gemini8217s visible watermarks",
       "url": "https://www.theverge.com/tech/980416/google-gemini-ai-watermarks-removal",
       "content_type": "news",
-      "notion_page_id": "3bc1256e-0561-8170-a966-ff8b45d4f215",
+      "notion_page_id": "3bc1256e-0561-81b9-80c3-d84b9f79c671",
       "title": "You can now turn off Google Gemini&#8217;s visible watermarks"
     },
     {
       "arxiv_id": null,
       "doi": null,
-      "normalized_title": "terabytes of credentials leaked in massive supplychain attack",
-      "url": "https://arstechnica.com/security/2026/08/terabytes-of-credentials-leaked-in-massive-supply-chain-attack/",
+      "normalized_title": "openai and anthropic in price war as chinese ai rivals gain ground",
+      "url": "https://arstechnica.com/ai/2026/08/openai-and-anthropic-in-price-war-as-chinese-ai-rivals-gain-ground/",
       "content_type": "news",
-      "notion_page_id": "3bc1256e-0561-81f8-a243-d42e5c89c894",
-      "title": "Terabytes of credentials leaked in massive supply-chain attack"
+      "notion_page_id": "3bc1256e-0561-8116-a669-c8a5232a8598",
+      "title": "OpenAI and Anthropic in price war as Chinese AI rivals gain ground"
     },
     {
       "arxiv_id": null,
@@ -196,7 +97,7 @@
       "normalized_title": "choosing an ai model one prompt 11 models different results",
       "url": "https://www.netlify.com/blog/one-prompt-11-models-very-different-results/",
       "content_type": "news",
-      "notion_page_id": "3bc1256e-0561-8122-98a0-e6b9e4d3a249",
+      "notion_page_id": "3bc1256e-0561-81a2-acd9-ecc69e4d2c18",
       "title": "Choosing an AI model: one prompt, 11 models, different results"
     }
   ]
