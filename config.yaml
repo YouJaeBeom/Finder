@@ -5,7 +5,7 @@
 # ── Notion ──────────────────────────────────────────────────────────────────
 # The page ID from your Notion workspace where the database will be created.
 # Get it from the page URL: notion.so/<workspace>/<PAGE_ID>
-notion_parent_page_id: "REPLACE_WITH_YOUR_NOTION_PAGE_ID"
+notion_parent_page_id: "https://app.notion.com/p/Finder-3bc1256e056180898608c39506c43463?source=copy_link"
 
 # Optional but recommended once you have run `python -m paper_digest init`.
 # Pinning the database ID here guarantees every run — local or GitHub Actions —

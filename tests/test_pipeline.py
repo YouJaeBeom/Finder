@@ -203,7 +203,7 @@ class TestWeeklyPipelineIntegration:
         monkeypatch.chdir(tmp_path)
         (tmp_path / "seen_ids.json").write_text("[]")
         cfg = textwrap.dedent("""\
-            notion_parent_page_id: "test-parent-page-id-abc123"
+            notion_parent_page_id: "3bc1256e05618089aaaabbbbccccdddd"
             keywords:
               - "large language model"
               - "LLM"
@@ -307,7 +307,7 @@ class TestWeeklyRunProducesReportFile:
         monkeypatch.chdir(tmp_path)
         (tmp_path / "seen_ids.json").write_text("[]")
         cfg = textwrap.dedent("""\
-            notion_parent_page_id: "test-parent-abc"
+            notion_parent_page_id: "3bc1256e05618089aaaabbbbccccdddd"
             keywords:
               - "large language model"
               - "LLM"

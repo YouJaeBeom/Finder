@@ -49,7 +49,8 @@ https://console.anthropic.com/settings/keys 에서 키를 만듭니다. 이게 `
 [config.yaml](config.yaml)에서 최소한 이 두 가지는 본인 것으로 바꿔야 합니다.
 
 ```yaml
-notion_parent_page_id: "여기에_1번에서_복사한_32자리_ID"
+# 페이지 링크를 그대로 붙여넣어도 되고, 32자리 ID만 넣어도 됩니다
+notion_parent_page_id: "https://www.notion.so/.../Finder-3bc1256e0561..."
 
 research_profile: |
   본인 연구 주제를 2~5문장으로.
@@ -148,10 +149,26 @@ Actions 실패 알림이 언제 오는지를 정하는 규칙입니다.
 | 후보는 있는데 랭킹 통과 0개 | **1** | 컷오프 오설정이나 LLM API 이상. **알림이 와야 함** |
 | 뉴스 쪽 문제 (피드 죽음 등) | 0 | 논문이 잘 들어간 실행을 뉴스가 망치면 안 됨 |
 
+## Actions 실행이 실패할 때
+
+실행이 시작 직후 죽었다면 대부분 설정 문제입니다. 로그의 `Cannot start:` 줄, 또는 `run-report.json` 아티팩트의 `error` 필드를 먼저 보세요.
+
+| 로그 메시지 | 원인과 해결 |
+|---|---|
+| `notion_parent_page_id ... is still the placeholder` | config.yaml에 본인 Notion 페이지 링크를 안 넣었습니다 |
+| `notion_parent_page_id does not contain a Notion ID` | 넣은 값에 32자리 ID가 없습니다. 페이지 링크를 다시 복사하세요 |
+| `NOTION_TOKEN is not set` | 리포 Settings → Secrets에 `NOTION_TOKEN`이 없거나 이름이 다릅니다 |
+| `ANTHROPIC_API_KEY is not set` | 위와 동일 (`llm.provider`가 `openai`면 `OPENAI_API_KEY`) |
+| `Notion page lookup ... failed: ... share ... with your integration` | Notion 페이지에 통합을 연결하지 않았습니다. 페이지 `···` → Connections |
+| `Notion ... failed: API token is invalid` | 토큰이 잘못됐거나 폐기됐습니다 |
+| `Permission denied ... git push` (커밋 단계) | Settings → Actions → General → **Read and write permissions** |
+
+Notion 관련 설정은 **수집·LLM 호출 전에 먼저 검사**하므로, 잘못돼 있으면 몇 초 만에 실패하고 API 비용이 나가지 않습니다.
+
 ## 개발
 
 ```bash
-python -m pytest          # 93 tests, 네트워크 호출 없음
+python -m pytest          # 124 tests, 네트워크 호출 없음 (소켓 차단 검증 포함)
 ```
 
 주요 모듈:

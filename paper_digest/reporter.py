@@ -47,3 +47,32 @@ def write_report(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     return report
+
+
+def write_failure_report(
+    mode: str,
+    error: str,
+    report_path: str = REPORT_FILE,
+) -> dict:
+    """Write a report for a run that never reached its work.
+
+    Without this the Actions artifact upload finds no file on exactly the runs
+    where someone most wants to know what happened, and the only record of the
+    failure is buried in the step log.
+    """
+    report = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "mode": mode,
+        "status": "failed",
+        "error": error,
+        "pages_created": 0,
+        "venue_updated": 0,
+        "sections_filled": [],
+        "duplicates_created": 0,
+        "candidates_found": 0,
+        "papers_ranked": 0,
+    }
+    Path(report_path).write_text(
+        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    return report

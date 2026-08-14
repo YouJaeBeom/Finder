@@ -1,14 +1,35 @@
 """Shared pytest fixtures for paper_digest tests."""
 from __future__ import annotations
 
-import json
+import socket
 import textwrap
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import List
 
 import pytest
 
-from paper_digest.models import Paper, PaperIdentifiers, ResearchNote, normalize_title
+from paper_digest.models import Paper, PaperIdentifiers, normalize_title
+
+
+# ── Network guard ──────────────────────────────────────────────────────────────
+
+@pytest.fixture(autouse=True)
+def _no_network(monkeypatch):
+    """Fail any test that reaches the network instead of quietly calling it.
+
+    Added after a gap in the Notion mocks let the suite make live calls to
+    api.notion.com. A mocked test that silently starts hitting a real API is
+    slow, flaky, and — with a token in the environment — capable of writing to
+    someone's real workspace.
+    """
+    def blocked(*args, **kwargs):
+        raise AssertionError(
+            "This test attempted a real network connection. Mock the request "
+            "instead — patch paper_digest.<module>.requests.{get,post,patch}."
+        )
+
+    monkeypatch.setattr(socket, "socket", blocked)
+    monkeypatch.setattr(socket, "create_connection", blocked)
 
 
 # ── Sample paper factory ───────────────────────────────────────────────────────
@@ -48,7 +69,7 @@ def make_paper(
 def sample_config(tmp_path):
     """Write a minimal config.yaml and return its path."""
     cfg_content = textwrap.dedent("""\
-        notion_parent_page_id: "test-parent-page-id"
+        notion_parent_page_id: "3bc1256e05618089aaaabbbbccccdddd"
         keywords:
           - "large language model"
           - "LLM"

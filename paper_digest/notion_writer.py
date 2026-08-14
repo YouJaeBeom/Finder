@@ -47,6 +47,25 @@ def _headers(token: str) -> Dict[str, str]:
     }
 
 
+def _check(resp, what: str) -> None:
+    """Raise on an error response, quoting what Notion actually said.
+
+    ``raise_for_status`` alone yields "401 Client Error: Unauthorized", which
+    tells a user nothing. Notion's body carries the sentence that matters — for
+    example "Make sure the relevant pages and databases are shared with your
+    integration" — and that is the difference between a fixable error and a
+    baffling one.
+    """
+    try:
+        resp.raise_for_status()
+    except requests.HTTPError as exc:
+        try:
+            detail = resp.json().get("message") or resp.text[:300]
+        except Exception:
+            detail = (resp.text or "")[:300]
+        raise RuntimeError(f"Notion {what} failed: {detail}") from exc
+
+
 # ── State (DB ID persistence) ──────────────────────────────────────────────────
 
 def _load_state() -> dict:
@@ -96,13 +115,13 @@ def _find_database_under_page(parent_page_id: str, token: str) -> Optional[str]:
                 params=params,
                 timeout=30,
             )
-            resp.raise_for_status()
         except requests.RequestException as exc:
             # Falling through to create is worse than failing loudly here: a
             # transient error would silently produce a duplicate database.
             raise RuntimeError(
                 f"Could not list children of parent page {parent_page_id}: {exc}"
             ) from exc
+        _check(resp, f"page lookup ({parent_page_id})")
 
         data = resp.json()
         for block in data.get("results", []):
@@ -126,7 +145,7 @@ def _add_missing_properties(db_id: str, token: str) -> None:
     resp = requests.get(
         f"{NOTION_BASE_URL}/databases/{db_id}", headers=_headers(token), timeout=30
     )
-    resp.raise_for_status()
+    _check(resp, "read database schema")
     existing = set(resp.json().get("properties", {}))
 
     missing = {
@@ -144,7 +163,7 @@ def _add_missing_properties(db_id: str, token: str) -> None:
         json={"properties": missing},
         timeout=30,
     )
-    resp.raise_for_status()
+    _check(resp, "schema update")
 
 
 def ensure_database(
@@ -188,7 +207,7 @@ def ensure_database(
         json=payload,
         timeout=30,
     )
-    resp.raise_for_status()
+    _check(resp, "database creation")
     db_id = resp.json()["id"]
 
     _remember_database(state, db_id)
@@ -322,7 +341,7 @@ def create_page(paper: Paper, db_id: str, token: str) -> str:
         json=payload,
         timeout=30,
     )
-    resp.raise_for_status()
+    _check(resp, "page creation")
     page_id: str = resp.json()["id"]
     logger.info("Created Notion page: %s (%s)", page_id, paper.title[:60])
     return page_id
@@ -343,7 +362,7 @@ def update_venue(page_id: str, venue: str, token: str) -> None:
         json=payload,
         timeout=30,
     )
-    resp.raise_for_status()
+    _check(resp, "venue update")
     logger.info("Updated venue to '%s' for page %s", venue, page_id)
 
 
@@ -372,7 +391,7 @@ def query_preprint_pages(db_id: str, token: str) -> List[dict]:
             json=payload,
             timeout=30,
         )
-        resp.raise_for_status()
+        _check(resp, "database query")
         data = resp.json()
         results.extend(data.get("results", []))
         has_more = data.get("has_more", False)

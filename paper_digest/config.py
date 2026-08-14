@@ -2,10 +2,50 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
 from typing import List
 
 import yaml
+
+# Notion IDs are UUIDs that appear with or without dashes depending on where you
+# copied them from.
+_NOTION_ID_RE = re.compile(
+    r"([0-9a-fA-F]{8})-?([0-9a-fA-F]{4})-?([0-9a-fA-F]{4})-?"
+    r"([0-9a-fA-F]{4})-?([0-9a-fA-F]{12})"
+)
+
+# What the shipped config files say before a user fills them in.
+PLACEHOLDERS = frozenset({
+    "REPLACE_WITH_YOUR_NOTION_PAGE_ID",
+    "YOUR_NOTION_PAGE_ID_HERE",
+})
+
+
+def extract_notion_id(raw: str) -> str:
+    """Pull a Notion ID out of whatever the user pasted.
+
+    "Copy link" in Notion yields a full URL, and that is what lands in
+    config.yaml far more often than a bare ID — so accept both rather than
+    failing on the input the UI actually hands people.
+
+        https://app.notion.com/p/Finder-3bc1256e05618089…?source=copy_link
+        https://www.notion.so/workspace/Title-3bc1256e05618089…
+        3bc1256e-0561-8089-8608-c39506c43463
+        3bc1256e056180898608c39506c43463
+
+    Returns "" when there is no ID in the string, which the caller reports as a
+    configuration error.
+    """
+    if not raw:
+        return ""
+    # Drop the query string first: ?source=copy_link and friends can't contain
+    # the ID, and excluding them keeps the "last match wins" rule honest.
+    matches = _NOTION_ID_RE.findall(raw.split("?")[0])
+    if not matches:
+        return ""
+    # Last match: page URLs put the ID at the end, after the title slug.
+    return "-".join(matches[-1]).lower()
 
 
 @dataclass
@@ -72,6 +112,32 @@ class Config:
     anthropic_api_key: str = ""
     openai_api_key: str = ""
 
+    def parent_page_id(self) -> str:
+        """The parent page ID, accepting a pasted Notion URL. "" if unusable."""
+        if self.notion_parent_page_id in PLACEHOLDERS:
+            return ""
+        return extract_notion_id(self.notion_parent_page_id)
+
+    def database_id(self) -> str:
+        """The pinned database ID, accepting a pasted Notion URL. "" if unset."""
+        return extract_notion_id(self.notion_database_id)
+
+    def llm_api_key(self) -> str:
+        """The API key for the configured provider."""
+        return (
+            self.anthropic_api_key
+            if self.llm.provider == "anthropic"
+            else self.openai_api_key
+        )
+
+    def llm_key_env_var(self) -> str:
+        """The environment variable name the configured provider reads."""
+        return (
+            "ANTHROPIC_API_KEY"
+            if self.llm.provider == "anthropic"
+            else "OPENAI_API_KEY"
+        )
+
 
 def load_config(path: str = "config.yaml") -> Config:
     """Load configuration from YAML file and inject secrets from environment."""
@@ -97,7 +163,9 @@ def load_config(path: str = "config.yaml") -> Config:
     )
 
     cfg = Config(
-        notion_parent_page_id=data.get("notion_parent_page_id", ""),
+        # Kept raw so the error message can quote what the user actually wrote;
+        # normalized on access via parent_page_id() / database_id().
+        notion_parent_page_id=data.get("notion_parent_page_id", "") or "",
         notion_database_id=data.get("notion_database_id", "") or "",
         keywords=data.get("keywords", []),
         tracked_venues=data.get("tracked_venues", []),

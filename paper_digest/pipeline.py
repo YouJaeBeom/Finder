@@ -8,7 +8,7 @@ from .collectors.arxiv import collect_arxiv_papers
 from .collectors.hackernews import collect_hackernews_stories
 from .collectors.rss import collect_rss_entries
 from .collectors.openalex import collect_openalex_papers
-from .config import Config, load_config
+from .config import PLACEHOLDERS, Config, load_config
 from .dedup import DedupStore, deduplicate_collected
 from .keywords import filter_by_keywords
 from .llm.base import LLMProvider
@@ -23,7 +23,7 @@ from .notion_writer import (
     update_venue,
 )
 from .ranking import rank_papers
-from .reporter import write_report
+from .reporter import write_failure_report, write_report
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +31,52 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)-7s %(name)s — %(message)s",
 )
+
+
+# ── Preflight ──────────────────────────────────────────────────────────────────
+
+def preflight(cfg: Config, needs_llm: bool = True) -> Optional[str]:
+    """Return why this run cannot possibly succeed, or None if it can.
+
+    Checked before any collection or LLM call. Everything here is a
+    configuration mistake that no amount of work downstream can recover from,
+    and finding out after forty minutes of collection and a bill for ranking is
+    the wrong time to learn about it.
+
+    *needs_llm* is False for init mode, which only ever talks to Notion.
+    """
+    if not cfg.notion_token:
+        return (
+            "NOTION_TOKEN is not set. In GitHub Actions this is a repository "
+            "secret: Settings → Secrets and variables → Actions."
+        )
+
+    if needs_llm and not cfg.llm_api_key():
+        return (
+            f"{cfg.llm_key_env_var()} is not set (llm.provider is "
+            f"'{cfg.llm.provider}'). In GitHub Actions this is a repository secret."
+        )
+
+    raw_parent = cfg.notion_parent_page_id
+    if not raw_parent or raw_parent in PLACEHOLDERS:
+        return (
+            "notion_parent_page_id in config.yaml is still the placeholder. "
+            "Open your Notion page, copy its link, and paste it there."
+        )
+
+    if not cfg.parent_page_id():
+        return (
+            f"notion_parent_page_id does not contain a Notion ID: {raw_parent!r}. "
+            "Paste the page link (or the 32-character ID) from Notion."
+        )
+
+    if cfg.notion_database_id and not cfg.database_id():
+        return (
+            f"notion_database_id does not contain a Notion ID: "
+            f"{cfg.notion_database_id!r}. Leave it empty to auto-resolve."
+        )
+
+    return None
 
 
 # ── Weekly mode ────────────────────────────────────────────────────────────────
@@ -44,18 +90,25 @@ def run_weekly(config_path: str = "config.yaml") -> int:
         cfg = load_config(config_path)
     except Exception as exc:
         logger.error("Failed to load config from %s: %s", config_path, exc)
+        write_failure_report("weekly", f"config load failed: {exc}")
         return 1
 
-    if not cfg.notion_token:
-        logger.error("NOTION_TOKEN environment variable is not set")
+    if problem := preflight(cfg):
+        logger.error("Cannot start: %s", problem)
+        write_failure_report("weekly", problem)
         return 1
 
-    llm_key = cfg.anthropic_api_key if cfg.llm.provider == "anthropic" else cfg.openai_api_key
-    if not llm_key:
-        logger.error(
-            "%s API key environment variable is not set",
-            "ANTHROPIC_API_KEY" if cfg.llm.provider == "anthropic" else "OPENAI_API_KEY",
+    # ── 0. Notion first ───────────────────────────────────────────────────────
+    # Resolved before collection and before any LLM call. A wrong token or page
+    # ID is the most common setup mistake, and it should cost two seconds to
+    # discover, not a full collection run and a ranking bill.
+    try:
+        db_id: Optional[str] = ensure_database(
+            cfg.parent_page_id(), cfg.notion_token, cfg.database_id()
         )
+    except Exception as exc:
+        logger.error("Notion is not reachable or not configured: %s", exc)
+        write_failure_report("weekly", f"notion: {exc}")
         return 1
 
     # ── 1. Collection ──────────────────────────────────────────────────────────
@@ -130,12 +183,6 @@ def run_weekly(config_path: str = "config.yaml") -> int:
 
     # ── 6/7. Notes + Notion write ─────────────────────────────────────────────
     created_papers: List[Paper] = []
-    db_id: Optional[str] = None
-
-    if top_papers or cfg.news.enabled:
-        db_id = ensure_database(
-            cfg.notion_parent_page_id, cfg.notion_token, cfg.notion_database_id
-        )
 
     if top_papers:
         logger.info("=== Stage 5: Note generation (%s / %s) ===",
@@ -268,10 +315,12 @@ def run_batch(config_path: str = "config.yaml", venue: Optional[str] = None) -> 
         cfg = load_config(config_path)
     except Exception as exc:
         logger.error("Failed to load config: %s", exc)
+        write_failure_report("batch", f"config load failed: {exc}")
         return 1
 
-    if not cfg.notion_token:
-        logger.error("NOTION_TOKEN environment variable is not set")
+    if problem := preflight(cfg):
+        logger.error("Cannot start: %s", problem)
+        write_failure_report("batch", problem)
         return 1
 
     # Resolves to the same database the weekly run uses — by config, by the
@@ -279,10 +328,11 @@ def run_batch(config_path: str = "config.yaml", venue: Optional[str] = None) -> 
     # require a local state.json, which never exists on a fresh CI checkout.
     try:
         db_id = ensure_database(
-            cfg.notion_parent_page_id, cfg.notion_token, cfg.notion_database_id
+            cfg.parent_page_id(), cfg.notion_token, cfg.database_id()
         )
     except Exception as exc:
         logger.error("Could not resolve the Notion database: %s", exc)
+        write_failure_report("batch", f"notion: {exc}")
         return 1
 
     # Update existing preprint pages to accepted venue
@@ -368,17 +418,18 @@ def run_init(config_path: str = "config.yaml") -> int:
         logger.error("Failed to load config: %s", exc)
         return 1
 
-    if not cfg.notion_token:
-        logger.error("NOTION_TOKEN environment variable is not set")
+    if problem := preflight(cfg, needs_llm=False):
+        logger.error("Cannot start: %s", problem)
         return 1
 
-    if not cfg.notion_parent_page_id:
-        logger.error("notion_parent_page_id must be set in config.yaml")
+    try:
+        db_id = ensure_database(
+            cfg.parent_page_id(), cfg.notion_token, cfg.database_id()
+        )
+    except Exception as exc:
+        logger.error("Notion is not reachable or not configured: %s", exc)
         return 1
 
-    db_id = ensure_database(
-        cfg.notion_parent_page_id, cfg.notion_token, cfg.notion_database_id
-    )
     logger.info("Notion database ready: %s", db_id)
     logger.info(
         "Pin it by adding this line to config.yaml:\n  notion_database_id: \"%s\"",

@@ -22,6 +22,9 @@ from .models import Paper, ResearchNote
 
 logger = logging.getLogger(__name__)
 
+# Headroom for thinking plus the JSON note. See the call site in generate_note.
+_NOTES_MAX_TOKENS = 8192
+
 _NOTES_SYSTEM = (
     "당신은 한국어로 연구 노트를 작성하는 전문가입니다. "
     "주어진 논문에 대해 깊이 있고 통찰력 있는 한국어 연구 노트를 작성하세요. "
@@ -154,7 +157,10 @@ def generate_note(paper: Paper, cfg: Config, provider: LLMProvider) -> ResearchN
     raw = provider.complete(
         prompt=prompt,
         model=cfg.llm.notes_model,
-        max_tokens=2048,
+        # Generous on purpose: current Claude models think by default and the
+        # thinking shares this budget with the answer, so a ceiling sized for
+        # the JSON alone truncates it and silently costs us the note.
+        max_tokens=_NOTES_MAX_TOKENS,
         system=system,
     )
 
@@ -173,12 +179,33 @@ def generate_note(paper: Paper, cfg: Config, provider: LLMProvider) -> ResearchN
     return note
 
 
+def _fallback_note(paper: Paper, reason: str) -> ResearchNote:
+    """A minimal note standing in for one that could not be generated."""
+    return ResearchNote(
+        one_line_summary=f"[{reason}] {paper.title}",
+        key_contributions=["(내용 없음)", "(내용 없음)", "(내용 없음)"],
+        method="" if paper.content_type == "news" else "(내용 없음)",
+        relevance_to_profile="(내용 없음)",
+        content_type=paper.content_type,
+    )
+
+
 def generate_notes(
     papers: List[Paper],
     cfg: Config,
     provider: LLMProvider,
 ) -> None:
-    """Generate Korean notes for all items (in-place mutation)."""
+    """Generate Korean notes for all items (in-place mutation).
+
+    One item's failure must not cost the whole batch. A single refused or
+    malformed response used to propagate out and abort the run, throwing away
+    every note already generated and every page not yet written — so failures
+    are contained per item and the run continues with a placeholder note.
+    """
     for i, paper in enumerate(papers, 1):
         logger.info("Generating note %d/%d: %s", i, len(papers), paper.title[:60])
-        paper.research_note = generate_note(paper, cfg, provider)
+        try:
+            paper.research_note = generate_note(paper, cfg, provider)
+        except Exception as exc:
+            logger.error("Note generation failed for '%s': %s", paper.title[:60], exc)
+            paper.research_note = _fallback_note(paper, "노트 생성 실패")

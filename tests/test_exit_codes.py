@@ -24,7 +24,7 @@ import pytest
 from paper_digest.models import Paper, PaperIdentifiers, normalize_title
 
 CONFIG = textwrap.dedent("""\
-    notion_parent_page_id: "test-parent-page-id"
+    notion_parent_page_id: "3bc1256e05618089aaaabbbbccccdddd"
     keywords: ["large language model", "LLM", "RLHF", "alignment"]
     tracked_venues: ["ACL 2026"]
     research_profile: |
@@ -70,11 +70,18 @@ def _run(config_path: str, collected: List[Paper]) -> int:
     notion_resp.raise_for_status = MagicMock()
     notion_resp.json.return_value = {"id": "mock-id"}
 
+    # The database is resolved up front now, before collection, so even a quiet
+    # week reaches Notion. An empty children list sends it down the create path.
+    notion_get = MagicMock()
+    notion_get.raise_for_status = MagicMock()
+    notion_get.json.return_value = {"results": [], "has_more": False}
+
     with (
         patch("paper_digest.pipeline.collect_arxiv_papers", return_value=[]),
         patch("paper_digest.pipeline.collect_openalex_papers", return_value=collected),
         patch("paper_digest.pipeline.create_provider", return_value=MagicMock()),
         patch("paper_digest.notion_writer.requests.post", return_value=notion_resp),
+        patch("paper_digest.notion_writer.requests.get", return_value=notion_get),
         patch("paper_digest.notion_writer.requests.patch", return_value=notion_resp),
         patch.dict(os.environ, {
             "NOTION_TOKEN": "mock-token",
