@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import re
 from dataclasses import dataclass, field
-from typing import List
+from typing import Dict, List
 
 import yaml
 
@@ -91,6 +91,10 @@ class Config:
     tracked_venues: List[str] = field(default_factory=list)
     research_profile: str = ""
 
+    # Extra "full name fragment" -> acronym mappings for the Venue column, on
+    # top of the built-in table in paper_digest/venues.py.
+    venue_aliases: Dict[str, str] = field(default_factory=dict)
+
     # Collection settings
     arxiv_categories: List[str] = field(
         default_factory=lambda: ["cs.CL", "cs.AI", "cs.LG"]
@@ -170,6 +174,7 @@ def load_config(path: str = "config.yaml") -> Config:
         keywords=data.get("keywords", []),
         tracked_venues=data.get("tracked_venues", []),
         research_profile=data.get("research_profile", ""),
+        venue_aliases=data.get("venue_aliases", {}) or {},
         arxiv_categories=data.get("arxiv_categories", ["cs.CL", "cs.AI", "cs.LG"]),
         days_back=data.get("days_back", 7),
         max_papers_to_rank=data.get("max_papers_to_rank", 1500),

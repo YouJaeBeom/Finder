@@ -159,6 +159,29 @@ keywords:
 
 Notion `Tags` 컬럼에는 **실제로 맞은 단어**가 들어가므로, 왜 걸렸는지 나중에 확인할 수 있습니다.
 
+### Venue 컬럼 (학회/저널 약칭)
+
+OpenAlex는 학회를 정식 명칭으로 줍니다. Notion에는 약칭으로 들어갑니다.
+
+| OpenAlex가 주는 이름 | Venue 컬럼 |
+|---|---|
+| Proceedings of the 32nd ACM International Conference on Information and Knowledge Management | `CIKM` |
+| Proceedings of the 47th International ACM SIGIR Conference on Research and Development... | `SIGIR` |
+| IEEE Transactions on Knowledge and Data Engineering | `TKDE` |
+| Zenodo (CERN European Organization for Nuclear Research) | `Zenodo` |
+
+ACL · EMNLP · NAACL · EACL · TACL · COLING · SIGIR · CIKM · WSDM · KDD · RecSys · WWW · ECIR · TOIS · SIGMOD · VLDB · ICDE · TKDE · NeurIPS · ICML · ICLR · AAAI · IJCAI · JMLR · TMLR · CVPR · ICCV · ECCV · TPAMI 가 내장돼 있습니다 ([venues.py](paper_digest/venues.py)).
+
+표에 없는 곳은 `config.yaml`에 추가하세요. 왼쪽은 정식 명칭의 **일부**입니다.
+
+```yaml
+venue_aliases:
+  "Korea Software Congress": "KSC"
+  "Workshop on Machine Learning for Systems": "MLSys Workshop"
+```
+
+**게재 상태는 `Status` 컬럼**(`preprint` / `published` / `accepted`)이 따로 들고 있습니다. Venue에는 이름만 들어갑니다 — arXiv 프리프린트는 Venue `arXiv` + Status `preprint`이고, batch 모드로 학회 확정을 찍으면 Venue가 `ACL 2026`, Status가 `accepted`로 바뀝니다.
+
 ### LLM 제공자 바꾸기
 
 Claude와 ChatGPT 둘 다 지원합니다. `config.yaml`에서:
@@ -211,7 +234,7 @@ Notion 관련 설정은 **수집·LLM 호출 전에 먼저 검사**하므로, �
 ## 개발
 
 ```bash
-python -m pytest          # 160 tests, 네트워크 호출 없음 (소켓 차단 검증 포함)
+python -m pytest          # 188 tests, 네트워크 호출 없음 (소켓 차단 검증 포함)
 ```
 
 주요 모듈:

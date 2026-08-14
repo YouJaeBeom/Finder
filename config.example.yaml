@@ -30,6 +30,12 @@ tracked_venues:
   - "ACL 2026"
   - "NeurIPS 2026"
 
+# Venue names are normalized to their acronym (CIKM, SIGIR, TKDE, ...) using a
+# built-in table. Add anything the table doesn't know: the key is a fragment of
+# the full registered name, the value is what appears in the Venue column.
+venue_aliases: {}
+  # "Workshop on Machine Learning for Systems": "MLSys Workshop"
+
 research_profile: |
   Describe your research focus here in 2-5 sentences.
   The LLM uses this both for relevance scoring and for generating the

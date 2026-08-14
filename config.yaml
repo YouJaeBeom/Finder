@@ -41,7 +41,20 @@ keywords:
          "hallucination", "factuality", "instruction following",
          "reasoning", "RAG", "code generation"]
     # 리뷰/서베이 논문을 빼고 싶으면 주석을 해제하세요
-    # not: ["survey", "position paper"]
+    not: ["survey", "position paper"]
+
+# ── Venue 표기 ────────────────────────────────────────────────────────────────
+# OpenAlex 는 학회를 정식 명칭으로 줍니다 ("Proceedings of the 32nd ACM
+# International Conference on Information and Knowledge Management"). Notion
+# Venue 컬럼에는 짧은 약칭이 들어가도록 자동 변환합니다 → CIKM
+#
+# 주요 학회/저널(ACL, EMNLP, NAACL, SIGIR, CIKM, WSDM, KDD, RecSys, WWW,
+# SIGMOD, VLDB, ICDE, TKDE, TOIS, NeurIPS, ICML, ICLR, AAAI, IJCAI, CVPR ...)
+# 은 내장 표에 있습니다. 표에 없는 곳은 아래에 추가하세요.
+# 왼쪽은 정식 명칭의 일부(부분 문자열), 오른쪽이 Venue 에 찍힐 이름입니다.
+venue_aliases: {}
+  # "Workshop on Machine Learning for Systems": "MLSys Workshop"
+  # "Korea Software Congress": "KSC"
 
 # ── Tracked venues (for batch mode) ──────────────────────────────────────────
 tracked_venues:

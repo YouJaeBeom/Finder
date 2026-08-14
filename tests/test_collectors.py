@@ -136,38 +136,50 @@ class TestVenueSelection:
     def test_conference_wins_over_the_repository_hosting_the_preprint(self):
         paper = _parse_work(self._work(
             self._source("Zenodo", "repository"),
-            self._source("ACL 2026", "conference"),
+            self._source(
+                "Proceedings of the 32nd ACM International Conference on "
+                "Information and Knowledge Management",
+                "conference",
+            ),
         ))
-        assert paper.venue == "ACL 2026"
+        assert paper.venue == "CIKM"
         assert paper.venue_status == "published"
 
     def test_journal_is_used_when_there_is_one(self):
         paper = _parse_work(self._work(
             self._source("arXiv", "repository"),
-            self._source("Transactions of the ACL", "journal"),
+            self._source("IEEE Transactions on Knowledge and Data Engineering",
+                         "journal"),
         ))
-        assert paper.venue == "Transactions of the ACL"
+        assert paper.venue == "TKDE"
 
-    def test_repository_only_is_labelled_a_preprint(self):
-        """Otherwise Venue reads "Zenodo", which is a file host, not a venue."""
+    def test_repository_only_keeps_the_repository_name(self):
+        """Venue is the name; that it is a preprint is Status's job."""
         paper = _parse_work(self._work(self._source("Zenodo", "repository")))
-        assert paper.venue == "Zenodo preprint"
+        assert paper.venue == "Zenodo"
         assert paper.venue_status == "preprint"
 
-    def test_arxiv_gets_its_established_label(self):
+    def test_arxiv_stays_arxiv(self):
         paper = _parse_work(self._work(self._source("arXiv", "repository")))
-        assert paper.venue == "arXiv preprint"
-
-    def test_no_location_at_all_still_yields_a_venue(self):
-        paper = _parse_work(self._work())
-        assert paper.venue == "preprint"
+        assert paper.venue == "arXiv"
         assert paper.venue_status == "preprint"
 
-    def test_every_preprint_venue_contains_the_word_preprint(self):
-        """Batch mode finds pages to stamp by their preprint status."""
+    def test_no_location_at_all_still_yields_something(self):
+        paper = _parse_work(self._work())
+        assert paper.venue == "unknown"
+        assert paper.venue_status == "preprint"
+
+    def test_venue_never_carries_a_status_suffix(self):
+        """Batch mode finds pages to stamp via Status, not via the venue name."""
         for host in ("Zenodo", "OSF", "arXiv", "SSRN"):
             paper = _parse_work(self._work(self._source(host, "repository")))
-            assert "preprint" in paper.venue
+            assert "preprint" not in paper.venue.lower()
+
+    def test_config_aliases_override_the_built_in_table(self):
+        work = self._work(self._source("Some Local Workshop on Retrieval",
+                                       "conference"))
+        paper = _parse_work(work, {"Some Local Workshop": "MYWS"})
+        assert paper.venue == "MYWS"
 
 
 class TestArxivIdParsing:

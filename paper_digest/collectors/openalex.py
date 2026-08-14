@@ -16,6 +16,7 @@ from typing import Dict, List, Optional
 import requests
 
 from ..models import Paper, PaperIdentifiers, normalize_title
+from ..venues import normalize_venue
 
 logger = logging.getLogger(__name__)
 
@@ -82,11 +83,20 @@ def _locations(work: dict) -> List[dict]:
     return seen
 
 
-def _source_name(location: dict) -> str:
-    return ((location.get("source") or {}).get("display_name") or "").strip()
+def _venue_name(location: dict, aliases: Dict[str, str]) -> str:
+    """The short venue name for a location's source, e.g. CIKM rather than
+    "Proceedings of the 32nd ACM International Conference on Information and
+    Knowledge Management"."""
+    source = location.get("source") or {}
+    return normalize_venue(
+        display_name=source.get("display_name") or "",
+        abbreviated_title=source.get("abbreviated_title"),
+        alternate_titles=source.get("alternate_titles"),
+        aliases=aliases,
+    )
 
 
-def _pick_venue(work: dict) -> tuple[str, str]:
+def _pick_venue(work: dict, aliases: Optional[Dict[str, str]] = None) -> tuple[str, str]:
     """Return (venue, venue_status) — the journal or conference where possible.
 
     ``primary_location`` is whichever copy OpenAlex considers canonical, which
@@ -94,29 +104,27 @@ def _pick_venue(work: dict) -> tuple[str, str]:
     is why venues read "Zenodo" or "OpenAlex" instead of the conference the
     paper was actually presented at, so the published locations are searched
     first and repositories are only a fallback.
+
+    Venue holds the name alone — "ACL", "arXiv". Whether that is a preprint or
+    an accepted paper is the Status column's job, not a suffix on the name.
     """
+    aliases = aliases or {}
     locations = _locations(work)
 
     for location in locations:
         source = location.get("source") or {}
-        name = _source_name(location)
+        name = _venue_name(location, aliases)
         if name and (source.get("type") or "").lower() in _PUBLISHED_SOURCE_TYPES:
-            return name[:100], "published"
+            return name, "published"
 
-    # Only repository copies exist, so this is a preprint. Say so in the venue
-    # itself — batch mode looks for exactly that word when stamping an accepted
-    # venue onto pages later.
     for location in locations:
-        name = _source_name(location)
-        if name:
-            if "arxiv" in name.lower():
-                return "arXiv preprint", "preprint"
-            return f"{name} preprint"[:100], "preprint"
+        if name := _venue_name(location, aliases):
+            return name, "preprint"
 
-    return "preprint", "preprint"
+    return "unknown", "preprint"
 
 
-def _parse_work(work: dict) -> Optional[Paper]:
+def _parse_work(work: dict, aliases: Optional[Dict[str, str]] = None) -> Optional[Paper]:
     """Parse one OpenAlex work dict into a Paper."""
     title = (work.get("title") or "").strip()
     if not title:
@@ -135,7 +143,7 @@ def _parse_work(work: dict) -> Optional[Paper]:
         doi = raw_doi.replace("https://doi.org/", "").strip()
 
     primary = work.get("primary_location") or {}
-    venue_name, venue_status = _pick_venue(work)
+    venue_name, venue_status = _pick_venue(work, aliases)
 
     # Authors
     authors = [
@@ -176,6 +184,7 @@ def collect_openalex_papers(
     keywords: List[str],
     days_back: int = 7,
     max_results: int = 500,
+    venue_aliases: Optional[Dict[str, str]] = None,
 ) -> List[Paper]:
     """Fetch papers from OpenAlex published in the last *days_back* days.
 
@@ -216,7 +225,7 @@ def collect_openalex_papers(
         meta = data.get("meta") or {}
 
         for work in results:
-            paper = _parse_work(work)
+            paper = _parse_work(work, venue_aliases)
             if paper is not None:
                 papers.append(paper)
 

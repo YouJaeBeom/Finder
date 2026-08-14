@@ -109,7 +109,9 @@ def _parse_entry(
         title=title,
         abstract=abstract,
         authors=authors,
-        venue="arXiv preprint",
+        # The venue is the name alone; that it is a preprint is what
+        # venue_status says, and what the Notion Status column shows.
+        venue="arXiv",
         venue_status="preprint",
         collection_date=datetime.now(timezone.utc).date().isoformat(),
         source=["arxiv"],
