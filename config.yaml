@@ -14,102 +14,147 @@ notion_parent_page_id: "https://app.notion.com/p/Finder-3bc1256e056180898608c395
 notion_database_id: ""
 
 # ── Research keywords ────────────────────────────────────────────────────────
-# 목록의 각 항목은 OR 로 묶입니다 (하나라도 맞으면 후보). 대소문자와 하이픈은
-# 무시하고 ("retrieval-augmented" = "retrieval augmented"), 제목과 초록을 함께
-# 봅니다. 짧은 약어는 단어 앞에서만 맞습니다 (RAG 가 stoRAGe 에 안 걸림).
+# 연구 아젠다 5개 축을 그대로 옮긴 것입니다. 각 축마다 Core 키워드는 단독으로
+# 두거나 규칙의 축으로 삼고, "use when applicable" 키워드는 다른 조건과 AND 로
+# 묶어 정밀도를 지킵니다.
+#
+# 목록의 항목끼리는 OR 입니다. 대소문자와 하이픈은 무시하고
+# ("retrieval-augmented" = "retrieval augmented"), 제목과 초록을 함께 봅니다.
+# 짧은 약어는 단어 앞에서만 맞습니다 (RAG 가 stoRAGe 에 안 걸림).
 #
 #   - "구절"                        이 구절이 있으면 매치
 #   - all: [A, B]                   A 와 B 가 모두 있어야 매치
 #   - any: [A, B]                   A 나 B 중 하나라도 있으면 매치
 #   - all: [[A, B], [C, D]]         (A 나 B) 그리고 (C 나 D)   ← 중첩 = "이 중 하나"
 #     not: [E]                      단, E 가 있으면 제외
-#
-# 넓은 단어(bias, fairness, robustness, retrieval)는 단독으로 두면 분야 전체가
-# 걸립니다. 아래에서는 전부 주제어와 AND 로 묶어 두었습니다.
 
-# 여러 규칙에서 재사용하는 "모델 용어 중 하나" 묶음 (YAML 앵커)
-_model_terms: &model
+# 여러 규칙에서 재사용하는 묶음 (YAML 앵커)
+_model: &model
   ["LLM", "large language model", "language model", "foundation model",
-   "generative model", "chatbot", "conversational agent"]
+   "generative model", "chatbot", "conversational agent", "GPT", "instruction-tuned"]
+_bias: &bias
+  ["bias", "biased", "fairness", "unfair", "skew", "imbalance", "stereotype"]
+_political: &political
+  ["political", "ideological", "partisan", "polarization", "viewpoint"]
 
 keywords:
-  # ── 1. 공정하고 신뢰할 수 있는 AI ─────────────────────────────────────────
-  - "algorithmic bias"
-  - "bias mitigation"
-  - "debiasing"
-  - "responsible AI"
-  - "trustworthy AI"
-  - "AI alignment"
-  - "AI safety"
-  - any: ["algorithmic audit", "algorithmic auditing", "model auditing",
-          "auditing framework"]
-  - all:
-      - ["fairness", "fair ranking", "unfairness"]
-      - [*model, ["retrieval", "ranking", "recommendation", "search",
-                  "dataset", "classifier", "decision"]]
-  - all:
-      - ["robustness", "adversarial"]
-      - *model
-
-  # ── 2. LLM 과 정치적 편향 (핵심 주제) ─────────────────────────────────────
+  # ── 1. LLM 정치적 편향과 맥락적 견고성 ────────────────────────────────────
+  # Core: political bias / prompt sensitivity / persona prompting / robustness
   - "political bias"
   - "ideological bias"
   - "partisan bias"
+  - "political stance"
   - "political ideology"
   - "political leaning"
   - "political orientation"
-  - "political stance"
   - "political compass"
-  - all:
-      - ["bias", "stance", "opinion", "value"]
-      - ["steering", "steerability", "steerable", "steer"]
-  - all:
-      - ["prompt sensitivity", "prompt robustness", "prompt perturbation",
-         "prompt variation"]
+  - "sycophancy"
+  - "sycophantic"
+  - any: ["prompt sensitivity", "prompt robustness", "prompt perturbation",
+          "prompt variation", "prompt brittleness", "prompt template"]
+  - all:                                   # 페르소나 프롬프팅
+      - ["persona", "role-play", "roleplay", "persona prompting"]
       - *model
-  - all:
-      - ["multilingual", "cross-lingual", "cross-cultural"]
-      - ["bias", "fairness", "evaluation", "benchmark"]
+  - all:                                   # 응답 일관성 · 견고성 평가
+      - ["robustness", "consistency", "instability", "variance"]
+      - *model
+      - ["prompt", "persona", "response", "evaluation", "language"]
+  - all:                                   # 편향 "측정" 은 어순이 제각각이라 단어로 분리
+      - *bias
+      - ["measurement", "measuring", "measure", "quantify", "quantifying",
+         "benchmark", "probe", "elicit"]
+      - [*model, *political]
+  - all:                                   # 다국어 · 교차문화 평가
+      - ["multilingual", "cross-lingual", "cross-cultural", "multi-lingual"]
+      - [*bias, ["evaluation", "benchmark", "stance", "alignment"]]
 
-  # ── 3. 정보 검색 · 탐색 · RAG ─────────────────────────────────────────────
+  # ── 2. 데이터 중심 · 인과적 편향 분석 ─────────────────────────────────────
+  # Core: training data bias / web data bias / bias propagation / causal / controlled pretraining
+  - "bias propagation"
+  - "bias amplification"
+  - "bias transfer"
+  - "controlled pretraining"
+  - "data provenance"
+  - "dataset curation"
+  - "representation bias"
+  - all:                                   # 데이터의 편향
+      - ["training data", "pretraining data", "pre-training data", "web data",
+         "web corpus", "web corpora", "corpus", "corpora", "dataset",
+         "data source"]
+      - [*bias, ["provenance", "quality", "curation", "composition",
+                 "contamination", "representation", "diversity"]]
+  - all:                                   # 인과적 분석 · 통제 실험
+      - ["causal", "causally", "causality", "intervention", "counterfactual",
+         "ablation", "controlled experiment"]
+      - [*bias, ["pretraining", "training data", "model behavior"]]
+      - *model
+
+  # ── 3. 검색 · RAG 에서의 공정하고 다양한 정보 접근 ────────────────────────
+  # Core: information retrieval / search personalization / filter bubbles /
+  #       information diversity / RAG
   - "retrieval-augmented generation"
   - "information retrieval"
   - "filter bubble"
   - "echo chamber"
   - "generative search"
   - "conversational search"
-  - any: ["search personalization", "personalized search",
-          "personalized ranking", "search result diversification"]
-  - all:
-      - ["retrieval", "search", "ranking", "RAG"]
-      - ["bias", "fairness", "diversity", "exposure", "polarization"]
-  - all:
-      - ["information access", "information exposure", "information diversity"]
-      - ["algorithmic", "AI", "LLM", "search", "recommender"]
+  - "information diversity"
+  - "viewpoint diversity"
+  - "selective exposure"
+  - any: ["search personalization", "personalized search", "personalized ranking",
+          "search result diversification", "result diversification"]
+  - all:                                   # 검색·랭킹·RAG 의 편향과 다양성
+      - ["retrieval", "retriever", "search", "ranking", "ranker", "RAG",
+         "recommender", "recommendation"]
+      - [*bias, ["diversity", "diversification", "exposure", "polarization",
+                 "viewpoint", "perspective", "credibility"]]
+  - all:                                   # AI 매개 정보 접근
+      - ["information access", "information exposure", "information seeking",
+         "news consumption", "information ecosystem"]
+      - [*model, ["algorithmic", "search", "recommender", "AI"]]
 
-  # ── 4. 웹 데이터 · 데이터 중심 AI ─────────────────────────────────────────
-  - "data-centric AI"
-  - "data provenance"
-  - "dataset documentation"
-  - "data quality"
-  - "bias transfer"
-  - any: ["web corpus", "web corpora", "web crawl", "common crawl",
-          "crawled corpus"]
-  - all:
-      # "corpora" 는 corpus 의 복수형이라 따로 넣어야 합니다
-      - ["dataset", "training data", "pretraining data", "corpus", "corpora"]
-      - ["bias", "fairness", "diversity", "representation", "provenance",
-         "contamination"]
-
-  # ── 5. 평가 · 계산사회과학 ────────────────────────────────────────────────
+  # ── 4. AI 매개 정보 시스템의 인간 중심 평가 ───────────────────────────────
+  # Core: human evaluation / LLM evaluation / survey experiments /
+  #       evaluation reliability / human-AI interaction
   - "LLM-as-a-judge"
   - "computational social science"
   - "political communication"
   - "human-AI interaction"
   - "public opinion"
-  - all:
-      - ["benchmark", "evaluation", "human evaluation", "annotation"]
-      - [*model, ["bias", "fairness", "political", "social"]]
+  - any: ["survey experiment", "user study", "crowdsourced evaluation",
+          "preregistered"]
+  - all:                                   # 자동 평가 vs 사람 평가
+      - ["human evaluation", "human annotation", "human judgment",
+         "human preference", "annotator"]
+      - *model
+  - all:                                   # 평가 자체의 신뢰성
+      - ["evaluation", "evaluator", "judge", "annotation", "benchmark"]
+      - ["reliability", "validity", "agreement", "correlation", "reproducibility",
+         "construct", "meta-evaluation"]
+
+  # ── 5. 대규모 웹 데이터 수집 · 코퍼스 구축 ────────────────────────────────
+  # Core: web data collection / web crawling / corpus construction /
+  #       large-scale collection / distributed processing
+  - "web crawling"
+  - "web crawler"
+  - "common crawl"
+  - "corpus construction"
+  - "dataset construction"
+  # "web corpus" 는 그 자체로 5번 축입니다. 2번 축에서는 편향어와 묶여 있어서
+  # 편향을 다루지 않는 코퍼스 구축 논문이 걸리지 않습니다.
+  - any: ["web corpus", "web corpora", "web archive", "crawling pipeline",
+          "scraping pipeline", "data collection pipeline"]
+  - all:                                   # 대규모 · 분산 수집
+      - ["large-scale", "large scale", "distributed", "parallel", "scalable",
+         "high-throughput"]
+      - ["data collection", "crawling", "crawler", "scraping", "web data",
+         "corpus", "data processing", "data pipeline", "ingestion"]
+  - all:                                   # 소셜미디어 데이터 수집
+      - ["social media", "twitter", "reddit", "youtube", "tiktok"]
+      - ["data collection", "dataset", "crawling", "corpus", "API", "sampling"]
+  - all:                                   # 재현 가능한 데이터 수집
+      - ["reproducible", "reproducibility", "replicable"]
+      - ["data collection", "corpus", "dataset", "pipeline", "crawl"]
 
 # ── Venue 표기 ────────────────────────────────────────────────────────────────
 # OpenAlex 는 학회를 정식 명칭으로 줍니다 ("Proceedings of the 32nd ACM
@@ -144,28 +189,37 @@ tracked_venues:
 # ── Research profile ─────────────────────────────────────────────────────────
 # 논문 관련도 채점(싼 모델)과 "내 연구와의 연결점" 작성(좋은 모델)에 모두
 # 쓰입니다. 키워드가 후보를 넓게 잡아오면, 이 글이 그중 무엇이 실제로 중요한지
-# 를 판단합니다. 구체적일수록 좋습니다.
+# 판단합니다.
 research_profile: |
-  제 연구는 AI 시스템의 공정성과 신뢰성, 특히 대형 언어 모델(LLM)의 정치적
-  편향에 초점을 맞추고 있습니다. LLM 이 정치적·이념적 성향을 어떻게 드러내는지
-  측정하는 벤치마크를 설계하고, 그 편향이 어디서 오는지 인과적으로 분석하며,
-  프롬프트로 성향을 얼마나 조종할 수 있는지(steerability)와 프롬프트 변형에
-  대한 강건성을 다국어 환경에서 평가합니다.
+  Trustworthy AI for Fair Information Access — 웹 데이터, 검색 시스템, 프롬프트
+  맥락이 정치적 정보 노출과 대형 언어 모델(LLM)의 행동을 어떻게 형성하는지를
+  연구합니다. 편향을 측정하고(measure), 설명하고(explain), 완화하는(mitigate)
+  것이 일관된 목표입니다.
 
-  두 번째 축은 정보 검색과 RAG 입니다. 검색 개인화가 만드는 필터 버블,
-  검색·검색증강생성 과정에서 생기는 노출 편향과 정보 다양성 문제, 그리고
-  생성형 검색이 사람의 정보 접근을 어떻게 바꾸는지에 관심이 있습니다.
+  1. LLM의 정치적 편향과 맥락적 견고성. 정치적 편향을 측정하고, 페르소나·언어·
+     프롬프트 맥락에 따라 응답이 얼마나 달라지는지 분석합니다. 아첨(sycophancy),
+     프롬프트 민감도, 다국어 평가, 편향 평가 벤치마크 설계에 관심이 있습니다.
 
-  세 번째 축은 데이터입니다. 웹 코퍼스가 어떻게 구성되는지, 데이터의 편향이
-  모델로 어떻게 전이되는지, 데이터 출처(provenance)와 품질을 어떻게 문서화하고
-  평가할지를 봅니다.
+  2. 데이터 중심·인과적 편향 분석. 웹 코퍼스와 학습 데이터의 편향이 모델 내부와
+     생성 결과의 정치적 편향으로 이어지는 경로를 봅니다. 통제된 사전학습과 인과
+     실험으로 데이터 특성·학습 과정·모델 행동의 관계를 규명하며, 편향 전파와
+     증폭, 데이터 큐레이션과 출처 문서화를 다룹니다.
 
-  평가 방법론 자체도 연구 대상입니다. LLM-as-a-judge 의 타당성, 사람 평가와의
-  정합성, 벤치마크 설계, 그리고 계산사회과학 관점에서 알고리즘이 여론과 정보
-  노출에 미치는 영향을 다룹니다.
+  3. 검색과 RAG에서의 공정하고 다양한 정보 접근. 검색 개인화가 만드는 필터버블,
+     관점 편중, 검색·검색증강생성의 편향을 분석하고, 관점 다양성과 정보 품질을
+     함께 보장하는 검색·RAG 방법을 설계합니다.
 
-  따라서 다음은 관련도가 낮습니다: 편향·공정성·정보 접근과 무관한 순수 성능
-  최적화(추론 속도, 양자화, 커널), 비전 전용 연구, 이론적 최적화 논문.
+  4. AI 매개 정보 시스템의 인간 중심 평가. LLM 기반 자동 평가와 사람 대상 실험을
+     결합해, 자동 평가가 실제 이용자의 판단·인식·정보 탐색 행동을 얼마나 충실히
+     반영하는지 검증합니다. LLM-as-a-judge의 타당성, 평가 신뢰도, 설문 실험,
+     계산사회과학적 접근을 포함합니다.
+
+  5. 대규모 웹 데이터 수집과 코퍼스 구축. 웹·소셜미디어 데이터를 안정적으로
+     수집하는 병렬·분산 파이프라인을 만들고, 연구 목적에 맞는 재현 가능한
+     코퍼스와 데이터셋을 구축합니다.
+
+  관련도가 낮은 것: 편향·공정성·정보 접근·데이터 구축과 무관한 순수 성능 최적화
+  (추론 속도, 양자화, 커널, 서빙), 비전 전용 연구, 순수 이론 최적화 논문.
 
 # ── arXiv categories ─────────────────────────────────────────────────────────
 arxiv_categories:
