@@ -92,10 +92,14 @@ class Paper:
     content_type: str = "paper"  # "paper" | "news"
     url: Optional[str] = None  # article/story link, shown in the Notion header
 
-    # News ordering signals. News skips LLM relevance scoring, so these are what
-    # decide which stories make the top_n cut.
-    points: Optional[int] = None  # Hacker News community score; None for RSS
-    published_at: Optional[str] = None  # ISO 8601 publish time when the source gives one
+    # Hacker News community score. Also the primary news ordering signal, since
+    # news skips LLM relevance scoring.
+    points: Optional[int] = None  # None for RSS and for papers
+
+    # The item's own date (ISO 8601), as distinct from collection_date, which is
+    # the day this run happened to fetch it. arXiv: the v1 submission date;
+    # OpenAlex: publication_date; news: the feed or story timestamp.
+    published_at: Optional[str] = None
 
     # Populated after ranking (papers only — news keeps 0.0)
     relevance_score: float = 0.0

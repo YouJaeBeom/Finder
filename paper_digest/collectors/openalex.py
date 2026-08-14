@@ -105,7 +105,9 @@ def _parse_work(work: dict) -> Optional[Paper]:
         normalized_title=norm_title,
     )
 
-    pub_date = work.get("publication_date") or datetime.now(timezone.utc).date().isoformat()
+    # A DOI link is the stable, canonical address; the publisher's landing page
+    # is the fallback for the works OpenAlex has without one.
+    url = f"https://doi.org/{doi}" if doi else primary.get("landing_page_url")
 
     paper = Paper(
         identifiers=identifiers,
@@ -116,6 +118,8 @@ def _parse_work(work: dict) -> Optional[Paper]:
         venue_status="preprint",
         collection_date=datetime.now(timezone.utc).date().isoformat(),
         source=["openalex"],
+        url=url,
+        published_at=work.get("publication_date"),
     )
 
     return paper

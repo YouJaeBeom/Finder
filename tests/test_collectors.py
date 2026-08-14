@@ -1,10 +1,11 @@
 """Tests for arXiv and OpenAlex collectors (abstract parsing and dedup logic)."""
 from __future__ import annotations
 
-import pytest
+import xml.etree.ElementTree as ET
+from datetime import datetime, timedelta, timezone
 
-from paper_digest.collectors.openalex import reconstruct_abstract
-from paper_digest.models import normalize_title
+from paper_digest.collectors.arxiv import ATOM_NS, _parse_entry
+from paper_digest.collectors.openalex import _parse_work, reconstruct_abstract
 
 
 class TestReconstructAbstract:
@@ -47,6 +48,69 @@ class TestReconstructAbstract:
         }
         result = reconstruct_abstract(inverted)
         assert result == "We propose a new method for LLM alignment"
+
+
+class TestPaperLinkAndDate:
+    """Both were parsed and then dropped: no link reached Notion, and the Date
+    column showed the day the run happened rather than the paper's own date."""
+
+    def _arxiv_entry(self, published: str) -> ET.Element:
+        xml = f"""
+        <entry xmlns="{ATOM_NS}">
+          <id>http://arxiv.org/abs/2408.01234v1</id>
+          <published>{published}</published>
+          <title>Scaling Laws for Alignment</title>
+          <summary>We study RLHF alignment in large language models.</summary>
+          <author><name>Alice Smith</name></author>
+        </entry>
+        """
+        return ET.fromstring(xml.strip())
+
+    def _parse_arxiv(self, published: str):
+        cutoff = datetime.now(timezone.utc) - timedelta(days=7)
+        return _parse_entry(self._arxiv_entry(published), keywords=[], cutoff=cutoff)
+
+    def test_arxiv_paper_gets_its_abstract_page_link(self):
+        recent = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+        paper = self._parse_arxiv(recent)
+
+        assert paper is not None
+        assert paper.url == "https://arxiv.org/abs/2408.01234"
+
+    def test_arxiv_published_date_is_the_v1_submission_not_today(self):
+        submitted = datetime.now(timezone.utc) - timedelta(days=3)
+        paper = self._parse_arxiv(submitted.isoformat())
+
+        assert paper.published_at == submitted.date().isoformat()
+        assert paper.published_at != paper.collection_date
+
+    def _openalex_work(self, **overrides) -> dict:
+        work = {
+            "title": "Retrieval Augmented Generation",
+            "abstract_inverted_index": {"We": [0], "study": [1], "RAG": [2]},
+            "doi": "https://doi.org/10.18653/v1/2026.acl-long.1",
+            "publication_date": "2026-08-11",
+            "primary_location": {
+                "source": {"display_name": "ACL 2026"},
+                "landing_page_url": "https://aclanthology.org/2026.acl-long.1/",
+            },
+            "authorships": [{"author": {"display_name": "Bob Jones"}}],
+        }
+        work.update(overrides)
+        return work
+
+    def test_openalex_paper_links_via_doi(self):
+        paper = _parse_work(self._openalex_work())
+        assert paper.url == "https://doi.org/10.18653/v1/2026.acl-long.1"
+
+    def test_openalex_falls_back_to_the_landing_page_without_a_doi(self):
+        paper = _parse_work(self._openalex_work(doi=None))
+        assert paper.url == "https://aclanthology.org/2026.acl-long.1/"
+
+    def test_openalex_publication_date_is_carried_through(self):
+        """It was computed into a local variable and never used."""
+        paper = _parse_work(self._openalex_work())
+        assert paper.published_at == "2026-08-11"
 
 
 class TestArxivIdParsing:

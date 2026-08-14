@@ -113,6 +113,11 @@ def _parse_entry(
         venue_status="preprint",
         collection_date=datetime.now(timezone.utc).date().isoformat(),
         source=["arxiv"],
+        # The abstract page rather than the PDF: it carries the metadata, the
+        # PDF link, and the version history.
+        url=f"https://arxiv.org/abs/{arxiv_id}",
+        # v1 submission date — the paper's own date, not the day we fetched it.
+        published_at=published_dt.date().isoformat(),
     )
 
     return paper

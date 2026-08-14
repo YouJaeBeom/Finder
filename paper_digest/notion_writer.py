@@ -14,10 +14,13 @@ state.json, and without the lookup every scheduled run would create a duplicate
 database.
 
 DB schema:
-    Title  (title)      Type  (select: 논문 | 뉴스)
-    Venue  (select)     Score (number)
-    Tags   (multi_select)
-    Date   (date)       URL   (url)
+    Title     (title)          Type      (select: 논문 | 뉴스)
+    Venue     (select)         Score     (number, papers only)
+    Tags      (multi_select)   URL       (url)
+    Published (date)  — the item's own date: arXiv v1 submission, OpenAlex
+                        publication_date, or the news story's timestamp
+    Collected (date)  — the day a run fetched it. Named "Date" before it sat
+                        next to Published and had to say which one it was.
 """
 from __future__ import annotations
 
@@ -92,9 +95,15 @@ _DB_PROPERTIES: Dict[str, dict] = {
     "Venue": {"select": {}},      # paper: ACL 2026 / arXiv preprint; news: source site
     "Score": {"number": {"format": "number"}},
     "Tags": {"multi_select": {}},
-    "Date": {"date": {}},
+    "Published": {"date": {}},    # the item's own date — what you sort a digest by
+    "Collected": {"date": {}},    # the day a run happened to fetch it
     "URL": {"url": {}},
 }
+
+# Properties an earlier version of this tool created under a different name.
+# Renaming keeps the column's existing values — every "Date" ever written was a
+# collection date, so the rows stay correct under the clearer name.
+_RENAMED_PROPERTIES = {"Date": "Collected"}
 
 
 def _find_database_under_page(parent_page_id: str, token: str) -> Optional[str]:
@@ -135,12 +144,14 @@ def _find_database_under_page(parent_page_id: str, token: str) -> Optional[str]:
         cursor = data.get("next_cursor")
 
 
-def _add_missing_properties(db_id: str, token: str) -> None:
-    """Add any schema property the database is missing.
+def _sync_schema(db_id: str, token: str) -> None:
+    """Bring an existing database's columns up to the current schema.
 
-    A database created by an older version of this tool predates the Type and
-    URL columns; writing a page with an unknown property is a hard 400, so the
-    schema is topped up rather than left to fail at write time.
+    Databases created by earlier versions of this tool are missing columns that
+    were added later, and writing a page with an unknown property is a hard 400
+    — so the schema is topped up rather than left to fail at write time.
+    Renames come first, so a column that only needs renaming is not also added
+    as a second, empty column beside it.
     """
     resp = requests.get(
         f"{NOTION_BASE_URL}/databases/{db_id}", headers=_headers(token), timeout=30
@@ -148,19 +159,27 @@ def _add_missing_properties(db_id: str, token: str) -> None:
     _check(resp, "read database schema")
     existing = set(resp.json().get("properties", {}))
 
-    missing = {
+    patch: Dict[str, dict] = {}
+
+    for old_name, new_name in _RENAMED_PROPERTIES.items():
+        if old_name in existing and new_name not in existing:
+            patch[old_name] = {"name": new_name}
+            existing.add(new_name)
+
+    patch.update({
         name: spec
         for name, spec in _DB_PROPERTIES.items()
-        if name not in existing and name != "Title"  # the title column is never missing
-    }
-    if not missing:
+        if name not in existing and name != "Title"  # the title column always exists
+    })
+
+    if not patch:
         return
 
-    logger.info("Adding missing database properties: %s", ", ".join(sorted(missing)))
+    logger.info("Updating database schema: %s", ", ".join(sorted(patch)))
     resp = requests.patch(
         f"{NOTION_BASE_URL}/databases/{db_id}",
         headers=_headers(token),
-        json={"properties": missing},
+        json={"properties": patch},
         timeout=30,
     )
     _check(resp, "schema update")
@@ -184,14 +203,14 @@ def ensure_database(
         if db_id:
             logger.info("Reusing Notion database from %s: %s", origin, db_id)
             _remember_database(state, db_id)
-            _add_missing_properties(db_id, token)
+            _sync_schema(db_id, token)
             return db_id
 
     if found := _find_database_under_page(parent_page_id, token):
         logger.info("Found existing '%s' database under the parent page: %s",
                     _DB_TITLE, found)
         _remember_database(state, found)
-        _add_missing_properties(found, token)
+        _sync_schema(found, token)
         return found
 
     logger.info("Creating Notion database under parent page %s", parent_page_id)
@@ -295,11 +314,14 @@ def _build_page_content(paper: Paper) -> List[dict]:
 
     # Divider + metadata
     blocks.append({"type": "divider", "divider": {}})
-    source_str = " + ".join(paper.source)
-    authors_str = ", ".join(paper.authors[:5]) if paper.authors else "Unknown"
-    blocks.append(
-        _text_block(f"출처: {source_str} | 저자: {authors_str}")
-    )
+    meta = [f"출처: {' + '.join(paper.source)}"]
+    if paper.authors:
+        meta.append(f"저자: {', '.join(paper.authors[:5])}")
+    if paper.published_at and not is_news:
+        # News already carries its date in the header line above.
+        meta.append(f"발행일: {paper.published_at[:10]}")
+    meta.append(f"수집일: {paper.collection_date}")
+    blocks.append(_text_block(" | ".join(meta)))
 
     return blocks
 
@@ -322,8 +344,12 @@ def create_page(paper: Paper, db_id: str, token: str) -> str:
         # paper and read as "judged irrelevant"; an empty cell is the truth.
         "Score": {"number": None if is_news else paper.relevance_score},
         "Tags": {"multi_select": tags},
-        "Date": {"date": {"start": paper.collection_date}},
+        "Collected": {"date": {"start": paper.collection_date}},
     }
+    if paper.published_at:
+        # Date-only: sources disagree on whether they give a timestamp, and a
+        # column mixing "2026-08-14" with "2026-08-14 09:31" reads as a bug.
+        properties["Published"] = {"date": {"start": paper.published_at[:10]}}
     if paper.url:
         properties["URL"] = {"url": paper.url}
 

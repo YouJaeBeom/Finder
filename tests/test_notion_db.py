@@ -17,8 +17,8 @@ from paper_digest.notion_writer import _DB_TITLE, ensure_database
 
 FULL_SCHEMA = {
     "properties": {
-        "Title": {}, "Type": {}, "Venue": {},
-        "Score": {}, "Tags": {}, "Date": {}, "URL": {},
+        "Title": {}, "Type": {}, "Venue": {}, "Score": {},
+        "Tags": {}, "Published": {}, "Collected": {}, "URL": {},
     }
 }
 
@@ -148,21 +148,41 @@ class TestDatabaseResolution:
 
 
 class TestSchemaTopUp:
-    def test_missing_columns_are_added_to_an_older_database(self):
-        """A database from before Type/URL existed would 400 on every write."""
-        old_schema = {"properties": {"Title": {}, "Venue": {}, "Score": {},
-                                     "Tags": {}, "Date": {}}}
-
+    def _sync(self, schema: dict):
+        """Run ensure_database against a database with the given schema."""
         with (
-            patch("paper_digest.notion_writer.requests.get", return_value=_resp(old_schema)),
+            patch("paper_digest.notion_writer.requests.get", return_value=_resp(schema)),
             patch("paper_digest.notion_writer.requests.patch",
                   return_value=_resp({})) as patch_req,
         ):
-            ensure_database("parent", "tok", configured_db_id="old-db")
+            ensure_database("parent", "tok", configured_db_id="existing-db")
+        return patch_req
+
+    def test_missing_columns_are_added_to_an_older_database(self):
+        """A database from before Type/URL existed would 400 on every write."""
+        patch_req = self._sync({"properties": {
+            "Title": {}, "Venue": {}, "Score": {}, "Tags": {},
+            "Published": {}, "Collected": {},
+        }})
 
         patch_req.assert_called_once()
-        added = patch_req.call_args.kwargs["json"]["properties"]
-        assert set(added) == {"Type", "URL"}
+        assert set(patch_req.call_args.kwargs["json"]["properties"]) == {"Type", "URL"}
+
+    def test_legacy_date_column_is_renamed_not_duplicated(self):
+        """Every value ever written to "Date" was a collection date.
+
+        Renaming keeps those rows correct; adding "Collected" alongside would
+        leave the real dates stranded in a column the tool no longer writes.
+        """
+        patch_req = self._sync({"properties": {
+            "Title": {}, "Type": {}, "Venue": {}, "Score": {},
+            "Tags": {}, "Date": {}, "URL": {},
+        }})
+
+        props = patch_req.call_args.kwargs["json"]["properties"]
+        assert props["Date"] == {"name": "Collected"}
+        assert "Collected" not in props, "renamed column must not also be created"
+        assert "Published" in props, "the new column is still added"
 
     def test_complete_schema_is_left_alone(self):
         with (
