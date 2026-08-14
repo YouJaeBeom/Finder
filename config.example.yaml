@@ -5,6 +5,11 @@
 
 notion_parent_page_id: "YOUR_NOTION_PAGE_ID_HERE"
 
+# Optional. Pin the database every run appends to. Fill this in with the ID that
+# `python -m paper_digest init` prints. Left empty, the tool finds its database
+# under the parent page (or creates it on the very first run).
+notion_database_id: ""
+
 keywords:
   - "large language model"
   - "machine learning"
@@ -44,8 +49,11 @@ llm:
 # ── IT news (optional) ───────────────────────────────────────────────────────
 # Off by default. When enabled, news is collected in the same weekly run and
 # written to the same Notion DB with Type = "뉴스" (papers are "논문").
+#
+# News skips LLM relevance scoring — the sources are already curated. Selection
+# is keyword filter → score/recency order → one story per source in turn → top_n.
 news:
-  enabled: true
+  enabled: false
 
   hacker_news:
     enabled: true
@@ -59,8 +67,8 @@ news:
 
   top_n: 5               # max news pages per weekly run
 
-  # Optional. Falls back to the paper keywords above when omitted — IT news
-  # usually wants a broader net than a paper query does.
+  # Leave EMPTY to keep everything the sources deliver; fill in to narrow the
+  # digest. A story matching any one keyword in its title or summary is kept.
   keywords:
     - "AI"
     - "LLM"

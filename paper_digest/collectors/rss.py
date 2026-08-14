@@ -114,6 +114,9 @@ def collect_rss_entries(feed_urls: List[str], days_back: int = 7) -> List[Paper]
                 source=["rss"],
                 content_type="news",
                 url=link,
+                # No community score in a feed — recency is all the ordering
+                # signal RSS gives us.
+                published_at=published.isoformat() if published else None,
             ))
             kept += 1
 

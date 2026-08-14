@@ -2,10 +2,7 @@
 from __future__ import annotations
 
 import logging
-import sys
 from typing import List, Optional
-
-from dataclasses import replace
 
 from .collectors.arxiv import collect_arxiv_papers
 from .collectors.hackernews import collect_hackernews_stories
@@ -13,9 +10,11 @@ from .collectors.rss import collect_rss_entries
 from .collectors.openalex import collect_openalex_papers
 from .config import Config, load_config
 from .dedup import DedupStore, deduplicate_collected
+from .keywords import filter_by_keywords
 from .llm.base import LLMProvider
 from .llm.factory import create_provider
 from .models import Paper
+from .news_select import select_news
 from .notes import generate_notes
 from .notion_writer import (
     create_page,
@@ -32,26 +31,6 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)-7s %(name)s — %(message)s",
 )
-
-
-# ── Keyword filtering ──────────────────────────────────────────────────────────
-
-def _matches_keywords(paper: Paper, keywords: List[str]) -> List[str]:
-    """Return the list of keywords that match the paper's title or abstract."""
-    text = f"{paper.title} {paper.abstract or ''}".lower()
-    matched = [kw for kw in keywords if kw.lower() in text]
-    return matched
-
-
-def _filter_by_keywords(papers: List[Paper], keywords: List[str]) -> List[Paper]:
-    """Keep only papers that match at least one keyword; populate matched_keywords."""
-    result = []
-    for paper in papers:
-        matched = _matches_keywords(paper, keywords)
-        if matched:
-            paper.matched_keywords = matched
-            result.append(paper)
-    return result
 
 
 # ── Weekly mode ────────────────────────────────────────────────────────────────
@@ -101,7 +80,7 @@ def run_weekly(config_path: str = "config.yaml") -> int:
 
     # ── 3. Keyword filtering ──────────────────────────────────────────────────
     logger.info("=== Stage 3: Keyword filtering ===")
-    candidates = _filter_by_keywords(unique_papers, cfg.keywords)
+    candidates = filter_by_keywords(unique_papers, cfg.keywords)
     candidates_count = len(candidates)
     logger.info("%d candidates after keyword filtering", candidates_count)
 
@@ -154,7 +133,9 @@ def run_weekly(config_path: str = "config.yaml") -> int:
     db_id: Optional[str] = None
 
     if top_papers or cfg.news.enabled:
-        db_id = ensure_database(cfg.notion_parent_page_id, cfg.notion_token)
+        db_id = ensure_database(
+            cfg.notion_parent_page_id, cfg.notion_token, cfg.notion_database_id
+        )
 
     if top_papers:
         logger.info("=== Stage 5: Note generation (%s / %s) ===",
@@ -203,11 +184,15 @@ def run_weekly(config_path: str = "config.yaml") -> int:
 
 def _run_news_stage(
     cfg: Config,
-    provider: LLMProvider,
+    provider: Optional[LLMProvider],
     dedup_store: DedupStore,
-    db_id: str,
+    db_id: Optional[str],
 ) -> List[Paper]:
-    """Collect, rank and write IT news. Returns the items written to Notion.
+    """Collect, select and write IT news. Returns the items written to Notion.
+
+    Unlike papers, news never goes through the cheap-model relevance gate — see
+    :mod:`paper_digest.news_select` for why. The provider here is used only to
+    write the Korean briefing for the stories already selected.
 
     Deliberately never raises and never changes the run's exit code: the
     exit-code contract in the requirements is about the paper pipeline, and a
@@ -240,25 +225,15 @@ def _run_news_stage(
         return []
 
     unique_news = deduplicate_collected(collected)
-    news_keywords = cfg.news.keywords or cfg.keywords
-    candidates = _filter_by_keywords(unique_news, news_keywords)
-    fresh = [item for item in candidates if not dedup_store.is_seen(item)]
+    # Drop already-written stories before selecting, so a repost from last week
+    # cannot consume one of this run's top_n slots.
+    fresh = [item for item in unique_news if not dedup_store.is_seen(item)]
     logger.info(
-        "News: %d collected, %d unique, %d matched keywords, %d new",
-        len(collected), len(unique_news), len(candidates), len(fresh),
+        "News: %d collected, %d unique, %d not yet written",
+        len(collected), len(unique_news), len(fresh),
     )
-    if not fresh:
-        return []
 
-    news_cfg = replace(cfg, top_n=cfg.news.top_n)
-    try:
-        top_news = rank_papers(fresh, news_cfg, provider)
-    except RuntimeError as exc:
-        # Nothing cleared the cutoff. For papers this is an alert; for news it is
-        # a quiet week in the feeds, so it stays a warning.
-        logger.warning("News ranking passed nothing: %s", exc)
-        return []
-
+    top_news = select_news(fresh, cfg.news.keywords, cfg.news.top_n)
     if not top_news:
         return []
 
@@ -299,17 +274,15 @@ def run_batch(config_path: str = "config.yaml", venue: Optional[str] = None) -> 
         logger.error("NOTION_TOKEN environment variable is not set")
         return 1
 
-    from pathlib import Path
-    import json
-
-    state_path = Path("state.json")
-    if not state_path.exists():
-        logger.error("state.json not found — run weekly mode first to create the database")
-        return 1
-    state = json.loads(state_path.read_text())
-    db_id = state.get("notion_database_id")
-    if not db_id:
-        logger.error("notion_database_id not found in state.json")
+    # Resolves to the same database the weekly run uses — by config, by the
+    # cached ID, or by finding it under the parent page. Batch mode used to
+    # require a local state.json, which never exists on a fresh CI checkout.
+    try:
+        db_id = ensure_database(
+            cfg.notion_parent_page_id, cfg.notion_token, cfg.notion_database_id
+        )
+    except Exception as exc:
+        logger.error("Could not resolve the Notion database: %s", exc)
         return 1
 
     # Update existing preprint pages to accepted venue
@@ -339,7 +312,7 @@ def run_batch(config_path: str = "config.yaml", venue: Optional[str] = None) -> 
     )
     all_papers = arxiv_papers + openalex_papers
     unique_papers = deduplicate_collected(all_papers)
-    candidates = _filter_by_keywords(unique_papers, cfg.keywords)
+    candidates = filter_by_keywords(unique_papers, cfg.keywords)
     new_candidates = [p for p in candidates if not dedup_store.is_seen(p)]
 
     created_papers: List[Paper] = []
@@ -403,6 +376,12 @@ def run_init(config_path: str = "config.yaml") -> int:
         logger.error("notion_parent_page_id must be set in config.yaml")
         return 1
 
-    db_id = ensure_database(cfg.notion_parent_page_id, cfg.notion_token)
+    db_id = ensure_database(
+        cfg.notion_parent_page_id, cfg.notion_token, cfg.notion_database_id
+    )
     logger.info("Notion database ready: %s", db_id)
+    logger.info(
+        "Pin it by adding this line to config.yaml:\n  notion_database_id: \"%s\"",
+        db_id,
+    )
     return 0

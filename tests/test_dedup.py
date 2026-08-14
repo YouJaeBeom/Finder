@@ -68,6 +68,67 @@ class TestDeduplicateCollected:
 
 # ── DedupStore (cross-run state) ──────────────────────────────────────────────
 
+class TestNewsDeduplicateCollected:
+    """News identity is the link — the same story runs under many headlines."""
+
+    def _news(self, title: str, url: str, venue: str, points: int | None = None) -> Paper:
+        return Paper(
+            identifiers=PaperIdentifiers(
+                normalized_title=normalize_title(title), url=url
+            ),
+            title=title,
+            abstract=None,
+            venue=venue,
+            source=["rss"],
+            content_type="news",
+            url=url,
+            points=points,
+        )
+
+    def test_same_link_under_two_headlines_is_one_item(self):
+        """Syndicated stories reach two feeds with two different headlines."""
+        items = [
+            self._news("Anthropic ships Opus 5", "https://x.com/a", "TechCrunch"),
+            self._news("Opus 5 is out, says Anthropic", "https://x.com/a", "The Verge"),
+        ]
+        result = deduplicate_collected(items)
+
+        assert len(result) == 1
+        assert result[0].source == ["rss"]
+
+    def test_distinct_links_are_kept_apart(self):
+        items = [
+            self._news("Story one", "https://x.com/1", "TechCrunch"),
+            self._news("Story two", "https://x.com/2", "TechCrunch"),
+        ]
+        assert len(deduplicate_collected(items)) == 2
+
+    def test_merge_keeps_the_higher_community_score(self):
+        items = [
+            self._news("Same story", "https://x.com/a", "Hacker News", points=120),
+            self._news("Same story", "https://x.com/a", "Hacker News", points=800),
+        ]
+        result = deduplicate_collected(items)
+
+        assert len(result) == 1
+        assert result[0].points == 800
+
+
+class TestCrossIdentifierMerge:
+    def test_arxiv_and_openalex_records_of_one_paper_merge_on_title(self):
+        """arXiv gives an ID, OpenAlex gives a DOI — only the title is shared."""
+        arxiv = make_paper(arxiv_id="2401.00001", title="Scaling Laws", abstract=None,
+                           source=["arxiv"])
+        openalex = make_paper(doi="10.1234/x", title="Scaling Laws",
+                              abstract="Full abstract.", source=["openalex"])
+
+        result = deduplicate_collected([arxiv, openalex])
+
+        assert len(result) == 1, "the same paper must not be listed twice"
+        assert sorted(result[0].source) == ["arxiv", "openalex"]
+        assert result[0].abstract == "Full abstract."
+
+
 class TestDedupStore:
     def test_new_paper_not_seen(self, tmp_path):
         store = DedupStore(str(tmp_path / "seen_ids.json"))

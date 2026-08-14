@@ -16,24 +16,32 @@ from paper_digest.collectors.rss import _strip_html
 from paper_digest.config import Config, NewsConfig
 from paper_digest.dedup import DedupStore
 from paper_digest.models import Paper, PaperIdentifiers, ResearchNote, normalize_title
+from paper_digest.news_select import select_news
 from paper_digest.notes import generate_note
 from paper_digest.pipeline import _run_news_stage
 from paper_digest.ranking import _is_rankable
 
 
-def _news_item(title: str, url: str, summary: str | None = None) -> Paper:
+def _news_item(
+    title: str,
+    url: str,
+    summary: str | None = None,
+    venue: str = "Hacker News",
+    points: int | None = None,
+) -> Paper:
     return Paper(
         identifiers=PaperIdentifiers(
             arxiv_id=None, doi=None, normalized_title=normalize_title(title), url=url
         ),
         title=title,
         abstract=summary,
-        venue="Hacker News",
+        venue=venue,
         venue_status="published",
         collection_date="2026-08-15",
         source=["hackernews"],
         content_type="news",
         url=url,
+        points=points,
     )
 
 
@@ -69,16 +77,55 @@ class TestRSSCollector:
         assert _strip_html("") == ""
 
 
-# ── Ranking ───────────────────────────────────────────────────────────────────
+# ── Selection (no LLM) ────────────────────────────────────────────────────────
 
-class TestNewsRankability:
-    def test_news_is_rankable_on_title_alone(self):
-        """HN has no article body, so requiring one would drop the whole source."""
-        assert _is_rankable(_news_item("Some headline", "https://e.com/1")) is True
-
-    def test_paper_still_requires_an_abstract(self):
+class TestNewsSelection:
+    def test_paper_ranking_still_requires_an_abstract(self):
+        """The LLM gate is now papers-only, and it still needs a body to judge."""
         paper = Paper(identifiers=PaperIdentifiers(), title="T", abstract=None)
         assert _is_rankable(paper) is False
+
+    def test_empty_keywords_keeps_everything(self):
+        """Clearing the list is the documented way to say 'summarise it all'."""
+        items = [_news_item(f"Story {i}", f"https://e.com/{i}") for i in range(3)]
+        assert len(select_news(items, keywords=[], top_n=10)) == 3
+
+    def test_keywords_filter_and_record_what_matched(self):
+        items = [
+            _news_item("New LLM benchmark", "https://e.com/1"),
+            _news_item("Sourdough starter tips", "https://e.com/2"),
+        ]
+        selected = select_news(items, keywords=["LLM"], top_n=10)
+        assert [item.title for item in selected] == ["New LLM benchmark"]
+        assert selected[0].matched_keywords == ["LLM"]
+
+    def test_higher_scoring_story_wins_within_a_source(self):
+        low = _news_item("AI story low", "https://e.com/1", points=120)
+        high = _news_item("AI story high", "https://e.com/2", points=900)
+        assert select_news([low, high], keywords=["AI"], top_n=1) == [high]
+
+    def test_busy_feed_cannot_crowd_out_the_other_sources(self):
+        """The whole point of the round-robin: TechCrunch posts ~20 items a day."""
+        feed = [
+            _news_item(f"AI feed story {i}", f"https://tc.com/{i}", venue="TechCrunch")
+            for i in range(10)
+        ]
+        hn = [_news_item("AI on HN", "https://e.com/hn", points=500)]
+
+        selected = select_news(feed + hn, keywords=["AI"], top_n=4)
+
+        assert len(selected) == 4
+        assert hn[0] in selected, "Hacker News must still get a slot"
+        assert sum(1 for item in selected if item.venue == "TechCrunch") == 3
+
+    def test_selection_never_calls_the_model(self):
+        """News skips the cheap-model relevance gate entirely — that is the point."""
+        provider = MagicMock()
+        items = [_news_item("AI thing", "https://e.com/1")]
+
+        select_news(items, keywords=["AI"], top_n=5)
+
+        provider.complete.assert_not_called()
 
 
 # ── Note shape ────────────────────────────────────────────────────────────────
@@ -117,10 +164,11 @@ class TestNewsStage:
 
     def _cfg(self, **news_kw) -> Config:
         defaults = dict(enabled=True, hacker_news_enabled=True,
-                        hacker_news_min_points=100, rss_feeds=[], top_n=3)
+                        hacker_news_min_points=100, rss_feeds=[], top_n=3,
+                        keywords=["AI", "LLM"])
         defaults.update(news_kw)
         return Config(
-            keywords=["AI", "LLM"],
+            keywords=["large language model"],  # paper keywords, unused by news
             research_profile="LLM 정렬 연구",
             notion_token="tok",
             anthropic_api_key="key",
@@ -128,18 +176,13 @@ class TestNewsStage:
         )
 
     def _provider(self) -> MagicMock:
+        """A provider that only ever answers note requests — news never ranks."""
         provider = MagicMock()
-
-        def complete(prompt, model, max_tokens=512, system=None):
-            if max_tokens <= 512:  # ranking
-                return json.dumps([{"id": str(i), "score": 9} for i in range(20)])
-            return json.dumps({  # note
-                "one_line_summary": "요약",
-                "key_contributions": ["a", "b", "c"],
-                "relevance_to_profile": "연결점",
-            })
-
-        provider.complete.side_effect = complete
+        provider.complete.return_value = json.dumps({
+            "one_line_summary": "요약",
+            "key_contributions": ["a", "b", "c"],
+            "relevance_to_profile": "연결점",
+        })
         return provider
 
     def test_disabled_news_does_nothing(self):
@@ -153,17 +196,21 @@ class TestNewsStage:
             _news_item("New LLM benchmark released", "https://e.com/1"),
             _news_item("AI chip startup raises round", "https://e.com/2"),
         ]
-        page = MagicMock()
         with (
             patch("paper_digest.pipeline.collect_hackernews_stories", return_value=stories),
             patch("paper_digest.pipeline.collect_rss_entries", return_value=[]),
             patch("paper_digest.pipeline.create_page", side_effect=["p1", "p2"]),
         ):
-            written = _run_news_stage(self._cfg(), self._provider(), DedupStore(), "db")
+            provider = self._provider()
+            written = _run_news_stage(self._cfg(), provider, DedupStore(), "db")
 
         assert len(written) == 2
         assert all(item.content_type == "news" for item in written)
         assert [item.notion_page_id for item in written] == ["p1", "p2"]
+        # One call per story, for its note. Any extra call means a relevance
+        # ranking pass crept back in.
+        assert provider.complete.call_count == 2
+        assert all(item.relevance_score == 0.0 for item in written)
 
     def test_stories_missing_every_keyword_are_dropped(self):
         stories = [_news_item("Sourdough starter tips", "https://e.com/bread")]

@@ -53,12 +53,15 @@ jobs:
       - name: Commit dedup state
         if: success()
         run: |
-          if git diff --quiet -- seen_ids.json; then
-            echo "seen_ids.json unchanged — nothing to commit"
+          # One at a time: `git add a b` with a missing b stages nothing at all.
+          for f in seen_ids.json state.json; do
+            if [ -f "$f" ]; then git add -- "$f"; fi
+          done
+          if git diff --cached --quiet; then
+            echo "state unchanged — nothing to commit"
             exit 0
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add seen_ids.json
-          git commit -m "chore: update seen_ids after ${{ inputs.venue }} batch [skip ci]"
+          git commit -m "chore: update digest state after ${{ inputs.venue }} batch [skip ci]"
           git push

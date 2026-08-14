@@ -46,6 +46,13 @@ def _story_to_paper(story: dict, collection_date: str) -> Optional[Paper]:
         # no article to summarise and the identity key would be missing.
         return None
 
+    posted = story.get("time")
+    published_at = (
+        datetime.fromtimestamp(posted, tz=timezone.utc).isoformat()
+        if isinstance(posted, (int, float))
+        else None
+    )
+
     return Paper(
         identifiers=PaperIdentifiers(
             arxiv_id=None,
@@ -64,6 +71,9 @@ def _story_to_paper(story: dict, collection_date: str) -> Optional[Paper]:
         source=["hackernews"],
         content_type="news",
         url=url,
+        # Community score orders the digest now that news skips LLM ranking.
+        points=int(story["score"]) if isinstance(story.get("score"), (int, float)) else None,
+        published_at=published_at,
     )
 
 

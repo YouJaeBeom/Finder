@@ -6,7 +6,7 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from .models import Paper, PaperIdentifiers
+from .models import Paper
 
 logger = logging.getLogger(__name__)
 
@@ -121,55 +121,51 @@ class DedupStore:
         _save_seen(self._records, self.path)
 
 
-def deduplicate_collected(papers: List[Paper]) -> List[Paper]:
-    """Within a single run, deduplicate papers from multiple sources.
+def _merge_into(existing: Paper, duplicate: Paper) -> None:
+    """Fold a duplicate into the entry already kept, preferring richer data."""
+    for src in duplicate.source:
+        if src not in existing.source:
+            existing.source.append(src)
+    if not existing.abstract and duplicate.abstract:
+        existing.abstract = duplicate.abstract
+    # Keep the highest community score seen for the story — the same article
+    # posted twice to Hacker News should carry the score that stuck.
+    if duplicate.points is not None and (existing.points or 0) < duplicate.points:
+        existing.points = duplicate.points
 
-    A paper that appears in both arXiv and OpenAlex is merged into one entry,
-    preserving sources from both.
+
+_IDENTITY_FIELDS = ("arxiv_id", "doi", "url", "normalized_title")
+
+
+def deduplicate_collected(papers: List[Paper]) -> List[Paper]:
+    """Within a single run, deduplicate items collected from multiple sources.
+
+    A paper appearing in both arXiv and OpenAlex is merged into one entry, as is
+    a news story carried by two feeds. Identity follows the same rule as the
+    cross-run store: any single match on arXiv ID, DOI, URL or normalized title
+    means the same item.
     """
-    seen: Dict[str, Paper] = {}  # normalized_title -> Paper
+    unique: List[Paper] = []
+    index: Dict[tuple, Paper] = {}  # (field, value) -> the entry we kept
 
     for paper in papers:
-        key = paper.identifiers.normalized_title
+        keys = [
+            (field, value)
+            for field in _IDENTITY_FIELDS
+            if (value := getattr(paper.identifiers, field))
+        ]
 
-        # Try arxiv_id match first
-        if paper.identifiers.arxiv_id:
-            for existing in seen.values():
-                if existing.identifiers.arxiv_id == paper.identifiers.arxiv_id:
-                    # Merge sources
-                    for src in paper.source:
-                        if src not in existing.source:
-                            existing.source.append(src)
-                    # Prefer the richer abstract
-                    if not existing.abstract and paper.abstract:
-                        existing.abstract = paper.abstract
-                    break
-            else:
-                seen[key] = paper
-            continue
-
-        # Try DOI match
-        if paper.identifiers.doi:
-            for existing in seen.values():
-                if existing.identifiers.doi == paper.identifiers.doi:
-                    for src in paper.source:
-                        if src not in existing.source:
-                            existing.source.append(src)
-                    if not existing.abstract and paper.abstract:
-                        existing.abstract = paper.abstract
-                    break
-            else:
-                seen[key] = paper
-            continue
-
-        # Fall back to normalized title match
-        if key in seen:
-            for src in paper.source:
-                if src not in seen[key].source:
-                    seen[key].source.append(src)
-            if not seen[key].abstract and paper.abstract:
-                seen[key].abstract = paper.abstract
+        kept = next((index[key] for key in keys if key in index), None)
+        if kept is None:
+            unique.append(paper)
+            kept = paper
         else:
-            seen[key] = paper
+            _merge_into(kept, paper)
 
-    return list(seen.values())
+        # Register every identifier this item carries, so a later item sharing
+        # any one of them — a different headline on the same link, say — resolves
+        # to the entry we already kept.
+        for key in keys:
+            index.setdefault(key, kept)
+
+    return unique

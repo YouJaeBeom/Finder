@@ -92,7 +92,12 @@ class Paper:
     content_type: str = "paper"  # "paper" | "news"
     url: Optional[str] = None  # article/story link, shown in the Notion header
 
-    # Populated after ranking
+    # News ordering signals. News skips LLM relevance scoring, so these are what
+    # decide which stories make the top_n cut.
+    points: Optional[int] = None  # Hacker News community score; None for RSS
+    published_at: Optional[str] = None  # ISO 8601 publish time when the source gives one
+
+    # Populated after ranking (papers only — news keeps 0.0)
     relevance_score: float = 0.0
 
     # Populated after note generation

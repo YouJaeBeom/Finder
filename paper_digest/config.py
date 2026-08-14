@@ -30,8 +30,9 @@ class NewsConfig:
     hacker_news_min_points: int = 100
     rss_feeds: List[str] = field(default_factory=list)
     top_n: int = 5
-    # Falls back to the paper keywords when left empty — IT news usually wants a
-    # broader net than a paper query does, so it can be overridden separately.
+    # Empty means no filter: keep everything collected. The sources are already
+    # curated (HN score floor, hand-picked feeds), so "summarise all of it" is a
+    # legitimate setting rather than a misconfiguration.
     keywords: List[str] = field(default_factory=list)
 
 
@@ -41,6 +42,9 @@ class Config:
 
     # Notion settings
     notion_parent_page_id: str = ""
+    # Optional. Pin the database every run writes to. Leave empty and the tool
+    # finds or creates it under the parent page.
+    notion_database_id: str = ""
 
     # Research parameters
     keywords: List[str] = field(default_factory=list)
@@ -94,6 +98,7 @@ def load_config(path: str = "config.yaml") -> Config:
 
     cfg = Config(
         notion_parent_page_id=data.get("notion_parent_page_id", ""),
+        notion_database_id=data.get("notion_database_id", "") or "",
         keywords=data.get("keywords", []),
         tracked_venues=data.get("tracked_venues", []),
         research_profile=data.get("research_profile", ""),

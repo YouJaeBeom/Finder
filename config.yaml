@@ -7,6 +7,12 @@
 # Get it from the page URL: notion.so/<workspace>/<PAGE_ID>
 notion_parent_page_id: "REPLACE_WITH_YOUR_NOTION_PAGE_ID"
 
+# Optional but recommended once you have run `python -m paper_digest init`.
+# Pinning the database ID here guarantees every run — local or GitHub Actions —
+# appends to the same database instead of creating a new one. Leave it empty and
+# the tool looks for its database under the parent page each run.
+notion_database_id: ""
+
 # ── Research keywords ────────────────────────────────────────────────────────
 # Papers matching any keyword (case-insensitive, title or abstract) are ranked.
 keywords:
@@ -71,8 +77,13 @@ llm:
   notes_model: "claude-opus-5"       # high-quality note generation
 
 # ── IT news (optional) ───────────────────────────────────────────────────────
-# Off by default. When enabled, news is collected in the same weekly run and
-# written to the same Notion DB with Type = "뉴스" (papers are "논문").
+# Written to the same Notion DB as papers, with Type = "뉴스" (papers are "논문").
+#
+# Unlike papers, news does NOT go through LLM relevance scoring. Hacker News is
+# already filtered by community score and the feeds below are hand-picked, so
+# the sources are curated by construction. Selection is: keyword filter →
+# score/recency order → one story per source in turn → top_n. The model is used
+# only to write the Korean briefing for the stories that made the cut.
 news:
   enabled: true
 
@@ -88,8 +99,9 @@ news:
 
   top_n: 5               # max news pages per weekly run
 
-  # Optional. Falls back to the paper keywords above when omitted — IT news
-  # usually wants a broader net than a paper query does.
+  # Leave this list EMPTY to keep everything the sources deliver.
+  # Fill it in to narrow the digest to your interests — a story matching any one
+  # keyword in its title or summary is kept.
   keywords:
     - "AI"
     - "LLM"

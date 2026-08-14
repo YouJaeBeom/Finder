@@ -150,6 +150,25 @@ def run_pipeline_mocked(config_path: str) -> tuple:
     mock_notion_patch_resp = MagicMock()
     mock_notion_patch_resp.raise_for_status = MagicMock()
 
+    def mock_notion_get(url, headers=None, params=None, timeout=None):
+        """Answer the database-resolution lookups.
+
+        An empty children list means "no digest database under this page yet",
+        which sends ensure_database down the create path these tests assert on.
+        """
+        mock_resp = MagicMock()
+        mock_resp.raise_for_status = MagicMock()
+        if "/blocks/" in url:
+            mock_resp.json.return_value = {"results": [], "has_more": False}
+        else:  # GET /databases/{id} — schema check
+            mock_resp.json.return_value = {
+                "properties": {
+                    "Title": {}, "Type": {}, "Venue": {},
+                    "Score": {}, "Tags": {}, "Date": {}, "URL": {},
+                }
+            }
+        return mock_resp
+
     env_vars = {
         "NOTION_TOKEN": "mock-notion-token-for-testing",
         "ANTHROPIC_API_KEY": "mock-anthropic-key-for-testing",
@@ -160,6 +179,7 @@ def run_pipeline_mocked(config_path: str) -> tuple:
         patch("paper_digest.pipeline.collect_openalex_papers", return_value=openalex_papers),
         patch("paper_digest.pipeline.create_provider", return_value=mock_llm),
         patch("paper_digest.notion_writer.requests.post", side_effect=mock_notion_post),
+        patch("paper_digest.notion_writer.requests.get", side_effect=mock_notion_get),
         patch("paper_digest.notion_writer.requests.patch", return_value=mock_notion_patch_resp),
         patch.dict(os.environ, env_vars),
     ):
