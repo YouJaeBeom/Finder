@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from .collectors.arxiv import collect_arxiv_papers
 from .collectors.hackernews import collect_hackernews_stories
@@ -103,7 +103,7 @@ def run_weekly(config_path: str = "config.yaml") -> int:
     # ID is the most common setup mistake, and it should cost two seconds to
     # discover, not a full collection run and a ranking bill.
     try:
-        db_id: Optional[str] = ensure_database(
+        db_id, db_props = ensure_database(
             cfg.parent_page_id(), cfg.notion_token, cfg.database_id()
         )
     except Exception as exc:
@@ -150,6 +150,7 @@ def run_weekly(config_path: str = "config.yaml") -> int:
     # a separate delivery and must not be suppressed by a quiet paper week.
     # paper_exit carries the paper pipeline's verdict to the end.
     paper_exit = 0
+    paper_error: Optional[str] = None
     top_papers: List[Paper] = []
     provider: Optional[LLMProvider] = None
 
@@ -170,16 +171,18 @@ def run_weekly(config_path: str = "config.yaml") -> int:
             logger.error("Ranking anomaly: %s", exc)
             top_papers = []
             paper_exit = 1
+            paper_error = f"ranking anomaly: {exc}"
         else:
             if not top_papers:
                 # Keyword candidates existed but nothing cleared the cutoff. Exit 1
                 # so the Actions run is marked failed and the alert fires — a
                 # misconfigured cutoff or a degraded LLM API must not pass
                 # silently. A genuinely quiet week has zero candidates and keeps 0.
-                logger.error(
-                    "Ranking anomaly: %d candidates ranked but none passed the cutoff",
-                    len(new_candidates),
+                paper_error = (
+                    f"ranking anomaly: {len(new_candidates)} candidates were "
+                    f"ranked but none passed the cutoff"
                 )
+                logger.error("%s", paper_error)
                 paper_exit = 1
 
     # ── 6/7. Notes + Notion write ─────────────────────────────────────────────
@@ -193,7 +196,7 @@ def run_weekly(config_path: str = "config.yaml") -> int:
         logger.info("=== Stage 6: Notion write ===")
         for paper in top_papers:
             try:
-                page_id = create_page(paper, db_id, cfg.notion_token)
+                page_id = create_page(paper, db_id, cfg.notion_token, db_props)
                 paper.notion_page_id = page_id
                 dedup_store.mark_seen(paper)
                 created_papers.append(paper)
@@ -206,7 +209,7 @@ def run_weekly(config_path: str = "config.yaml") -> int:
     # pages that were already written.
     if cfg.news.enabled and provider is None:
         provider = create_provider(cfg)
-    created_news = _run_news_stage(cfg, provider, dedup_store, db_id)
+    created_news = _run_news_stage(cfg, provider, dedup_store, db_id, db_props)
     created_papers.extend(created_news)
 
     dedup_store.persist()
@@ -219,6 +222,7 @@ def run_weekly(config_path: str = "config.yaml") -> int:
         candidates_found=candidates_count,
         papers_ranked=len(new_candidates),
         mode="weekly",
+        error=paper_error,
     )
 
     logger.info(
@@ -235,6 +239,7 @@ def _run_news_stage(
     provider: Optional[LLMProvider],
     dedup_store: DedupStore,
     db_id: Optional[str],
+    db_props: Optional[Set[str]] = None,
 ) -> List[Paper]:
     """Collect, select and write IT news. Returns the items written to Notion.
 
@@ -290,7 +295,7 @@ def _run_news_stage(
     written: List[Paper] = []
     for item in top_news:
         try:
-            item.notion_page_id = create_page(item, db_id, cfg.notion_token)
+            item.notion_page_id = create_page(item, db_id, cfg.notion_token, db_props)
             dedup_store.mark_seen(item)
             written.append(item)
         except Exception as exc:
@@ -328,7 +333,7 @@ def run_batch(config_path: str = "config.yaml", venue: Optional[str] = None) -> 
     # cached ID, or by finding it under the parent page. Batch mode used to
     # require a local state.json, which never exists on a fresh CI checkout.
     try:
-        db_id = ensure_database(
+        db_id, db_props = ensure_database(
             cfg.parent_page_id(), cfg.notion_token, cfg.database_id()
         )
     except Exception as exc:
@@ -380,7 +385,7 @@ def run_batch(config_path: str = "config.yaml", venue: Optional[str] = None) -> 
                     paper.venue = venue
                     paper.venue_status = "accepted"
                     try:
-                        page_id = create_page(paper, db_id, cfg.notion_token)
+                        page_id = create_page(paper, db_id, cfg.notion_token, db_props)
                         paper.notion_page_id = page_id
                         dedup_store.mark_seen(paper)
                         created_papers.append(paper)
@@ -425,7 +430,7 @@ def run_init(config_path: str = "config.yaml") -> int:
         return 1
 
     try:
-        db_id = ensure_database(
+        db_id, _ = ensure_database(
             cfg.parent_page_id(), cfg.notion_token, cfg.database_id()
         )
     except Exception as exc:

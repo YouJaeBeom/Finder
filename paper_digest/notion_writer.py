@@ -28,7 +28,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set, Tuple
 
 import requests
 
@@ -146,53 +146,87 @@ def _find_database_under_page(parent_page_id: str, token: str) -> Optional[str]:
         cursor = data.get("next_cursor")
 
 
-def _sync_schema(db_id: str, token: str) -> None:
-    """Bring an existing database's columns up to the current schema.
-
-    Databases created by earlier versions of this tool are missing columns that
-    were added later, and writing a page with an unknown property is a hard 400
-    — so the schema is topped up rather than left to fail at write time.
-    Renames come first, so a column that only needs renaming is not also added
-    as a second, empty column beside it.
-    """
+def read_properties(db_id: str, token: str) -> Set[str]:
+    """The column names the database currently has."""
     resp = requests.get(
         f"{NOTION_BASE_URL}/databases/{db_id}", headers=_headers(token), timeout=30
     )
     _check(resp, "read database schema")
-    existing = set(resp.json().get("properties", {}))
+    return set(resp.json().get("properties", {}))
+
+
+def _sync_schema(db_id: str, token: str) -> Set[str]:
+    """Bring an existing database's columns up to the current schema.
+
+    Returns the column names that exist afterwards — callers write only those,
+    since Notion rejects a page carrying a property the database doesn't have.
+
+    Databases created by earlier versions of this tool are missing columns that
+    were added later. Renames come first, so a column that only needs renaming
+    is not also added as a second, empty column beside it.
+
+    A failure here is reported and swallowed rather than raised. Notion accepts
+    some schema edits and refuses others, and losing an entire week's digest
+    because one column could not be added is a wildly disproportionate outcome
+    — better to write the columns that do exist and say what was skipped.
+    """
+    existing = read_properties(db_id, token)
+
+    # `existing` stays the columns that are really there, so the failure path
+    # can report them honestly. `planned` is what would exist if the patch
+    # lands, and is what the add-missing pass is computed against — otherwise a
+    # renamed column is also created a second time, empty, under its new name.
+    planned = set(existing)
 
     patch: Dict[str, dict] = {}
-
     for old_name, new_name in _RENAMED_PROPERTIES.items():
         if old_name in existing and new_name not in existing:
             patch[old_name] = {"name": new_name}
-            existing.add(new_name)
+            planned.discard(old_name)
+            planned.add(new_name)
 
     patch.update({
         name: spec
         for name, spec in _DB_PROPERTIES.items()
-        if name not in existing and name != "Title"  # the title column always exists
+        if name not in planned and name != "Title"  # the title column always exists
     })
 
     if not patch:
-        return
+        return existing
 
     logger.info("Updating database schema: %s", ", ".join(sorted(patch)))
-    resp = requests.patch(
-        f"{NOTION_BASE_URL}/databases/{db_id}",
-        headers=_headers(token),
-        json={"properties": patch},
-        timeout=30,
-    )
-    _check(resp, "schema update")
+    try:
+        resp = requests.patch(
+            f"{NOTION_BASE_URL}/databases/{db_id}",
+            headers=_headers(token),
+            json={"properties": patch},
+            timeout=30,
+        )
+        _check(resp, "schema update")
+    except Exception as exc:
+        logger.error(
+            "Could not update the database schema (%s). Continuing with the "
+            "columns that already exist; add the missing ones by hand in Notion "
+            "if you want them: %s",
+            exc, ", ".join(sorted(set(_DB_PROPERTIES) - existing)),
+        )
+        return existing
+
+    # Re-read rather than assuming the patch applied exactly as sent — a
+    # partially-accepted schema edit would otherwise poison every page write.
+    return read_properties(db_id, token)
 
 
 def ensure_database(
     parent_page_id: str,
     token: str,
     configured_db_id: str = "",
-) -> str:
-    """Resolve the one database every run writes to, creating it only if needed.
+) -> Tuple[str, Set[str]]:
+    """Resolve the database every run writes to, and report its column set.
+
+    Returns ``(database_id, property_names)``. Callers need the second half
+    because Notion rejects a page carrying a property the database lacks, and
+    a schema edit is not guaranteed to succeed.
 
     See the module docstring for the resolution order.
     """
@@ -205,15 +239,13 @@ def ensure_database(
         if db_id:
             logger.info("Reusing Notion database from %s: %s", origin, db_id)
             _remember_database(state, db_id)
-            _sync_schema(db_id, token)
-            return db_id
+            return db_id, _sync_schema(db_id, token)
 
     if found := _find_database_under_page(parent_page_id, token):
         logger.info("Found existing '%s' database under the parent page: %s",
                     _DB_TITLE, found)
         _remember_database(state, found)
-        _sync_schema(found, token)
-        return found
+        return found, _sync_schema(found, token)
 
     logger.info("Creating Notion database under parent page %s", parent_page_id)
     payload = {
@@ -233,7 +265,7 @@ def ensure_database(
 
     _remember_database(state, db_id)
     logger.info("Created database: %s", db_id)
-    return db_id
+    return db_id, set(_DB_PROPERTIES)
 
 
 def _remember_database(state: dict, db_id: str) -> None:
@@ -330,8 +362,19 @@ def _build_page_content(paper: Paper) -> List[dict]:
 
 # ── Page creation ──────────────────────────────────────────────────────────────
 
-def create_page(paper: Paper, db_id: str, token: str) -> str:
-    """Create a Notion page for a paper or news item. Returns the new page ID."""
+def create_page(
+    paper: Paper,
+    db_id: str,
+    token: str,
+    known_properties: Optional[Set[str]] = None,
+) -> str:
+    """Create a Notion page for a paper or news item. Returns the new page ID.
+
+    *known_properties* is the database's actual column set. Notion rejects the
+    whole page if it carries a property the database does not have, so a column
+    that could not be created must not be written — one missing column would
+    otherwise cost every page in the run.
+    """
     tags = [{"name": kw} for kw in paper.matched_keywords[:10]]
 
     is_news = paper.content_type == "news"
@@ -355,6 +398,13 @@ def create_page(paper: Paper, db_id: str, token: str) -> str:
         properties["Published"] = {"date": {"start": paper.published_at[:10]}}
     if paper.url:
         properties["URL"] = {"url": paper.url}
+
+    if known_properties is not None:
+        dropped = set(properties) - known_properties
+        if dropped:
+            logger.warning("Database has no %s column(s) — writing without them",
+                           ", ".join(sorted(dropped)))
+        properties = {k: v for k, v in properties.items() if k in known_properties}
 
     children = _build_page_content(paper)
 

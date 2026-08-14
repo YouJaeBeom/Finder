@@ -23,8 +23,14 @@ def write_report(
     papers_ranked: int,
     mode: str,
     report_path: str = REPORT_FILE,
+    error: Optional[str] = None,
 ) -> dict:
-    """Write run-report.json and return the report dict."""
+    """Write run-report.json and return the report dict.
+
+    *error* records why a run that produced output still exited non-zero — a
+    ranking anomaly, say. Without it the report of a failed run says only that
+    zero pages were created, leaving the reason in the step log alone.
+    """
     sections_filled: List[int] = []
     for paper in papers_created:
         if paper.research_note is not None:
@@ -35,6 +41,7 @@ def write_report(
     report = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "mode": mode,
+        "status": "failed" if error else "ok",
         "pages_created": len(papers_created),
         "venue_updated": venue_updated,
         "sections_filled": sections_filled,
@@ -42,6 +49,8 @@ def write_report(
         "candidates_found": candidates_found,
         "papers_ranked": papers_ranked,
     }
+    if error:
+        report["error"] = error
 
     Path(report_path).write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"

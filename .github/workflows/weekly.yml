@@ -38,6 +38,30 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: python -m paper_digest run --mode weekly
 
+      # Surface the reason on the run page itself. Without this the only record
+      # of *why* a run failed is inside a zip you have to download, so the
+      # Annotations box says nothing more useful than "exit code 1".
+      - name: Explain the failure
+        if: failure()
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+
+          report = pathlib.Path("run-report.json")
+          if report.exists():
+              data = json.loads(report.read_text(encoding="utf-8"))
+              reason = data.get("error") or "no error recorded — see the step log"
+          else:
+              reason = "the run died before it could write a report — see the step log"
+
+          # ::error:: is one line; newlines have to be escaped to survive.
+          print("::error::" + str(reason).replace("\n", "%0A"))
+
+          if summary := os.environ.get("GITHUB_STEP_SUMMARY"):
+              with open(summary, "a", encoding="utf-8") as fh:
+                  fh.write(f"## Weekly digest failed\n\n```\n{reason}\n```\n")
+          PY
+
       # Always upload the report: on a failed run it is the evidence of what
       # went wrong, so this must not be skipped when the previous step exits 1.
       - name: Upload run report

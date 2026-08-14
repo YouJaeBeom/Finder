@@ -42,6 +42,27 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: python -m paper_digest run --mode batch --venue "${{ inputs.venue }}"
 
+      - name: Explain the failure
+        if: failure()
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+
+          report = pathlib.Path("run-report.json")
+          if report.exists():
+              data = json.loads(report.read_text(encoding="utf-8"))
+              reason = data.get("error") or "no error recorded — see the step log"
+          else:
+              reason = "the run died before it could write a report — see the step log"
+
+          # ::error:: is one line; newlines have to be escaped to survive.
+          print("::error::" + str(reason).replace("\n", "%0A"))
+
+          if summary := os.environ.get("GITHUB_STEP_SUMMARY"):
+              with open(summary, "a", encoding="utf-8") as fh:
+                  fh.write(f"## Batch update failed\n\n```\n{reason}\n```\n")
+          PY
+
       - name: Upload run report
         if: always()
         uses: actions/upload-artifact@v4
