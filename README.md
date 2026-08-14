@@ -234,7 +234,7 @@ Notion 관련 설정은 **수집·LLM 호출 전에 먼저 검사**하므로, �
 ## 개발
 
 ```bash
-python -m pytest          # 201 tests, 네트워크 호출 없음 (소켓 차단 검증 포함)
+python -m pytest          # 211 tests, 네트워크 호출 없음 (소켓 차단 검증 포함)
 ```
 
 주요 모듈:

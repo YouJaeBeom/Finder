@@ -14,8 +14,9 @@ notion_parent_page_id: "https://app.notion.com/p/Finder-3bc1256e056180898608c395
 notion_database_id: ""
 
 # ── Research keywords ────────────────────────────────────────────────────────
-# 목록의 각 항목은 OR 로 묶입니다 (하나라도 맞으면 후보). 대소문자는 무시하고
-# 제목과 초록을 함께 봅니다. 항목은 세 가지 형태로 쓸 수 있습니다:
+# 목록의 각 항목은 OR 로 묶입니다 (하나라도 맞으면 후보). 대소문자와 하이픈은
+# 무시하고 ("retrieval-augmented" = "retrieval augmented"), 제목과 초록을 함께
+# 봅니다. 짧은 약어는 단어 앞에서만 맞습니다 (RAG 가 stoRAGe 에 안 걸림).
 #
 #   - "구절"                        이 구절이 있으면 매치
 #   - all: [A, B]                   A 와 B 가 모두 있어야 매치
@@ -23,25 +24,92 @@ notion_database_id: ""
 #   - all: [[A, B], [C, D]]         (A 나 B) 그리고 (C 나 D)   ← 중첩 = "이 중 하나"
 #     not: [E]                      단, E 가 있으면 제외
 #
-# "LLM" 같은 넓은 단어를 단독으로 두면 cs.CL 대부분이 걸립니다. 넓은 단어는
-# 아래처럼 주제어와 AND 로 묶으세요.
-keywords:
-  # 구절 자체가 이미 구체적이라 단독으로 둬도 안전한 것들
-  - "reinforcement learning from human feedback"
-  - "direct preference optimization"
-  - "instruction tuning"
-  - "chain of thought"
-  - "retrieval augmented generation"
-  - "constitutional ai"
+# 넓은 단어(bias, fairness, robustness, retrieval)는 단독으로 두면 분야 전체가
+# 걸립니다. 아래에서는 전부 주제어와 AND 로 묶어 두었습니다.
 
-  # 넓은 모델 용어 × 관심 주제 — 둘 다 나올 때만 후보로 잡습니다
+# 여러 규칙에서 재사용하는 "모델 용어 중 하나" 묶음 (YAML 앵커)
+_model_terms: &model
+  ["LLM", "large language model", "language model", "foundation model",
+   "generative model", "chatbot", "conversational agent"]
+
+keywords:
+  # ── 1. 공정하고 신뢰할 수 있는 AI ─────────────────────────────────────────
+  - "algorithmic bias"
+  - "bias mitigation"
+  - "debiasing"
+  - "responsible AI"
+  - "trustworthy AI"
+  - "AI alignment"
+  - "AI safety"
+  - any: ["algorithmic audit", "algorithmic auditing", "model auditing",
+          "auditing framework"]
   - all:
-      - ["LLM", "large language model", "language model"]
-      - ["alignment", "RLHF", "safety", "harmless",
-         "hallucination", "factuality", "instruction following",
-         "reasoning", "RAG", "code generation"]
-    # 리뷰/서베이 논문을 빼고 싶으면 주석을 해제하세요
-    not: ["survey", "position paper"]
+      - ["fairness", "fair ranking", "unfairness"]
+      - [*model, ["retrieval", "ranking", "recommendation", "search",
+                  "dataset", "classifier", "decision"]]
+  - all:
+      - ["robustness", "adversarial"]
+      - *model
+
+  # ── 2. LLM 과 정치적 편향 (핵심 주제) ─────────────────────────────────────
+  - "political bias"
+  - "ideological bias"
+  - "partisan bias"
+  - "political ideology"
+  - "political leaning"
+  - "political orientation"
+  - "political stance"
+  - "political compass"
+  - all:
+      - ["bias", "stance", "opinion", "value"]
+      - ["steering", "steerability", "steerable", "steer"]
+  - all:
+      - ["prompt sensitivity", "prompt robustness", "prompt perturbation",
+         "prompt variation"]
+      - *model
+  - all:
+      - ["multilingual", "cross-lingual", "cross-cultural"]
+      - ["bias", "fairness", "evaluation", "benchmark"]
+
+  # ── 3. 정보 검색 · 탐색 · RAG ─────────────────────────────────────────────
+  - "retrieval-augmented generation"
+  - "information retrieval"
+  - "filter bubble"
+  - "echo chamber"
+  - "generative search"
+  - "conversational search"
+  - any: ["search personalization", "personalized search",
+          "personalized ranking", "search result diversification"]
+  - all:
+      - ["retrieval", "search", "ranking", "RAG"]
+      - ["bias", "fairness", "diversity", "exposure", "polarization"]
+  - all:
+      - ["information access", "information exposure", "information diversity"]
+      - ["algorithmic", "AI", "LLM", "search", "recommender"]
+
+  # ── 4. 웹 데이터 · 데이터 중심 AI ─────────────────────────────────────────
+  - "data-centric AI"
+  - "data provenance"
+  - "dataset documentation"
+  - "data quality"
+  - "bias transfer"
+  - any: ["web corpus", "web corpora", "web crawl", "common crawl",
+          "crawled corpus"]
+  - all:
+      # "corpora" 는 corpus 의 복수형이라 따로 넣어야 합니다
+      - ["dataset", "training data", "pretraining data", "corpus", "corpora"]
+      - ["bias", "fairness", "diversity", "representation", "provenance",
+         "contamination"]
+
+  # ── 5. 평가 · 계산사회과학 ────────────────────────────────────────────────
+  - "LLM-as-a-judge"
+  - "computational social science"
+  - "political communication"
+  - "human-AI interaction"
+  - "public opinion"
+  - all:
+      - ["benchmark", "evaluation", "human evaluation", "annotation"]
+      - [*model, ["bias", "fairness", "political", "social"]]
 
 # ── Venue 표기 ────────────────────────────────────────────────────────────────
 # OpenAlex 는 학회를 정식 명칭으로 줍니다 ("Proceedings of the 32nd ACM
@@ -57,28 +125,53 @@ venue_aliases: {}
   # "Korea Software Congress": "KSC"
 
 # ── Tracked venues (for batch mode) ──────────────────────────────────────────
+# batch 모드에서 게재 확정을 찍을 때 쓰는 목록입니다.
 tracked_venues:
-  - "ACL 2026"
+  - "ACL 2026"       # NLP
   - "EMNLP 2026"
   - "NAACL 2026"
+  - "SIGIR 2026"     # 정보 검색
+  - "CIKM 2026"
+  - "WSDM 2026"
+  - "WWW 2026"
+  - "FAccT 2026"     # 공정성 · 책임성 · 투명성
+  - "AIES 2026"
+  - "ICWSM 2026"     # 웹 · 소셜 미디어
+  - "CSCW 2026"      # 인간-AI 상호작용
   - "ICLR 2026"
   - "NeurIPS 2026"
-  - "ICML 2026"
 
 # ── Research profile ─────────────────────────────────────────────────────────
-# Describe your research focus. The LLM uses this for relevance scoring AND
-# for writing the "내 연구와의 연결점" section of each note.
+# 논문 관련도 채점(싼 모델)과 "내 연구와의 연결점" 작성(좋은 모델)에 모두
+# 쓰입니다. 키워드가 후보를 넓게 잡아오면, 이 글이 그중 무엇이 실제로 중요한지
+# 를 판단합니다. 구체적일수록 좋습니다.
 research_profile: |
-  내 연구는 대형 언어 모델(LLM)의 정렬(alignment)과 안전성에 초점을 맞추고 있습니다.
-  특히 RLHF(인간 피드백을 통한 강화 학습), 지시 추종(instruction following),
-  그리고 모델이 도움이 되면서도 해롭지 않도록 하는 방법에 관심이 있습니다.
-  또한 LLM의 추론 능력 향상, 환각(hallucination) 감소,
-  그리고 실제 응용에서의 신뢰성 향상에도 관심을 가지고 있습니다.
-  최근에는 검색 증강 생성(RAG)과 코드 생성 분야에서 LLM 활용 방법을 연구하고 있습니다.
+  제 연구는 AI 시스템의 공정성과 신뢰성, 특히 대형 언어 모델(LLM)의 정치적
+  편향에 초점을 맞추고 있습니다. LLM 이 정치적·이념적 성향을 어떻게 드러내는지
+  측정하는 벤치마크를 설계하고, 그 편향이 어디서 오는지 인과적으로 분석하며,
+  프롬프트로 성향을 얼마나 조종할 수 있는지(steerability)와 프롬프트 변형에
+  대한 강건성을 다국어 환경에서 평가합니다.
+
+  두 번째 축은 정보 검색과 RAG 입니다. 검색 개인화가 만드는 필터 버블,
+  검색·검색증강생성 과정에서 생기는 노출 편향과 정보 다양성 문제, 그리고
+  생성형 검색이 사람의 정보 접근을 어떻게 바꾸는지에 관심이 있습니다.
+
+  세 번째 축은 데이터입니다. 웹 코퍼스가 어떻게 구성되는지, 데이터의 편향이
+  모델로 어떻게 전이되는지, 데이터 출처(provenance)와 품질을 어떻게 문서화하고
+  평가할지를 봅니다.
+
+  평가 방법론 자체도 연구 대상입니다. LLM-as-a-judge 의 타당성, 사람 평가와의
+  정합성, 벤치마크 설계, 그리고 계산사회과학 관점에서 알고리즘이 여론과 정보
+  노출에 미치는 영향을 다룹니다.
+
+  따라서 다음은 관련도가 낮습니다: 편향·공정성·정보 접근과 무관한 순수 성능
+  최적화(추론 속도, 양자화, 커널), 비전 전용 연구, 이론적 최적화 논문.
 
 # ── arXiv categories ─────────────────────────────────────────────────────────
 arxiv_categories:
-  - cs.CL   # Computation and Language
+  - cs.CL   # Computation and Language — LLM, 편향 측정, 평가
+  - cs.IR   # Information Retrieval — 검색, 개인화, RAG
+  - cs.CY   # Computers and Society — 공정성, 정책, 계산사회과학
   - cs.AI   # Artificial Intelligence
   - cs.LG   # Machine Learning
 
@@ -129,13 +222,22 @@ news:
   top_n: 5               # max news pages per weekly run
 
   # Leave this list EMPTY to keep everything the sources deliver.
-  # Fill it in to narrow the digest to your interests — a story matching any one
-  # keyword in its title or summary is kept.
+  # 뉴스는 논문보다 넓게 잡아도 됩니다 — 출처가 이미 큐레이션돼 있으니까요.
   keywords:
     - "AI"
     - "LLM"
     - "OpenAI"
     - "Anthropic"
-    - "GPU"
-    - "chip"
+    - "chatbot"
     - "open source"
+    # 연구 주제와 겹치는 것들
+    - "bias"
+    - "misinformation"
+    - "disinformation"
+    - "content moderation"
+    - "search engine"
+    - "recommendation algorithm"
+    - "AI regulation"
+    - "AI policy"
+    - "copyright"
+    - "training data"

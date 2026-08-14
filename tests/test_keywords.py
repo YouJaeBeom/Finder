@@ -143,9 +143,70 @@ class TestMalformedRules:
     def test_an_unusable_entry_is_dropped_and_the_rest_survive(self):
         rules = compile_rules([12345, "LLM"])
         assert len(rules) == 1
-        assert rules[0].groups == (("LLM",),)
+        assert [t.label for t in rules[0].groups[0]] == ["LLM"]
 
     def test_unknown_keys_do_not_discard_a_usable_rule(self):
         rules = compile_rules([{"all": ["LLM"], "mode": "strict"}])
         assert len(rules) == 1
-        assert rules[0].groups == (("LLM",),)
+        assert [t.label for t in rules[0].groups[0]] == ["LLM"]
+
+
+class TestSpellingRobustness:
+    """Papers hyphenate the phrases this tool searches for."""
+
+    def test_hyphenated_papers_match_unhyphenated_keywords(self):
+        paper = _paper("Retrieval-Augmented Generation for Open-Domain QA")
+        assert matches_keywords(paper, ["retrieval augmented generation"])
+
+    def test_unhyphenated_papers_match_hyphenated_keywords(self):
+        paper = _paper("Retrieval Augmented Generation at Scale")
+        assert matches_keywords(paper, ["retrieval-augmented generation"])
+
+    def test_llm_as_a_judge_in_both_spellings(self):
+        for title in ("LLM-as-a-Judge: Evaluating Assistants",
+                      "Using an LLM as a judge for evaluation"):
+            assert matches_keywords(_paper(title), ["LLM-as-a-judge"]), title
+
+    def test_en_dashes_are_handled_too(self):
+        assert matches_keywords(_paper("Human–AI Interaction Patterns"),
+                                ["human-ai interaction"])
+
+
+class TestWordBoundaries:
+    """A short keyword must not hide inside a longer word."""
+
+    def test_rag_does_not_match_storage_or_paragraph(self):
+        for title in ("Efficient Storage for Vector Databases",
+                      "Paragraph-level Retrieval", "Average Precision Revisited"):
+            assert matches_keywords(_paper(title), ["RAG"]) == [], title
+
+    def test_rag_still_matches_the_real_thing(self):
+        assert matches_keywords(_paper("A RAG pipeline for QA"), ["RAG"]) == ["RAG"]
+
+    def test_suffixes_and_plurals_still_match(self):
+        assert matches_keywords(_paper("LLMs are biased evaluators"), ["LLM"])
+        assert matches_keywords(_paper("Measuring biases in search"), ["bias"])
+
+
+class TestSharedTermLists:
+    """YAML anchors are how a shared term list is reused across rules, and
+    combining one with extra terms nests it a level deeper."""
+
+    RULES = [{"all": [
+        ["fairness"],
+        [["LLM", "large language model"], ["retrieval", "ranking"]],
+    ]}]
+
+    def test_a_nested_group_is_flattened_into_alternatives(self):
+        assert matches_keywords(_paper("Fairness in LLM evaluation"), self.RULES)
+        assert matches_keywords(_paper("Fairness in ranking systems"), self.RULES)
+
+    def test_the_group_is_still_a_requirement(self):
+        assert matches_keywords(_paper("Fairness in hiring decisions"),
+                                self.RULES) == []
+
+    def test_nesting_does_not_invent_a_stringified_keyword(self):
+        rules = compile_rules(self.RULES)
+        labels = [t.label for group in rules[0].groups for t in group]
+        assert labels == ["fairness", "LLM", "large language model",
+                          "retrieval", "ranking"]
