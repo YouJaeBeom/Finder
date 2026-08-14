@@ -16,6 +16,7 @@ database.
 DB schema:
     Title     (title)          Type      (select: 논문 | 뉴스)
     Venue     (select)         Score     (number, papers only)
+    Status    (select: preprint | published | accepted)
     Tags      (multi_select)   URL       (url)
     Published (date)  — the item's own date: arXiv v1 submission, OpenAlex
                         publication_date, or the news story's timestamp
@@ -93,6 +94,7 @@ _DB_PROPERTIES: Dict[str, dict] = {
     "Title": {"title": {}},
     "Type": {"select": {}},       # "논문" | "뉴스" — papers and news share one DB
     "Venue": {"select": {}},      # paper: ACL 2026 / arXiv preprint; news: source site
+    "Status": {"select": {}},     # preprint | published | accepted
     "Score": {"number": {"format": "number"}},
     "Tags": {"multi_select": {}},
     "Published": {"date": {}},    # the item's own date — what you sort a digest by
@@ -340,6 +342,7 @@ def create_page(paper: Paper, db_id: str, token: str) -> str:
         },
         "Type": {"select": {"name": "뉴스" if is_news else "논문"}},
         "Venue": {"select": {"name": paper.venue[:100]}},
+        "Status": {"select": {"name": paper.venue_status[:100]}},
         # News is not LLM-scored. Writing 0 would sort every story below every
         # paper and read as "judged irrelevant"; an empty cell is the truth.
         "Score": {"number": None if is_news else paper.relevance_score},
@@ -376,10 +379,15 @@ def create_page(paper: Paper, db_id: str, token: str) -> str:
 # ── Page update (batch venue mode) ────────────────────────────────────────────
 
 def update_venue(page_id: str, venue: str, token: str) -> None:
-    """Update the Venue property of an existing Notion page."""
+    """Stamp an accepted venue onto an existing page.
+
+    Status moves with it — leaving it at "preprint" would hand the same page
+    back to the next batch run.
+    """
     payload = {
         "properties": {
             "Venue": {"select": {"name": venue[:100]}},
+            "Status": {"select": {"name": "accepted"}},
         }
     }
     resp = requests.patch(
@@ -395,7 +403,14 @@ def update_venue(page_id: str, venue: str, token: str) -> None:
 # ── Database query (for batch mode) ───────────────────────────────────────────
 
 def query_preprint_pages(db_id: str, token: str) -> List[dict]:
-    """Return all pages in the DB that still have venue_status == preprint."""
+    """Return all pages in the DB still marked as preprints.
+
+    Filters on Status, not on the venue name. Notion's ``select`` filter has no
+    ``contains`` condition — only ``equals`` — so the previous
+    ``Venue contains "arXiv"`` was rejected outright, and it would have missed
+    the repositories that are not arXiv (Zenodo, OSF, institutional archives)
+    even if it had worked.
+    """
     results = []
     has_more = True
     cursor: Optional[str] = None
@@ -403,8 +418,8 @@ def query_preprint_pages(db_id: str, token: str) -> List[dict]:
     while has_more:
         payload: dict = {
             "filter": {
-                "property": "Venue",
-                "select": {"contains": "arXiv"},
+                "property": "Status",
+                "select": {"equals": "preprint"},
             },
             "page_size": 100,
         }

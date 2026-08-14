@@ -14,28 +14,34 @@ notion_parent_page_id: "https://app.notion.com/p/Finder-3bc1256e056180898608c395
 notion_database_id: ""
 
 # ── Research keywords ────────────────────────────────────────────────────────
-# Papers matching any keyword (case-insensitive, title or abstract) are ranked.
+# 목록의 각 항목은 OR 로 묶입니다 (하나라도 맞으면 후보). 대소문자는 무시하고
+# 제목과 초록을 함께 봅니다. 항목은 세 가지 형태로 쓸 수 있습니다:
+#
+#   - "구절"                        이 구절이 있으면 매치
+#   - all: [A, B]                   A 와 B 가 모두 있어야 매치
+#   - any: [A, B]                   A 나 B 중 하나라도 있으면 매치
+#   - all: [[A, B], [C, D]]         (A 나 B) 그리고 (C 나 D)   ← 중첩 = "이 중 하나"
+#     not: [E]                      단, E 가 있으면 제외
+#
+# "LLM" 같은 넓은 단어를 단독으로 두면 cs.CL 대부분이 걸립니다. 넓은 단어는
+# 아래처럼 주제어와 AND 로 묶으세요.
 keywords:
-  - "large language model"
-  - "LLM"
-  - "instruction tuning"
-  - "RLHF"
+  # 구절 자체가 이미 구체적이라 단독으로 둬도 안전한 것들
   - "reinforcement learning from human feedback"
+  - "direct preference optimization"
+  - "instruction tuning"
   - "chain of thought"
   - "retrieval augmented generation"
-  - "RAG"
-  - "alignment"
-  - "in-context learning"
-  - "prompt engineering"
-  - "fine-tuning"
-  - "neural machine translation"
-  - "natural language processing"
-  - "transformer"
-  - "language model"
-  - "hallucination"
-  - "factuality"
-  - "code generation"
-  - "reasoning"
+  - "constitutional ai"
+
+  # 넓은 모델 용어 × 관심 주제 — 둘 다 나올 때만 후보로 잡습니다
+  - all:
+      - ["LLM", "large language model", "language model"]
+      - ["alignment", "RLHF", "safety", "harmless",
+         "hallucination", "factuality", "instruction following",
+         "reasoning", "RAG", "code generation"]
+    # 리뷰/서베이 논문을 빼고 싶으면 주석을 해제하세요
+    # not: ["survey", "position paper"]
 
 # ── Tracked venues (for batch mode) ──────────────────────────────────────────
 tracked_venues:
@@ -71,10 +77,20 @@ max_papers_to_rank: 1500  # truncate by score estimate if exceeded
 top_n: 10                 # maximum Notion pages per weekly run (5-10 target)
 
 # ── LLM provider ─────────────────────────────────────────────────────────────
+# Claude(Anthropic) 와 ChatGPT(OpenAI) 둘 다 됩니다. provider 를 바꾸고 해당
+# 제공자의 키를 GitHub Secrets 에 넣으면 끝입니다 (Anthropic → ANTHROPIC_API_KEY,
+# OpenAI → OPENAI_API_KEY). 랭킹과 노트 작성 모델은 따로 지정하므로,
+# "싼 모델로 거르고 좋은 모델로 정리한다"는 구조는 어느 쪽이든 동일합니다.
 llm:
   provider: "anthropic"          # "anthropic" | "openai"
   ranking_model: "claude-haiku-4-5"    # cheap bulk ranking
-  notes_model: "claude-opus-5"       # high-quality note generation
+  notes_model: "claude-sonnet-5"       # high-quality note generation
+
+  # ── ChatGPT 로 바꾸려면 위 세 줄을 지우고 아래를 쓰세요 ──
+  # provider: "openai"
+  # ranking_model: "gpt-4o-mini"       # 저렴한 대량 랭킹용
+  # notes_model: "gpt-4o"              # 노트 작성용
+  # (계정에서 쓸 수 있는 어떤 chat 모델 ID 든 넣을 수 있습니다)
 
 # ── IT news (optional) ───────────────────────────────────────────────────────
 # Written to the same Notion DB as papers, with Type = "뉴스" (papers are "논문").

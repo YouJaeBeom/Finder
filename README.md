@@ -121,13 +121,56 @@ GitHub `Actions` 탭 → `Weekly paper digest` → **Run workflow** 버튼으로
 
 | 하고 싶은 것 | 방법 |
 |---|---|
-| 관심 키워드 바꾸기 | `config.yaml`의 `keywords` / `news.keywords` 수정 후 push |
+| 관심 키워드 바꾸기 | `config.yaml`의 `keywords` / `news.keywords` 수정 후 push (아래 문법 참고) |
+| LLM을 ChatGPT로 바꾸기 | `llm.provider: "openai"` + `OPENAI_API_KEY` 시크릿 등록 |
 | 뉴스 소스 추가 | `config.yaml`의 `news.rss_feeds`에 피드 URL 추가 (코드 수정 불필요) |
 | 뉴스 전부 받기 | `news.keywords`를 빈 리스트로 |
 | 뉴스 끄기 | `news.enabled: false` |
 | 논문 개수 조정 | `top_n` (기본 10), `news.top_n` (기본 5) |
 | 지금 당장 한 번 돌리기 | Actions 탭 → Run workflow |
 | 학회 게재 확정 반영 | Actions 탭 → `Proceedings batch update` → venue 입력 (예: `ACL 2026`) |
+
+### 키워드 문법 (AND / OR / 제외)
+
+목록의 **항목끼리는 OR**입니다. 항목 하나는 아래 네 형태 중 하나입니다.
+
+```yaml
+keywords:
+  - "instruction tuning"           # 이 구절이 있으면 매치
+
+  - all: ["LLM", "alignment"]      # 둘 다 있어야 매치
+
+  - any: ["RLHF", "DPO"]           # 하나라도 있으면 매치
+
+  - all:                           # 중첩 리스트 = "이 중 하나"
+      - ["LLM", "large language model"]   #   (모델 용어 중 하나)
+      - ["alignment", "safety"]           #   AND (주제 용어 중 하나)
+    not: ["survey"]                # 단, survey 가 있으면 제외
+```
+
+대소문자는 무시하고, **제목과 초록을 합쳐서** 봅니다.
+
+`"LLM"` 하나만 넣으면 cs.CL 대부분이 걸립니다 — 넓은 단어는 `all`로 주제어와 묶으세요. 실제로 지금 설정에서:
+
+```
+통과  Scaling LLM alignment with human feedback      ['LLM', 'alignment']
+제외  LLM inference speedup with quantization        []
+```
+
+Notion `Tags` 컬럼에는 **실제로 맞은 단어**가 들어가므로, 왜 걸렸는지 나중에 확인할 수 있습니다.
+
+### LLM 제공자 바꾸기
+
+Claude와 ChatGPT 둘 다 지원합니다. `config.yaml`에서:
+
+```yaml
+llm:
+  provider: "openai"
+  ranking_model: "gpt-4o-mini"    # 대량 랭킹 (싼 모델)
+  notes_model: "gpt-4o"           # 노트 작성 (좋은 모델)
+```
+
+그리고 GitHub Secrets에 `OPENAI_API_KEY`를 등록하면 됩니다. "싼 모델로 거르고 좋은 모델로 정리한다"는 구조는 어느 쪽이든 같습니다.
 
 ### 로컬에서 직접 돌리기
 
@@ -168,7 +211,7 @@ Notion 관련 설정은 **수집·LLM 호출 전에 먼저 검사**하므로, �
 ## 개발
 
 ```bash
-python -m pytest          # 124 tests, 네트워크 호출 없음 (소켓 차단 검증 포함)
+python -m pytest          # 160 tests, 네트워크 호출 없음 (소켓 차단 검증 포함)
 ```
 
 주요 모듈:

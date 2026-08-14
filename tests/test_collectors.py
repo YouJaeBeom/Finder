@@ -113,6 +113,63 @@ class TestPaperLinkAndDate:
         assert paper.published_at == "2026-08-11"
 
 
+class TestVenueSelection:
+    """Venue must name the conference or journal, not the file host.
+
+    primary_location is whichever copy OpenAlex considers canonical, which for
+    anything with a preprint is usually the repository — which is how "Zenodo"
+    and "OpenAlex" ended up in the Venue column instead of the actual venue.
+    """
+
+    def _work(self, *locations: dict) -> dict:
+        return {
+            "title": "A Paper",
+            "abstract_inverted_index": {"We": [0], "study": [1]},
+            "primary_location": locations[0] if locations else {},
+            "locations": list(locations),
+            "publication_date": "2026-08-11",
+        }
+
+    def _source(self, name: str, source_type: str) -> dict:
+        return {"source": {"display_name": name, "type": source_type}}
+
+    def test_conference_wins_over_the_repository_hosting_the_preprint(self):
+        paper = _parse_work(self._work(
+            self._source("Zenodo", "repository"),
+            self._source("ACL 2026", "conference"),
+        ))
+        assert paper.venue == "ACL 2026"
+        assert paper.venue_status == "published"
+
+    def test_journal_is_used_when_there_is_one(self):
+        paper = _parse_work(self._work(
+            self._source("arXiv", "repository"),
+            self._source("Transactions of the ACL", "journal"),
+        ))
+        assert paper.venue == "Transactions of the ACL"
+
+    def test_repository_only_is_labelled_a_preprint(self):
+        """Otherwise Venue reads "Zenodo", which is a file host, not a venue."""
+        paper = _parse_work(self._work(self._source("Zenodo", "repository")))
+        assert paper.venue == "Zenodo preprint"
+        assert paper.venue_status == "preprint"
+
+    def test_arxiv_gets_its_established_label(self):
+        paper = _parse_work(self._work(self._source("arXiv", "repository")))
+        assert paper.venue == "arXiv preprint"
+
+    def test_no_location_at_all_still_yields_a_venue(self):
+        paper = _parse_work(self._work())
+        assert paper.venue == "preprint"
+        assert paper.venue_status == "preprint"
+
+    def test_every_preprint_venue_contains_the_word_preprint(self):
+        """Batch mode finds pages to stamp by their preprint status."""
+        for host in ("Zenodo", "OSF", "arXiv", "SSRN"):
+            paper = _parse_work(self._work(self._source(host, "repository")))
+            assert "preprint" in paper.venue
+
+
 class TestArxivIdParsing:
     """Tests for arXiv ID version filtering."""
 

@@ -13,14 +13,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
-from paper_digest.notion_writer import _DB_TITLE, ensure_database
+from paper_digest.notion_writer import _DB_PROPERTIES, _DB_TITLE, ensure_database
 
-FULL_SCHEMA = {
-    "properties": {
-        "Title": {}, "Type": {}, "Venue": {}, "Score": {},
-        "Tags": {}, "Published": {}, "Collected": {}, "URL": {},
-    }
-}
+# Derived from the schema itself, so adding a column can't silently leave these
+# tests asserting against a shape the code no longer writes.
+FULL_SCHEMA = {"properties": {name: {} for name in _DB_PROPERTIES}}
 
 
 def _resp(payload: dict) -> MagicMock:
@@ -160,10 +157,9 @@ class TestSchemaTopUp:
 
     def test_missing_columns_are_added_to_an_older_database(self):
         """A database from before Type/URL existed would 400 on every write."""
-        patch_req = self._sync({"properties": {
-            "Title": {}, "Venue": {}, "Score": {}, "Tags": {},
-            "Published": {}, "Collected": {},
-        }})
+        older = dict(FULL_SCHEMA["properties"])
+        del older["Type"], older["URL"]
+        patch_req = self._sync({"properties": older})
 
         patch_req.assert_called_once()
         assert set(patch_req.call_args.kwargs["json"]["properties"]) == {"Type", "URL"}

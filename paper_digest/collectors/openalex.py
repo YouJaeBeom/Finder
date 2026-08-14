@@ -39,6 +39,7 @@ _SELECTED_FIELDS = ",".join([
     "abstract_inverted_index",
     "publication_date",
     "primary_location",
+    "locations",  # the journal/conference is often not the primary location
     "authorships",
 ])
 
@@ -65,6 +66,56 @@ def reconstruct_abstract(inverted_index: Optional[Dict]) -> Optional[str]:
     return text if text else None
 
 
+# OpenAlex source types that name where a paper was *published*. Everything
+# else — chiefly "repository", which covers arXiv, Zenodo, OSF and institutional
+# archives — is where a copy is *hosted*, which is not a venue.
+_PUBLISHED_SOURCE_TYPES = {"journal", "conference", "book series", "ebook platform"}
+
+
+def _locations(work: dict) -> List[dict]:
+    """Every location for a work, primary first, without duplicates."""
+    primary = work.get("primary_location") or {}
+    seen = [primary] if primary else []
+    for loc in work.get("locations") or []:
+        if loc and loc not in seen:
+            seen.append(loc)
+    return seen
+
+
+def _source_name(location: dict) -> str:
+    return ((location.get("source") or {}).get("display_name") or "").strip()
+
+
+def _pick_venue(work: dict) -> tuple[str, str]:
+    """Return (venue, venue_status) — the journal or conference where possible.
+
+    ``primary_location`` is whichever copy OpenAlex considers canonical, which
+    for anything with a preprint is usually the repository. Taking it verbatim
+    is why venues read "Zenodo" or "OpenAlex" instead of the conference the
+    paper was actually presented at, so the published locations are searched
+    first and repositories are only a fallback.
+    """
+    locations = _locations(work)
+
+    for location in locations:
+        source = location.get("source") or {}
+        name = _source_name(location)
+        if name and (source.get("type") or "").lower() in _PUBLISHED_SOURCE_TYPES:
+            return name[:100], "published"
+
+    # Only repository copies exist, so this is a preprint. Say so in the venue
+    # itself — batch mode looks for exactly that word when stamping an accepted
+    # venue onto pages later.
+    for location in locations:
+        name = _source_name(location)
+        if name:
+            if "arxiv" in name.lower():
+                return "arXiv preprint", "preprint"
+            return f"{name} preprint"[:100], "preprint"
+
+    return "preprint", "preprint"
+
+
 def _parse_work(work: dict) -> Optional[Paper]:
     """Parse one OpenAlex work dict into a Paper."""
     title = (work.get("title") or "").strip()
@@ -83,12 +134,8 @@ def _parse_work(work: dict) -> Optional[Paper]:
     if raw_doi:
         doi = raw_doi.replace("https://doi.org/", "").strip()
 
-    # Venue from primary_location
     primary = work.get("primary_location") or {}
-    source = primary.get("source") or {}
-    venue_name = source.get("display_name") or "OpenAlex"
-    if "arxiv" in venue_name.lower():
-        venue_name = "arXiv preprint"
+    venue_name, venue_status = _pick_venue(work)
 
     # Authors
     authors = [
@@ -115,7 +162,7 @@ def _parse_work(work: dict) -> Optional[Paper]:
         abstract=abstract,
         authors=authors,
         venue=venue_name,
-        venue_status="preprint",
+        venue_status=venue_status,
         collection_date=datetime.now(timezone.utc).date().isoformat(),
         source=["openalex"],
         url=url,
