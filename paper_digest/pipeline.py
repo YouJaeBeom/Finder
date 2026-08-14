@@ -122,6 +122,7 @@ def run_weekly(config_path: str = "config.yaml") -> int:
         keywords=cfg.keywords,
         days_back=cfg.days_back,
         venue_aliases=cfg.venue_aliases,
+        excluded_venues=cfg.excluded_venues,
     )
     all_papers = arxiv_papers + openalex_papers
     logger.info("Collected %d total papers (arXiv: %d, OpenAlex: %d)",
@@ -366,6 +367,7 @@ def run_batch(config_path: str = "config.yaml", venue: Optional[str] = None) -> 
         keywords=cfg.keywords,
         days_back=cfg.days_back,
         venue_aliases=cfg.venue_aliases,
+        excluded_venues=cfg.excluded_venues,
     )
     all_papers = arxiv_papers + openalex_papers
     unique_papers = deduplicate_collected(all_papers)

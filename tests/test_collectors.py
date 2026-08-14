@@ -154,8 +154,12 @@ class TestVenueSelection:
         assert paper.venue == "TKDE"
 
     def test_repository_only_keeps_the_repository_name(self):
-        """Venue is the name; that it is a preprint is Status's job."""
-        paper = _parse_work(self._work(self._source("Zenodo", "repository")))
+        """Venue is the name; that it is a preprint is Status's job.
+
+        Exclusion is switched off here — this is about naming, not policy.
+        """
+        paper = _parse_work(self._work(self._source("Zenodo", "repository")),
+                            excluded_venues=[])
         assert paper.venue == "Zenodo"
         assert paper.venue_status == "preprint"
 
@@ -172,7 +176,8 @@ class TestVenueSelection:
     def test_venue_never_carries_a_status_suffix(self):
         """Batch mode finds pages to stamp via Status, not via the venue name."""
         for host in ("Zenodo", "OSF", "arXiv", "SSRN"):
-            paper = _parse_work(self._work(self._source(host, "repository")))
+            paper = _parse_work(self._work(self._source(host, "repository")),
+                                excluded_venues=[])
             assert "preprint" not in paper.venue.lower()
 
     def test_config_aliases_override_the_built_in_table(self):
@@ -215,3 +220,52 @@ class TestArxivIdParsing:
         from paper_digest.collectors.arxiv import _parse_arxiv_id
         result = _parse_arxiv_id("not-an-arxiv-id")
         assert result is None
+
+
+class TestUnmoderatedArchivesAreDropped:
+    """Anyone can upload anything to Zenodo or figshare and get a DOI, so
+    OpenAlex indexes manifestos and field guides next to research. Six of ten
+    papers in one real run came from these."""
+
+    def _work(self, venue: str, source_type: str = "repository", **extra) -> dict:
+        location = {"source": {"display_name": venue, "type": source_type}}
+        work = {
+            "title": "Intention is All You Need: A Manifesto",
+            "abstract_inverted_index": {"A": [0], "manifesto": [1]},
+            "primary_location": location,
+            "locations": [location],
+            "publication_date": "2026-08-11",
+        }
+        work.update(extra)
+        return work
+
+    def test_zenodo_and_figshare_are_dropped(self):
+        for venue in ("Zenodo", "Zenodo (CERN European Organization for Nuclear "
+                      "Research)", "figshare", "Research Square", "TechRxiv"):
+            assert _parse_work(self._work(venue)) is None, venue
+
+    def test_arxiv_is_kept(self):
+        """arXiv is a repository too, but its CS sections are moderated."""
+        paper = _parse_work(self._work("arXiv (Cornell University)"))
+        assert paper is not None and paper.venue == "arXiv"
+
+    def test_a_real_venue_is_kept(self):
+        paper = _parse_work(self._work(
+            "Proceedings of the 32nd ACM International Conference on "
+            "Information and Knowledge Management", source_type="conference"))
+        assert paper is not None and paper.venue == "CIKM"
+
+    def test_a_zenodo_copy_of_a_published_paper_survives(self):
+        """_pick_venue prefers the conference, so the paper is not collateral."""
+        zenodo = {"source": {"display_name": "Zenodo", "type": "repository"}}
+        acl = {"source": {"display_name": "Annual Meeting of the Association "
+                          "for Computational Linguistics", "type": "conference"}}
+        work = self._work("Zenodo")
+        work["primary_location"], work["locations"] = zenodo, [zenodo, acl]
+
+        paper = _parse_work(work)
+        assert paper is not None and paper.venue == "ACL"
+
+    def test_the_list_is_configurable(self):
+        assert _parse_work(self._work("Zenodo"), excluded_venues=[]) is not None
+        assert _parse_work(self._work("arXiv"), excluded_venues=["arxiv"]) is None

@@ -332,3 +332,34 @@ class TestDeletedDatabase:
 
         assert db_id == "live-db"
         post.assert_not_called()
+
+
+class TestSummaryColumn:
+    """The one-liner belongs in a column, so the table is readable without
+    opening every page."""
+
+    def _paper(self, note=None) -> Paper:
+        from paper_digest.models import ResearchNote
+        return Paper(
+            identifiers=PaperIdentifiers(), title="A Paper", abstract="...",
+            venue="ACL", collection_date="2026-08-15",
+            research_note=ResearchNote(note, ["a"], "m", "r") if note else None,
+        )
+
+    def _write(self, paper) -> dict:
+        with patch("paper_digest.notion_writer.requests.post",
+                   return_value=_resp({"id": "p1"})) as post:
+            create_page(paper, "db", "tok")
+        return post.call_args.kwargs["json"]["properties"]
+
+    def test_the_one_line_summary_lands_in_the_column(self):
+        written = self._write(self._paper("정치적 편향을 다국어로 측정한다."))
+        assert written["Summary"]["rich_text"][0]["text"]["content"] == (
+            "정치적 편향을 다국어로 측정한다.")
+
+    def test_no_note_means_no_summary_property(self):
+        assert "Summary" not in self._write(self._paper())
+
+    def test_an_overlong_summary_is_truncated_to_notions_limit(self):
+        written = self._write(self._paper("가" * 3000))
+        assert len(written["Summary"]["rich_text"][0]["text"]["content"]) == 2000

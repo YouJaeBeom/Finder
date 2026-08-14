@@ -138,10 +138,17 @@ def collect_arxiv_papers(
     cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
 
     cat_query = " OR ".join(f"cat:{c}" for c in categories)
-    # Date range (coarse — we validate precisely via published date)
+    # Date range (coarse — we validate precisely via published date).
+    #
+    # The separator is a literal space, not "+TO+". arXiv's own docs show the
+    # query URL-encoded, where a space appears as "+", and copying that form
+    # into a params dict double-encodes it: requests sends "%2BTO%2B", arXiv
+    # cannot parse the range, and the whole query collapses. It fails quietly —
+    # one result instead of several hundred — so the source looks alive while
+    # contributing nothing.
     start_str = cutoff.strftime("%Y%m%d") + "0000"
     end_str = datetime.now(timezone.utc).strftime("%Y%m%d") + "2359"
-    date_filter = f"submittedDate:[{start_str}+TO+{end_str}]"
+    date_filter = f"submittedDate:[{start_str} TO {end_str}]"
     query = f"({cat_query}) AND {date_filter}"
 
     papers: List[Paper] = []

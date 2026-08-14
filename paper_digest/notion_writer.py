@@ -96,6 +96,7 @@ _DB_PROPERTIES: Dict[str, dict] = {
     "Venue": {"select": {}},      # paper: ACL 2026 / arXiv preprint; news: source site
     "Status": {"select": {}},     # preprint | published | accepted
     "Score": {"number": {"format": "number"}},
+    "Summary": {"rich_text": {}}, # the note's one-liner, readable without opening the page
     "Tags": {"multi_select": {}},
     "Published": {"date": {}},    # the item's own date — what you sort a digest by
     "Collected": {"date": {}},    # the day a run happened to fetch it
@@ -418,6 +419,13 @@ def create_page(
         "Tags": {"multi_select": tags},
         "Collected": {"date": {"start": paper.collection_date}},
     }
+    # The one-liner in a column, so the table is readable without opening pages.
+    if paper.research_note and paper.research_note.one_line_summary:
+        properties["Summary"] = {
+            "rich_text": [{
+                "text": {"content": paper.research_note.one_line_summary[:2000]}
+            }]
+        }
     if paper.published_at:
         # Date-only: sources disagree on whether they give a timestamp, and a
         # column mixing "2026-08-14" with "2026-08-14 09:31" reads as a bug.

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence
 
 import requests
 
@@ -124,7 +124,31 @@ def _pick_venue(work: dict, aliases: Optional[Dict[str, str]] = None) -> tuple[s
     return "unknown", "preprint"
 
 
-def _parse_work(work: dict, aliases: Optional[Dict[str, str]] = None) -> Optional[Paper]:
+# General-purpose deposit archives. Anyone can upload anything to these with no
+# moderation and get a DOI for it, so OpenAlex indexes manifestos and field
+# guides alongside research. arXiv is also a repository but its CS sections are
+# moderated, which is the difference that matters here.
+DEFAULT_EXCLUDED_VENUES = (
+    "zenodo",
+    "figshare",
+    "research square",
+    "preprints.org",
+    "authorea",
+    "researchgate",
+    "techrxiv",
+)
+
+
+def _is_excluded(venue: str, excluded: Sequence[str]) -> bool:
+    lowered = venue.lower()
+    return any(pattern.lower() in lowered for pattern in excluded)
+
+
+def _parse_work(
+    work: dict,
+    aliases: Optional[Dict[str, str]] = None,
+    excluded_venues: Optional[Sequence[str]] = None,
+) -> Optional[Paper]:
     """Parse one OpenAlex work dict into a Paper."""
     title = (work.get("title") or "").strip()
     if not title:
@@ -144,6 +168,14 @@ def _parse_work(work: dict, aliases: Optional[Dict[str, str]] = None) -> Optiona
 
     primary = work.get("primary_location") or {}
     venue_name, venue_status = _pick_venue(work, aliases)
+
+    # Dropped only when the venue we settled on is an unmoderated archive —
+    # _pick_venue prefers a real journal or conference, so a paper that is both
+    # on Zenodo and in a proceedings keeps the proceedings and survives.
+    excluded = DEFAULT_EXCLUDED_VENUES if excluded_venues is None else excluded_venues
+    if _is_excluded(venue_name, excluded):
+        logger.debug("Skipping %r from excluded venue %s", title[:60], venue_name)
+        return None
 
     # Authors
     authors = [
@@ -185,6 +217,7 @@ def collect_openalex_papers(
     days_back: int = 7,
     max_results: int = 500,
     venue_aliases: Optional[Dict[str, str]] = None,
+    excluded_venues: Optional[Sequence[str]] = None,
 ) -> List[Paper]:
     """Fetch papers from OpenAlex published in the last *days_back* days.
 
@@ -225,7 +258,7 @@ def collect_openalex_papers(
         meta = data.get("meta") or {}
 
         for work in results:
-            paper = _parse_work(work, venue_aliases)
+            paper = _parse_work(work, venue_aliases, excluded_venues)
             if paper is not None:
                 papers.append(paper)
 

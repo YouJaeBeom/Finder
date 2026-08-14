@@ -55,18 +55,22 @@ keywords:
   - all:                                   # 페르소나 프롬프팅
       - ["persona", "role-play", "roleplay", "persona prompting"]
       - *model
-  - all:                                   # 응답 일관성 · 견고성 평가
-      - ["robustness", "consistency", "instability", "variance"]
+  - all:                                   # 응답 일관성 · 견고성
+      - ["robustness", "consistency", "inconsistency", "instability",
+         "sensitivity"]
       - *model
-      - ["prompt", "persona", "response", "evaluation", "language"]
+      # 무엇에 대한 견고성인지 못박습니다 — 그냥 "robust LLM" 은 너무 넓습니다.
+      - [*political, *bias, ["prompt", "persona", "opinion", "stance",
+                             "demographic", "cultural"]]
   - all:                                   # 편향 "측정" 은 어순이 제각각이라 단어로 분리
       - *bias
       - ["measurement", "measuring", "measure", "quantify", "quantifying",
          "benchmark", "probe", "elicit"]
       - [*model, *political]
-  - all:                                   # 다국어 · 교차문화 평가
+  - all:                                   # 다국어 · 교차문화 편향 평가
       - ["multilingual", "cross-lingual", "cross-cultural", "multi-lingual"]
-      - [*bias, ["evaluation", "benchmark", "stance", "alignment"]]
+      # 편향·정치 축을 요구합니다. 다국어 평가 일반은 관심사가 아닙니다.
+      - [*bias, *political, ["stereotyp", "culture", "value"]]
 
   # ── 2. 데이터 중심 · 인과적 편향 분석 ─────────────────────────────────────
   # Core: training data bias / web data bias / bias propagation / causal / controlled pretraining
@@ -81,8 +85,10 @@ keywords:
       - ["training data", "pretraining data", "pre-training data", "web data",
          "web corpus", "web corpora", "corpus", "corpora", "dataset",
          "data source"]
-      - [*bias, ["provenance", "quality", "curation", "composition",
-                 "contamination", "representation", "diversity"]]
+      # "representation" 과 "diversity" 는 뺐습니다 — representation learning,
+      # data diversity 증강 논문이 통째로 걸립니다.
+      - [*bias, ["provenance", "curation", "composition", "contamination",
+                 "toxicity", "stereotyp"]]
   - all:                                   # 인과적 분석 · 통제 실험
       - ["causal", "causally", "causality", "intervention", "counterfactual",
          "ablation", "controlled experiment"]
@@ -121,16 +127,20 @@ keywords:
   - "political communication"
   - "human-AI interaction"
   - "public opinion"
+  # "preregistered" 는 뺐습니다 — 사전등록 실험이 아닌 곳에서도 흔히 쓰입니다.
   - any: ["survey experiment", "user study", "crowdsourced evaluation",
-          "preregistered"]
+          "vignette experiment", "participants were", "human subjects"]
   - all:                                   # 자동 평가 vs 사람 평가
       - ["human evaluation", "human annotation", "human judgment",
          "human preference", "annotator"]
       - *model
-  - all:                                   # 평가 자체의 신뢰성
-      - ["evaluation", "evaluator", "judge", "annotation", "benchmark"]
-      - ["reliability", "validity", "agreement", "correlation", "reproducibility",
-         "construct", "meta-evaluation"]
+  - any:                                   # 평가 자체의 신뢰성 — 구절로 못박습니다.
+      # "evaluation" + "validity" 처럼 일반어 두 개를 AND 하면 거의 모든 논문이
+      # 걸립니다 (speculative decoding 논문까지 통과했습니다).
+      ["construct validity", "meta-evaluation", "evaluation reliability",
+       "annotator agreement", "inter-annotator", "annotation quality",
+       "evaluator bias", "judge bias", "position bias", "correlate with human",
+       "correlation with human", "agreement with human", "human-LLM agreement"]
 
   # ── 5. 대규모 웹 데이터 수집 · 코퍼스 구축 ────────────────────────────────
   # Core: web data collection / web crawling / corpus construction /
@@ -154,7 +164,9 @@ keywords:
       - ["data collection", "dataset", "crawling", "corpus", "API", "sampling"]
   - all:                                   # 재현 가능한 데이터 수집
       - ["reproducible", "reproducibility", "replicable"]
-      - ["data collection", "corpus", "dataset", "pipeline", "crawl"]
+      # 수집 자체를 요구합니다 — "재현 가능한 실험" 은 거의 모든 논문이 주장합니다.
+      - ["data collection", "crawl", "crawling", "scraping",
+         "collection pipeline", "corpus construction"]
 
 # ── Venue 표기 ────────────────────────────────────────────────────────────────
 # OpenAlex 는 학회를 정식 명칭으로 줍니다 ("Proceedings of the 32nd ACM
