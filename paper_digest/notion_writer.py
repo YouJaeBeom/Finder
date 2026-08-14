@@ -90,17 +90,22 @@ def _save_state(state: dict) -> None:
 
 # ── Database creation ──────────────────────────────────────────────────────────
 
+# Order matters and is only settable once: Notion takes the column order from
+# the property order at creation time, and the API cannot reorder an existing
+# database's columns afterwards (that lives in the view, which is not exposed).
+# So this is ordered for reading — what the item is, then what it says, then
+# where it came from — with bookkeeping last.
 _DB_PROPERTIES: Dict[str, dict] = {
     "Title": {"title": {}},
-    "Type": {"select": {}},       # "논문" | "뉴스" — papers and news share one DB
-    "Venue": {"select": {}},      # paper: ACL 2026 / arXiv preprint; news: source site
-    "Status": {"select": {}},     # preprint | published | accepted
+    "Summary": {"rich_text": {}}, # the note's one-liner, read without opening the page
+    "Venue": {"select": {}},      # ACL / SIGIR / TKDE / arXiv; news: the source site
     "Score": {"number": {"format": "number"}},
-    "Summary": {"rich_text": {}}, # the note's one-liner, readable without opening the page
-    "Tags": {"multi_select": {}},
+    "Type": {"select": {}},       # "논문" | "뉴스" — papers and news share one DB
+    "Status": {"select": {}},     # preprint | published | accepted
     "Published": {"date": {}},    # the item's own date — what you sort a digest by
-    "Collected": {"date": {}},    # the day a run happened to fetch it
+    "Tags": {"multi_select": {}},
     "URL": {"url": {}},
+    "Collected": {"date": {}},    # the day a run happened to fetch it
 }
 
 # Properties an earlier version of this tool created under a different name.

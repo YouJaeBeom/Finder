@@ -1,0 +1,255 @@
+abbr,query,name,dblp,score,papers
+AAAI,AAAI,AAAI Conference on Artificial Intelligence,conf/aaai,1.00,12345
+ACL,ACL,Annual Meeting of the Association for Computational Linguistics,conf/acl,1.00,11759
+ASPLOS,ASPLOS,International Conference on Architectural Support for Programming Languages and Operating Systems,conf/asplos,1.00,652
+CAV,CAV,International Conference on Computer Aided Verification,conf/cav,1.00,300
+CCS,CCS,Annual ACM Conference on Computer and Communications Security,conf/ccs,1.00,935
+CHI,CHI,ACM Conference on Human Factors in Computing Systems,conf/chi,1.00,4845
+CRYPTO,CRYPTO,Annual International Cryptology Conference,conf/crypto,1.00,148
+CVPR,IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR),IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR),conf/cvpr,1.00,7361
+EUROCRYPT,EUROCRYPT,International Conference on the Theory and Application of Cryptographic Techniques,conf/eurocrypt,1.00,186
+FOCS,FOCS,IEEE Annual Symposium on Foundations of Computer Science,conf/focs,1.00,399
+FSE/ESEC,FSE/ESEC,ACM SIGSOFT Conference on the Foundations of Software Engineering,conf/sigsoft,1.00,0
+HPCA,HPCA,International Symposium on High-Performance Computer Architecture,conf/hpca,1.00,423
+ICCV,ICCV,IEEE/CVF International Conference on Computer Vision (ICCV),conf/iccv,1.00,4627
+ICML,ICML,International Conference on Machine Learning (ICML),conf/icml,1.00,7322
+ICSE,ICSE,International Conference on Software Engineering,conf/icse,1.00,779
+ISCA,ISCA,International Symposium on Computer Architecture,conf/isca,1.00,478
+KDD,KDD,ACM SIGKDD Conference on Knowledge Discovery and Data Mining,conf/kdd,1.00,2253
+MICRO,MICRO,Annual IEEE/ACM International Symposium on Microarchitecture,conf/micro,1.00,576
+MobiCom,MobiCom,Annual International Conference on Mobile Computing and Networking,conf/mobicom,1.00,589
+NeurIPS/NIPS,NeurIPS,Conference on Neural Information Processing Systems (NeurIPS),conf/nips,1.00,12450
+OOPSLA,"ACM SIGPLAN International Conference on Object-Oriented Programming Systems, Languages, and Applications","ACM SIGPLAN International Conference on Object-Oriented Programming Systems, Languages, and Applications",conf/oopsla,1.00,1102
+PLDI,PLDI,ACM-SIGPLAN Symposium on Programming Language Design and Implementation,conf/pldi,1.00,1
+POPL,Proc. ACM Program. Lang.,ACM-SIGACT Symposium on Principles of Programming Languages,conf/popl,1.00,1116
+RTSS,RTSS,IEEE Real-Time Systems Symposium,conf/rtss,1.00,134
+S&P,IEEE Symposium on Security and Privacy,IEEE Symposium on Security and Privacy,conf/sp,1.00,924
+SIGCOMM,SIGCOMM,ACM SIGCOMM Conference,conf/sigcomm,1.00,364
+SIGGRAPH,SIGGRAPH,International Conference on Computer Graphics and Interactive Techniques,conf/siggraph,1.00,587
+SIGIR,SIGIR,Annual International ACM SIGIR Conference on Research and Development in Information Retrieval,conf/sigir,1.00,2059
+SIGMOD,SIGMOD/PODS,ACM SIGMOD Conference,conf/sigmod,1.00,25
+SOSP,SOSP,Symposium on Operating Systems Principles,conf/sosp,1.00,151
+STOC,STOC,Symposium on the Theory of Computing,conf/stoc,1.00,559
+USENIX NSDI,Symposium on Networked Systems Design and Implementation,Symposium on Networked Systems Design and Implementation,conf/nsdi,1.00,414
+USENIX OSDI,USENIX Symposium on Operating Systems Design and Implementation,USENIX Symposium on Operating Systems Design and Implementation,conf/osdi,1.00,145
+VIS,VIS,IEEE Visualization Conference,conf/visualization,1.00,208
+VLDB / PVLDB,Proceedings of the VLDB Endowment,Very Large Data Bases Conference,conf/vldb,1.00,1312
+WWW,WWW,The Web Conference,conf/www,1.00,3568
+ASE,ASE,International Conference on Automated Software Engineering,conf/kbse,0.95,1144
+DAC,DAC,Design Automation Conference,conf/dac,0.95,1460
+EMNLP,EMNLP,Conference on Empirical Methods in Natural Language Processing,conf/emnlp,0.95,8137
+ICDE,ICDE,IEEE International Conference on Data Engineering,conf/icde,0.95,1586
+LICS,LICS,ACM/IEEE Symposium on Logic in Computer Science,conf/lics,0.95,282
+MobiSys,MobiSys,"ACM SIGMOBILE International Conference on Mobile Systems, Applications, and Services",conf/mobisys,0.95,387
+PODS,PODS,ACM SIGACT-SIGMOD-SIGART Symposium on Principles of Database Systems,conf/pods,0.95,26
+SC,SC,"International Conference for High Performance Computing, Networking, Storage and Analysis",conf/sc,0.95,182
+SIGMETRICS,SIGMETRICS,International Conference on Measurement and Modeling of Computer Systems,conf/sigmetrics,0.95,168
+SODA,SODA,ACM-SIAM Symposium on Discrete Algorithms,conf/soda,0.95,640
+UBICOMP,UBICOMP,ACM International Joint Conference on Pervasive and Ubiquitous Computing,conf/huc,0.95,0
+USENIX ATC,USENIX ATC,USENIX Annual Technical Conference,conf/usenix,0.95,238
+USENIX FAST,USENIX Conference on File and Storage Technologies,USENIX Conference on File and Storage Technologies,conf/fast,0.95,130
+USENIX Security,USENIX Security Symposium,USENIX Security Symposium,conf/uss,0.95,1121
+ECCV,ECCV,European Conference on Computer Vision (ECCV),conf/eccv,0.90,2468
+EuroSys,EuroSys,European Conference on Computer Systems,conf/eurosys,0.90,339
+ICFP,ICFP,ACM SIGPLAN International Conference on Functional Programming,conf/icfp,0.90,0
+NDSS,NDSS,Network and Distributed System Security Symposium,conf/ndss,0.90,647
+RTAS,RTAS,IEEE Real Time Technology and Applications Symposium,conf/rtas,0.90,132
+UIST,ACM Symposium on User Interface Software and Technology,ACM Symposium on User Interface Software and Technology,conf/uist,0.90,714
+ICLR,ICLR,International Conference on Learning Representations (ICLR),conf/iclr,0.80,6725
+INFOCOM,INFOCOM,IEEE Conference on Computer Communications,conf/infocom,0.80,1367
+SIGGRAPH ASIA,SIGGRAPH ASIA,ACM SIGGRAPH Conference and Exhibition on Computer Graphics and Interactive Techniques in Asia,conf/siggrapha,0.80,471
+CIKM,CIKM,International Conference on Information and Knowledge Management,conf/cikm,0.75,2195
+CONEXT,CONEXT,Conference on Emerging Network Experiment and Technology,conf/conext,0.75,62
+ICDM,ICDM,IEEE International Conference on Data Mining,conf/icdm,0.75,575
+PACT,PACT,International Conference on Parallel Architectures and Compilation Techniques,conf/IEEEpact,0.75,140
+PPoPP,PPoPP,ACM SIGPLAN Symposium on Principles &#38; Practice of Parallel Programming,conf/ppopp,0.75,177
+ISSTA,ISSTA,International Symposium on Software Testing and Analysis,conf/issta,0.70,304
+VR,VR,IEEE Conference on Virtual Reality and 3D User Interfaces,conf/vr,0.70,395
+COLT,COLT,Annual Conference Computational Learning Theory,conf/colt,0.65,669
+ISMB,ISMB,Intelligent Systems in Molecular Biology,conf/ismb,0.65,0
+MICCAI,MICCAI,International Conference on Medical Image Computing and Computer-Assisted Intervention,conf/miccai,0.65,2634
+PODC,PODC,ACM Symposium on Principles of Distributed Computing,conf/podc,0.65,149
+SenSys,SenSys,ACM International Conference on Embedded Networked Sensor Systems,conf/sensys,0.65,298
+WSDM,WSDM,Web Search and Data Mining,conf/wsdm,0.65,637
+HPDC,HPDC,International Symposium on High-Performance Parallel Distributed Computing,conf/hpdc,0.60,230
+IJCAI,IJCAI,International Joint Conference on Artificial Intelligence,conf/ijcai,0.60,2995
+MM,MM,ACM International Conference on Multimedia,conf/mm,0.60,3852
+CSCW,CSCW,Conference on Computer Supported Cooperative Work,conf/cscw,0.55,0
+ICCAD,ICCAD,International Conference on Computer Aided Design,conf/iccad,0.55,691
+ICDCS,ICDCS,IEEE International Conference on Distributed Computing Systems,conf/icdcs,0.55,680
+IPSN,IPSN,International Symposium on Information Processing in Sensor Networks,conf/ipsn,0.55,87
+MobiHoc,MobiHoc,"International Symposium on Theory, Algorithmic Foundations, and Protocol Design for Mobile Networks and Mobile Computing",conf/mobihoc,0.55,218
+PERCOM,PERCOM,Annual IEEE International Conference on Pervasive Computing and Communications,conf/percom,0.55,142
+SPAA,SPAA,ACM Symposium on Parallelism in Algorithms and Architectures,conf/spaa,0.55,154
+UAI,UAI,Conference on Uncertainty in Artificial Intelligence,conf/uai,0.55,633
+CODES+ISSS,CODES+ISSS,International Conference on Hardware/Software Codesign and System Synthesis,conf/codesisss,0.50,29
+ICS,ICS,ACM International Conference on Supercomputing,conf/ics,0.50,316
+SOCG,SOCG,International Symposium on Computational Geometry,conf/compgeom,0.50,309
+ECRTS,ECRTS,Euromicro Conference on Real-Time Systems,conf/ecrts,0.45,80
+TACAS,TACAS,International Conference on Tools and Algorithms for Construction and Analysis of Systems,conf/tacas,0.40,275
+ISMAR,ISMAR,International Symposium on Mixed and Augmented Reality,conf/ismar,0.35,451
+KR,KR,International Conference on Principles of Knowledge Representation and Reasoning,conf/kr,0.35,247
+RECOMB,RECOMB,Annual International Conference on Research in Computational Molecular Biology,conf/recomb,0.35,56
+ACSAC,ACSAC,Annual Computer Security Applications Conference,conf/acsac,0.30,241
+CASES,CASES,"International Conference on Compilers, Architecture, and Synthesis for Embedded Systems",conf/cases,0.30,64
+CC,CC,International Conference on Compiler Construction,conf/cc,0.30,95
+CGO,CGO,IEEE/ACM International Symposium on Code Generation and Optimization,conf/cgo,0.30,171
+COLING,COLING,International Conference on Computational Linguistics,conf/coling,0.30,855
+DATE,DATE,"Design, Automation, and Test in Europe",conf/date,0.30,1609
+DISC,DISC,International Symposium on Distributed Computing,conf/wdag,0.30,99
+DSN,DSN,Dependable Systems and Networks,conf/dsn,0.30,240
+EACL,EACL,Conference of the European Chapter of the Association for Computational Linguistics,conf/eacl,0.30,1510
+ECOOP,ECOOP,European Conference on Object-Oriented Programming,conf/ecoop,0.30,129
+EDBT,EDBT,International Conference on Extending Database Technology,conf/edbt,0.30,350
+EMSOFT,EMSOFT,International Conference on Embedded Software,conf/emsoft,0.30,11
+ESA,ESA,European Symposium on Algorithms,conf/esa,0.30,476
+ESOP,ESOP,European Symposium on Programming,conf/esop,0.30,118
+ESORICS,ESORICS,European Symposium on Research in Computer Security,conf/esorics,0.30,286
+Eurographics,Eurographics,Annual Conference of the European Association for Computer Graphics,conf/eurographics,0.30,104
+ICALP,ICALP,"International Colloquium on Automata, Languages and Programming",conf/icalp,0.30,619
+ICNP,ICNP,IEEE International Conference on Network Protocols,conf/icnp,0.30,268
+ICPP,ICPP,International Conference on Parallel Processing,conf/icpp,0.30,276
+ICSME,ICSME,IEEE International Conference on Software Maintenance and Evolution,conf/icsm,0.30,273
+IMC,IMC,ACM/SIGCOMM Internet Measurement Conference,conf/imc,0.30,247
+IPDPS,IPDPS,IEEE International Parallel and Distributed Processing Symposium,conf/ipps,0.30,459
+ISWC,ISWC,International Semantic Web Conference,conf/semweb,0.30,0
+IUI,IUI,International Conference on Intelligent User Interfaces,conf/iui,0.30,334
+LCTES,LCTES,"ACM SIGPLAN/SIGBED International Conference on Languages, Compilers, and Tools for Embedded Systems",conf/lctrts,0.30,73
+MASCOTS,MASCOTS,"IEEE/ACM International Symposium on Modeling, Analysis, and Simulation On Computer and Telecommunication Systems",conf/mascots,0.30,109
+MIDDLEWARE,MIDDLEWARE,International Middleware Conference,conf/middleware,0.30,101
+MODELS,MODELS,ACM/IEEE International Conference on Model Driven Engineering Languages and Systems,conf/models,0.30,262
+Pacific Graphics,Pacific Graphics,Pacific Conference on Computer Graphics and Applications,conf/pg,0.30,0
+RAID,RAID,International Symposium on Recent Advances in Intrusion Detection,conf/raid,0.30,158
+RE,RE,IEEE International Requirements Engineering Conference,conf/re,0.30,332
+SDM,SDM,SIAM International Conference on Data Mining,conf/sdm,0.30,260
+ACCV,ACCV,Asian Conference on Computer Vision,conf/accv,0.25,279
+AISTATS,AISTATS,International Conference on Artificial Intelligence and Statistics,conf/aistats,0.25,1335
+ANCS,ANCS,Symposium on Architectures for Networking and Communications Systems,conf/ancs,0.25,0
+ASIACCS,ASIACCS,ACM Asia Conference on Computer and Communications Security,conf/asiaccs,0.25,435
+CCGRID,CCGRID,"IEEE/ACM International Symposium on Cluster, Cloud and Internet Computing",conf/ccgrid,0.25,275
+CLOUD,CLOUD,IEEE International Conference on Cloud Computing,conf/IEEEcloud,0.25,214
+CLUSTER,CLUSTER,IEEE International Conference on Cluster Computing,conf/cluster,0.25,123
+CONCUR,CONCUR,International Conference on Concurrency Theory,conf/concur,0.25,117
+CSF,CSF,IEEE Computer Security Foundations Symposium,conf/csfw,0.25,117
+EURO-PAR,EURO-PAR,European Conference on Parallel Processing,conf/europar,0.25,221
+FASE,FASE,International Conference on Fundamental Approaches to Software Engineering,conf/fase,0.25,85
+FC,FC,Financial Cryptography and Data Security,conf/fc,0.25,108
+GECCO,GECCO,Annual Conference on Genetic and Evolutionary Computation,conf/gecco,0.25,684
+I3D,I3D,ACM Symposium on Interactive 3D Graphics and Games,conf/si3d,0.25,0
+ICCD,ICCD,International Conference on Computer Design,conf/iccd,0.25,867
+ICRA,ICRA,IEEE International Conference on Robotics and Automation,conf/icra,0.25,4280
+ICST,ICST,"International Conference on Software Testing, Verification, and Validation",conf/icst,0.25,668
+IISWC,IISWC,IEEE International Symposium on Workload Characterization,conf/iiswc,0.25,105
+ISAAC,ISAAC,International Symposium on Algorithms and Computation,conf/isaac,0.25,168
+ISLPED,ISLPED,International Symposium on Low Power Electronics and Design,conf/islped,0.25,189
+ISPASS,ISPASS,IEEE International Symposium on Performance Analysis of Systems and Software,conf/ispass,0.25,208
+ISSRE,ISSRE,IEEE International Symposium on Software Reliability Engineering,conf/issre,0.25,183
+MASS,MASS,IEEE International Conference on Mobile Adhoc and Sensor Systems,conf/mass,0.25,313
+MSST,MSST,IEEE Conference on Mass Storage Systems and Technologies,conf/mss,0.25,0
+NOMS,NOMS,IEEE/IFIP Network Operations and Management Symposium,conf/noms,0.25,594
+RecSys,RecSys,ACM Conference on Recommender Systems,conf/recsys,0.25,647
+SAS,SAS,International Static Analysis Symposium,conf/sas,0.25,394
+SECON,SECON,"Annual IEEE International Conference on Sensing, Communication, and Networking",conf/secon,0.25,203
+SGP,SGP,Eurographics Symposium on Geometry Processing,conf/sgp,0.25,0
+SOCC,SOCC,ACM Symposium on Cloud Computing,conf/cloud,0.25,412
+SOUPS,SOUPS,Symposium On Usable Privacy and Security,conf/soups,0.25,57
+SRDS,SRDS,IEEE International Symposium on Reliable Distributed Systems,conf/srds,0.25,113
+STACS,STACS,Symposium on Theoretical Aspects of Computer Science,conf/stacs,0.25,224
+VRST,VRST,ACM Symposium on Virtual Reality Software and Technology,conf/vrst,0.25,353
+AAMAS,AAMAS,International Conference on Autonomous Agents and Multiagent Systems,conf/ifaamas,0.20,1341
+ACL Findings,ACL Findings,Findings of ACL,series/findacl,0.20,0
+ASIACRYPT,ASIACRYPT,International Conference on the Theory and Application of Cryptology and Information Security,conf/asiacrypt,0.20,123
+BIGDATA,BIGDATA,IEEE International Conference on Big Data,conf/bigdataconf,0.20,3006
+BMVC,BMVC,British Machine Vision Conference,conf/bmvc,0.20,526
+CCC,CCC,Computational Complexity Conference,conf/coco,0.20,4642
+CIDR,CIDR,Conference on Innovative Data Systems Research,conf/cidr,0.20,133
+CoNLL,CoNLL,Conference on Computational Natural Language Learning,conf/conll,0.20,127
+EuroS&P,European Symposium on Security and Privacy,European Symposium on Security and Privacy,conf/eurosp,0.20,254
+EuroVis,EuroVis,Eurographics Conference on Visualization,conf/vissym,0.20,106
+FM,FM,International Symposium on Formal Methods,conf/fm,0.20,168
+FPGA,FPGA,Symposium on Field Programmable Gate Arrays,conf/fpga,0.20,185
+FSE,ESEC/SIGSOFT FSE,Fast Software Encryption Workshop,conf/fse,0.20,200
+ICASSP,ICASSP,"IEEE International Conference on Acoustics, Speech, and Signal Processing",conf/icassp,0.20,12636
+ICCPS,ICCPS,International Conference on Cyber-Physical Systems,conf/iccps,0.20,152
+ICWS,ICWS,IEEE International Conference on Web Services,conf/icws,0.20,30
+ICWSM,ICWSM,International Conference on Web and Social Media,conf/icwsm,0.20,386
+IJCNLP,IJCNLP,International Joint Conference on Natural Language Processing,conf/ijcnlp,0.20,148
+IPMI,IPMI,Information Processing in Medical Imaging,conf/ipmi,0.20,106
+IROS,IROS,IEEE/RJS International Conference on Intelligent RObots and Systems,conf/iros,0.20,4679
+InterSpeech,InterSpeech,Conference of the International Speech Communication Association,conf/interspeech,0.20,3317
+MFCS,MFCS,International Symposium on Mathematical Foundations of Computer Science,conf/mfcs,0.20,251
+MLSys,MLSys,Conference on Machine Learning and Systems,conf/mlsys,0.20,133
+MSR,MSR,IEEE/ACM International Conference on Mining Software Repositories,conf/msr,0.20,489
+NAACL Findings,North American Chapter of the Association for Computational Linguistics,North American Chapter of the Association for Computational Linguistics,conf/naacl,0.20,2031
+PAM,PAM,International Conference on Passive and Active Measurement,conf/pam,0.20,96
+PERFORMANCE,PERFORMANCE,"International Symposium on Computer Modeling, Measurement and Evaluation",conf/performance,0.20,217
+PETS,PETS,Proceedings on Privacy Enhancing Technologies,journals/popets,0.20,105
+PKC,PKC,International Conference on Theory and Practice of Public Key Cryptography,conf/pkc,0.20,88
+RSS,RSS,Robotics: Science and Systems Conference,conf/rss,0.20,207
+SCA,SCA,Symposium on Computer Animation,conf/sca,0.20,17
+SWAT,SWAT,Scandinavian Workshop on Algorithm Theory,conf/swat,0.20,77
+SYSTOR,SYSTOR,International Systems and Storage Conference,conf/systor,0.20,81
+VMCAI,VMCAI,"International Conference on Verification, Model Checking and Abstract Interpretation",conf/vmcai,0.20,89
+WACV,WACV,IEEE/CVF Winter Conference on Applications of Computer Vision,conf/wacv,0.20,0
+WADS,WADS,International Symposium on Algorithms and Data Structures,conf/wads,0.20,88
+WHC/HS,WHC,World Haptics Conference,conf/haptics,0.20,158
+WoWMoM,WoWMoM,"IEEE International Symposium on a World of Wireless, Mobile and Multimedia Networks",conf/wowmom,0.20,250
+BIBM,BIBM,IEEE International Conference on Bioinformatics and Biomedicine,conf/bibm,0.15,3189
+DASFAA,DASFAA,International Conference on Database Systems for Advanced Applications,conf/dasfaa,0.15,1052
+HiPC,HiPC,"International Conference on High Performance Computing, Data, and Analytics",conf/hipc,0.15,125
+HiPEAC,HiPEAC,International Conference on High Performance Embedded Architectures and Compilers,conf/hipeac,0.15,0
+ICSOC,ICSOC,International Conference on Service Oriented Computing,conf/icsoc,0.15,165
+IJCAR,IJCAR,International Joint Conference on Automated Reasoning,conf/ijcar,0.15,126
+NOSSDAV,NOSSDAV,International Workshop on Network and Operating System Support for Digital Audio and Video,conf/nossdav,0.15,61
+PAKDD,PAKDD,Pacific-Asia Conference on Knowledge Discovery and Data Mining,conf/pakdd,0.15,893
+SEC,SEC,IFIP International Information Security Conference,conf/sec,0.15,295
+VEE,VEE,International Conference on Virtual Execution Environments,conf/vee,0.15,0
+ACNS,ACNS,International Conference on Applied Cryptography and Network Security,conf/acns,0.10,178
+AIED,AIED,International Conference on Artificial Intelligence in Education,conf/aied,0.10,892
+ARITH,ARITH,IEEE Symposium on Computer Arithmetic,conf/arith,0.10,82
+ASONAM,ASONAM,International Conference on Advances in Social Networks Analysis and Mining,conf/asunam,0.10,372
+ASRU,ASRU,Automatic Speech Recognition &#38; Understanding,conf/asru,0.10,397
+BCB,BCB,"ACM International Conference on Bioinformatics, Computational Biology and Biomedicine",conf/bcb,0.10,445
+Blockchain,Blockchain,IEEE International Conference on Blockchain,conf/blockchain2,0.10,316
+CADE,CADE,Conference on Automated Deduction,conf/cade,0.10,131
+CHES,CHES,Conference on Cryptographic Hardware and Embedded Systems,conf/ches,0.10,0
+CODASPY,CODASPY,Conference on Data and Application Security and Privacy,conf/codaspy,0.10,144
+CPM,CPM,Annual Symposium on Combinatorial Pattern Matching,conf/cpm,0.10,116
+CoRL,CoRL,Conference on Robot Learning,conf/corl,0.10,469
+CogSci,CogSci,Annual Meeting of the Cognitive Science Society,conf/cogsci,0.10,3459
+DLT,DLT,International Conference on Developments in Language Theory,conf/dlt,0.10,161
+ECCB,ECCB,European Conference on Computational Biology,conf/eccb,0.10,0
+EH,EuroHaptics,EuroHaptics,conf/eurohaptics,0.10,83
+FCCM,FCCM,IEEE Symposium on Field-Programmable Custom Computing Machines,conf/fccm,0.10,264
+FMCAD,FMCAD,Formal Methods in Computer-Aided Design,conf/fmcad,0.10,110
+FPL,FPL,International Conference on Field-Programmable Logic and Applications,conf/fpl,0.10,177
+HSCC,HSCC,International Conference on Hybrid Systems: Computation and Control,conf/hybrid,0.10,89
+ICBC,ICBC,IEEE International Conference on Blockchain and Cryptocurrency,conf/icbc2,0.10,566
+ICMI,ICMI,International Conference on Multimodal Interaction,conf/icmi,0.10,931
+ICN,ICN,Information-Centric Networking,conf/acmicn,0.10,129
+IM,IM,IFIP/IEEE Symposium on Integrated Network Management,conf/im,0.10,5
+ISBI,ISBI,IEEE International Symposium on Biomedical Imaging,conf/isbi,0.10,2609
+ISIT,ISIT,International Symposium on Information Theory,conf/isit,0.10,1550
+LREC,LREC,International Conference on Language Resources and Evaluation,conf/lrec,0.10,1532
+MEMSYS,MEMSYS,International Symposium on Memory Systems,conf/memsys,0.10,81
+MMsys,MMsys,ACM SIGMM Conference on Multimedia Systems,conf/mmsys,0.10,230
+MobileHCI,MobileHCI,International Conference on Human-Computer Interaction with Mobile Devices and Services,conf/mhci,0.10,126
+PKDD,PKDD,European Conference on Machine Learning and Knowledge Discovery in Databases,conf/pkdd,0.10,26
+PSB,PSB,Pacific Symposium on Biocomputing,conf/psb,0.10,0
+SANER,SANER,"IEEE International Conference on Software Analysis, Evolution, and Reengineering",conf/saner,0.10,546
+SIGDIAL,SIGDIAL,SIGdial Meetings,conf/sigdial,0.10,245
+SLT,SLT,Spoken Language Technology Workshop,conf/slt,0.10,229
+WMT,WMT,Conference on Machine Translation,conf/wmt,0.10,349
+WiOpt,WiOpt,"International Symposium on Modeling and Optimization in Mobile, Ad-Hoc and Wireless Networks",conf/wiopt,0.10,274
+WiSec,WiSec,Conference on Security and Privacy in Wireless and Mobile Networks,conf/wisec,0.10,144
+AVSS,AVSS,IEEE International Conference on Advanced Video and Signal Based Surveillance,conf/avss,0.05,181
+CSEET,Conference on Software Engineering Education and Training,Conference on Software Engineering Education and Training,conf/csee,0.05,140
+ECAI,ECAI,European Conference on Artificial Intelligence,conf/ecai,0.05,2410
+ICAPS,ICAPS,International Conference on Automated Planning and Scheduling,conf/icaps,0.05,201
+ICLP,ICLP,International Conference on Logic Programming,conf/iclp,0.05,98
+ICMR,ICMR,International Conference on Multimedia Retrieval,conf/mir,0.05,866
+ICPR,ICPR,International Conference on Pattern Recognition,conf/icpr,0.05,1158
+ITS,ITS,International Conference on Augmented Intelligence and Intelligent Tutoring Systems,conf/its,0.05,239
+InfoVis,InfoVis,IEEE Information Visualization Conference,conf/infovis,0.05,0
+SAC,SAC,ACM Symposium on Applied Computing,conf/sac,0.05,1091
+TCC,TCC,Theory of Cryptography Conference,conf/tcc,0.05,79

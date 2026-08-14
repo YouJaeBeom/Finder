@@ -228,7 +228,14 @@ def collect_openalex_papers(
     date_str = cutoff.isoformat()
 
     concept_filter = "|".join(_CS_CONCEPTS)
-    work_filter = f"from_publication_date:{date_str},concepts.id:{concept_filter}"
+    # is_core restricts to venues OpenAlex classifies as core scholarly sources.
+    # It is the difference between 79,000 and 9,500 works a week, and it removes
+    # the unmoderated deposit archives at the source rather than by name — 36%
+    # of recent CS "works" were Zenodo uploads before this.
+    work_filter = (
+        f"from_publication_date:{date_str},concepts.id:{concept_filter},"
+        f"primary_location.source.is_core:true"
+    )
 
     papers: List[Paper] = []
     cursor = "*"

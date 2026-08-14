@@ -77,6 +77,22 @@ class NewsConfig:
 
 
 @dataclass
+class ConferenceConfig:
+    """Top-conference collection via Semantic Scholar.
+
+    The venue list ships with the tool (paper_digest/data/venues.csv), built
+    from the Korean CS community's combined ranking. *min_score* selects from
+    it; include/exclude adjust the result by abbreviation.
+    """
+
+    enabled: bool = True
+    min_score: float = 0.5
+    include: List[str] = field(default_factory=list)
+    exclude: List[str] = field(default_factory=list)
+    max_results: int = 400
+
+
+@dataclass
 class Config:
     """Full application configuration."""
 
@@ -114,6 +130,9 @@ class Config:
 
     # IT news collection (opt-in)
     news: NewsConfig = field(default_factory=NewsConfig)
+
+    # Top-conference collection
+    conferences: ConferenceConfig = field(default_factory=ConferenceConfig)
 
     # Secrets — loaded from environment at runtime
     notion_token: str = ""
@@ -170,6 +189,15 @@ def load_config(path: str = "config.yaml") -> Config:
         keywords=news_data.get("keywords", []) or [],
     )
 
+    conf_data = data.get("conferences", {}) or {}
+    conf_cfg = ConferenceConfig(
+        enabled=conf_data.get("enabled", True),
+        min_score=float(conf_data.get("min_score", 0.5)),
+        include=conf_data.get("include", []) or [],
+        exclude=conf_data.get("exclude", []) or [],
+        max_results=int(conf_data.get("max_results", 400)),
+    )
+
     cfg = Config(
         # Kept raw so the error message can quote what the user actually wrote;
         # normalized on access via parent_page_id() / database_id().
@@ -186,6 +214,7 @@ def load_config(path: str = "config.yaml") -> Config:
         top_n=data.get("top_n", 10),
         llm=llm_cfg,
         news=news_cfg,
+        conferences=conf_cfg,
         # Secrets always come from the environment, never from the config file
         notion_token=os.environ.get("NOTION_TOKEN", ""),
         anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY", ""),

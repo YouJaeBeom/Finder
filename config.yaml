@@ -168,6 +168,31 @@ keywords:
       - ["data collection", "crawl", "crawling", "scraping",
          "collection pipeline", "corpus construction"]
 
+# ── Top conferences ──────────────────────────────────────────────────────────
+# 학회 논문은 OpenAlex 로 못 가져옵니다. ACL 논문은 venue 레코드가 비어 있고
+# (source: null), 있는 학회 source 는 연도별 파편이라 venue 필터를 걸면 정작
+# 읽을 가치가 있는 곳이 통째로 빠집니다. 그래서 Semantic Scholar 를 씁니다 —
+# 같은 논문을 venue 와 초록까지 함께 주고, 약자를 그대로 받습니다. 키 불필요.
+#
+# 학회 목록은 도구에 동봉돼 있습니다 (paper_digest/data/venues.csv).
+# 한국정보과학회 / BK21 / KAIST / SNU / POSTECH 종합 순위를 정규화한 점수이며,
+# 출처: https://gist.github.com/Pusnow/6eb933355b5cb8d31ef1abcb3c3e1206
+#
+# 학회 논문은 프로시딩이 나올 때 한꺼번에 들어옵니다. 조용한 주가 대부분이고
+# 어느 주에 갑자기 한 학회가 통째로 들어오는 게 정상입니다.
+conferences:
+  enabled: true
+
+  # 0.5 = 대략 "우수" 이상. 1.00 = 모든 기관이 최우수로 꼽은 곳(ACL, SIGIR, KDD,
+  # WWW, CHI, AAAI, ICML, NeurIPS, SIGMOD ...). 좁히려면 0.7~1.0 으로 올리세요.
+  min_score: 0.5
+
+  # 점수와 무관하게 반드시 포함/제외할 학회 (약자)
+  include: []
+  exclude: []
+
+  max_results: 400
+
 # ── Venue 표기 ────────────────────────────────────────────────────────────────
 # OpenAlex 는 학회를 정식 명칭으로 줍니다 ("Proceedings of the 32nd ACM
 # International Conference on Information and Knowledge Management"). Notion

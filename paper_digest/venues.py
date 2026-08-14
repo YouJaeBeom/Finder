@@ -19,8 +19,15 @@ under the wrong venue.
 """
 from __future__ import annotations
 
+import csv
+import logging
 import re
+from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
+
+logger = logging.getLogger(__name__)
 
 # (acronym, distinguishing substrings). Order matters — the first match wins,
 # so entries whose full name contains another entry's name come first (NAACL
@@ -161,3 +168,74 @@ def normalize_venue(
     trimmed = _TRAILING_PARENTHETICAL.sub("", name).strip()
     trimmed = _BOILERPLATE.sub("", trimmed).strip()
     return (trimmed or name)[:_MAX_VENUE_LEN]
+
+
+# ── The shipped conference list ───────────────────────────────────────────────
+
+_VENUE_CSV = Path(__file__).parent / "data" / "venues.csv"
+
+
+@dataclass(frozen=True)
+class Venue:
+    """One conference from the shipped list."""
+
+    abbr: str        # "ACL" — what the Venue column shows
+    query: str       # the name Semantic Scholar answers to, often not the abbr
+    name: str        # the full registered name
+    dblp: str        # DBLP stream key, e.g. "conf/acl"
+    score: float     # 0–1, the community ranking's normalized average
+    papers: int      # papers Semantic Scholar has for it (0 = not collectable)
+
+    @property
+    def collectable(self) -> bool:
+        return self.papers > 0
+
+
+@lru_cache(maxsize=1)
+def load_venues() -> Tuple[Venue, ...]:
+    """The venue table shipped with the package."""
+    if not _VENUE_CSV.exists():
+        logger.warning("Venue list missing at %s", _VENUE_CSV)
+        return ()
+
+    with _VENUE_CSV.open(encoding="utf-8", newline="") as fh:
+        return tuple(
+            Venue(abbr=row["abbr"], query=row["query"], name=row["name"],
+                  dblp=row["dblp"], score=float(row["score"] or 0),
+                  papers=int(row["papers"] or 0))
+            for row in csv.DictReader(fh)
+        )
+
+
+def select_venues(
+    min_score: float = 0.5,
+    include: Sequence[str] = (),
+    exclude: Sequence[str] = (),
+) -> Dict[str, str]:
+    """Venues to collect from, as ``{search name: abbreviation}``.
+
+    The two differ more often than not: Semantic Scholar answers to "NeurIPS"
+    but not "NeurIPS/NIPS", to "IEEE Symposium on Security and Privacy" but not
+    "S&P". The abbreviation is what the Venue column should show, so both are
+    carried.
+
+    Venues Semantic Scholar has no papers for are dropped — asking for them
+    costs a request and returns nothing. *include* adds back a venue below the
+    threshold; *exclude* removes one above it.
+    """
+    excluded = {e.lower() for e in exclude}
+    included = {i.lower() for i in include}
+
+    return {
+        v.query: v.abbr
+        for v in load_venues()
+        if v.collectable
+        and v.abbr.lower() not in excluded
+        and (v.score >= min_score or v.abbr.lower() in included)
+    }
+
+
+@lru_cache(maxsize=1)
+def venue_aliases_from_list() -> Dict[str, str]:
+    """Full-name → abbreviation, so the writer can shorten what it is given."""
+    return {v.name: v.abbr for v in load_venues() if v.name and v.abbr}

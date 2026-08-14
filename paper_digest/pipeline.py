@@ -5,6 +5,7 @@ import logging
 from typing import List, Optional, Set
 
 from .collectors.arxiv import collect_arxiv_papers
+from .collectors.conferences import collect_conference_papers
 from .collectors.hackernews import collect_hackernews_stories
 from .collectors.rss import collect_rss_entries
 from .collectors.openalex import collect_openalex_papers
@@ -23,6 +24,7 @@ from .notion_writer import (
     update_venue,
 )
 from .ranking import rank_papers
+from .venues import select_venues, venue_aliases_from_list
 from .reporter import write_failure_report, write_report
 
 logger = logging.getLogger(__name__)
@@ -79,6 +81,35 @@ def preflight(cfg: Config, needs_llm: bool = True) -> Optional[str]:
     return None
 
 
+def _collect_conferences(cfg: Config) -> List[Paper]:
+    """Papers from the top conferences, or nothing if the source is disabled.
+
+    Never raises: conference proceedings are a bonus source, and a Semantic
+    Scholar outage must not cost the arXiv and journal papers of the same run.
+    """
+    if not cfg.conferences.enabled:
+        return []
+
+    venues = select_venues(
+        min_score=cfg.conferences.min_score,
+        include=cfg.conferences.include,
+        exclude=cfg.conferences.exclude,
+    )
+    if not venues:
+        logger.warning("No conferences selected — check conferences.min_score")
+        return []
+
+    try:
+        return collect_conference_papers(
+            venues=venues,
+            days_back=cfg.days_back,
+            max_results=cfg.conferences.max_results,
+        )
+    except Exception as exc:
+        logger.warning("Conference collection failed: %s", exc)
+        return []
+
+
 # ── Weekly mode ────────────────────────────────────────────────────────────────
 
 def run_weekly(config_path: str = "config.yaml") -> int:
@@ -121,12 +152,16 @@ def run_weekly(config_path: str = "config.yaml") -> int:
     openalex_papers = collect_openalex_papers(
         keywords=cfg.keywords,
         days_back=cfg.days_back,
-        venue_aliases=cfg.venue_aliases,
+        venue_aliases={**venue_aliases_from_list(), **cfg.venue_aliases},
         excluded_venues=cfg.excluded_venues,
     )
-    all_papers = arxiv_papers + openalex_papers
-    logger.info("Collected %d total papers (arXiv: %d, OpenAlex: %d)",
-                len(all_papers), len(arxiv_papers), len(openalex_papers))
+    conference_papers = _collect_conferences(cfg)
+    all_papers = arxiv_papers + openalex_papers + conference_papers
+    logger.info(
+        "Collected %d total papers (arXiv: %d, OpenAlex: %d, conferences: %d)",
+        len(all_papers), len(arxiv_papers), len(openalex_papers),
+        len(conference_papers),
+    )
 
     # ── 2. Within-run deduplication ───────────────────────────────────────────
     logger.info("=== Stage 2: Deduplication ===")

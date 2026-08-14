@@ -177,6 +177,7 @@ def run_pipeline_mocked(config_path: str) -> tuple:
     with (
         patch("paper_digest.pipeline.collect_arxiv_papers", return_value=arxiv_papers),
         patch("paper_digest.pipeline.collect_openalex_papers", return_value=openalex_papers),
+        patch("paper_digest.pipeline.collect_conference_papers", return_value=[]),
         patch("paper_digest.pipeline.create_provider", return_value=mock_llm),
         patch("paper_digest.notion_writer.requests.post", side_effect=mock_notion_post),
         patch("paper_digest.notion_writer.requests.get", side_effect=mock_notion_get),

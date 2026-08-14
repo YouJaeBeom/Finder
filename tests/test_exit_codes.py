@@ -79,6 +79,7 @@ def _run(config_path: str, collected: List[Paper]) -> int:
     with (
         patch("paper_digest.pipeline.collect_arxiv_papers", return_value=[]),
         patch("paper_digest.pipeline.collect_openalex_papers", return_value=collected),
+        patch("paper_digest.pipeline.collect_conference_papers", return_value=[]),
         patch("paper_digest.pipeline.create_provider", return_value=MagicMock()),
         patch("paper_digest.notion_writer.requests.post", return_value=notion_resp),
         patch("paper_digest.notion_writer.requests.get", return_value=notion_get),
