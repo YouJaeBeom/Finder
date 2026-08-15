@@ -29,7 +29,9 @@ CONFIG = textwrap.dedent("""\
     tracked_venues: ["ACL 2026"]
     research_profile: |
       내 연구는 대형 언어 모델의 정렬과 안전성에 초점을 맞추고 있습니다.
-    arxiv_categories: [cs.CL, cs.AI, cs.LG]
+    arxiv:
+      enabled: true
+      categories: [cs.CL, cs.AI, cs.LG]
     days_back: 7
     max_papers_to_rank: 1500
     top_n: 10

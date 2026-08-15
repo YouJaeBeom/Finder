@@ -86,10 +86,9 @@ def sample_config(tmp_path):
         research_profile: |
           내 연구는 대형 언어 모델(LLM)의 정렬(alignment)과 안전성에 초점을 맞추고 있습니다.
           특히 RLHF(인간 피드백을 통한 강화 학습)와 지시 추종에 관심이 있습니다.
-        arxiv_categories:
-          - cs.CL
-          - cs.AI
-          - cs.LG
+        arxiv:
+          enabled: true
+          categories: [cs.CL, cs.AI, cs.LG]
         days_back: 7
         max_papers_to_rank: 1500
         top_n: 10

@@ -144,10 +144,14 @@ def run_weekly(config_path: str = "config.yaml") -> int:
 
     # ── 1. Collection ──────────────────────────────────────────────────────────
     logger.info("=== Stage 1: Collection ===")
-    arxiv_papers = collect_arxiv_papers(
-        categories=cfg.arxiv_categories,
-        keywords=cfg.keywords,
-        days_back=cfg.days_back,
+    arxiv_papers = (
+        collect_arxiv_papers(
+            categories=cfg.arxiv.categories,
+            keywords=cfg.keywords,
+            days_back=cfg.days_back,
+        )
+        if cfg.arxiv.enabled
+        else []
     )
     openalex_papers = collect_openalex_papers(
         keywords=cfg.keywords,
@@ -393,10 +397,14 @@ def run_batch(config_path: str = "config.yaml", venue: Optional[str] = None) -> 
 
     # Collect new papers (limited to top_n)
     logger.info("=== Batch mode: collecting new papers (top_n=%d) ===", cfg.top_n)
-    arxiv_papers = collect_arxiv_papers(
-        categories=cfg.arxiv_categories,
-        keywords=cfg.keywords,
-        days_back=cfg.days_back,
+    arxiv_papers = (
+        collect_arxiv_papers(
+            categories=cfg.arxiv.categories,
+            keywords=cfg.keywords,
+            days_back=cfg.days_back,
+        )
+        if cfg.arxiv.enabled
+        else []
     )
     openalex_papers = collect_openalex_papers(
         keywords=cfg.keywords,

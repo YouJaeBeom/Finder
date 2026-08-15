@@ -258,20 +258,25 @@ research_profile: |
   관련도가 낮은 것: 편향·공정성·정보 접근·데이터 구축과 무관한 순수 성능 최적화
   (추론 속도, 양자화, 커널, 서빙), 비전 전용 연구, 순수 이론 최적화 논문.
 
-# ── arXiv categories ─────────────────────────────────────────────────────────
-arxiv_categories:
-  - cs.CL   # Computation and Language — LLM, 편향 측정, 평가
-  - cs.IR   # Information Retrieval — 검색, 개인화, RAG
-  - cs.CY   # Computers and Society — 공정성, 정책, 계산사회과학
-  - cs.AI   # Artificial Intelligence
-  - cs.LG   # Machine Learning
+# ── arXiv (기본 꺼짐) ────────────────────────────────────────────────────────
+# arXiv 는 하루에 수백 편이 올라옵니다. 학회 프로시딩은 1년에 한 번, 저널은 한
+# 달에 한 번 나오므로, 둘을 함께 켜면 자리를 전부 프리프린트가 가져갑니다.
+# 심사를 거친 논문만 보려면 꺼두세요.
+arxiv:
+  enabled: false
+  categories:
+    - cs.CL   # Computation and Language
+    - cs.IR   # Information Retrieval
+    - cs.CY   # Computers and Society
+    - cs.AI
+    - cs.LG
 
 # ── Collection window ─────────────────────────────────────────────────────────
 days_back: 7
 
 # ── Cost controls ─────────────────────────────────────────────────────────────
 max_papers_to_rank: 1500  # truncate by score estimate if exceeded
-top_n: 10                 # maximum Notion pages per weekly run (5-10 target)
+top_n: 30                 # maximum Notion pages per weekly run
 
 # ── LLM provider ─────────────────────────────────────────────────────────────
 # Claude(Anthropic) 와 ChatGPT(OpenAI) 둘 다 됩니다. provider 를 바꾸고 해당

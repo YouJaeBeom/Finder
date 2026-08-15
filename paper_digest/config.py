@@ -77,6 +77,21 @@ class NewsConfig:
 
 
 @dataclass
+class ArxivConfig:
+    """arXiv preprint collection.
+
+    Off by default now: arXiv drowns out the peer-reviewed sources. It posts
+    hundreds of papers a day against a conference's once-a-year proceedings, so
+    with both enabled essentially every slot goes to a preprint.
+    """
+
+    enabled: bool = False
+    categories: List[str] = field(
+        default_factory=lambda: ["cs.CL", "cs.IR", "cs.CY", "cs.AI", "cs.LG"]
+    )
+
+
+@dataclass
 class ConferenceConfig:
     """Top-conference collection via Semantic Scholar.
 
@@ -116,9 +131,7 @@ class Config:
     excluded_venues: Optional[List[str]] = None
 
     # Collection settings
-    arxiv_categories: List[str] = field(
-        default_factory=lambda: ["cs.CL", "cs.AI", "cs.LG"]
-    )
+    arxiv: ArxivConfig = field(default_factory=ArxivConfig)
     days_back: int = 7
 
     # Cost controls
@@ -189,6 +202,13 @@ def load_config(path: str = "config.yaml") -> Config:
         keywords=news_data.get("keywords", []) or [],
     )
 
+    arxiv_data = data.get("arxiv", {}) or {}
+    arxiv_cfg = ArxivConfig(
+        enabled=arxiv_data.get("enabled", False),
+        categories=arxiv_data.get("categories") or ["cs.CL", "cs.IR", "cs.CY",
+                                                    "cs.AI", "cs.LG"],
+    )
+
     conf_data = data.get("conferences", {}) or {}
     conf_cfg = ConferenceConfig(
         enabled=conf_data.get("enabled", True),
@@ -208,7 +228,7 @@ def load_config(path: str = "config.yaml") -> Config:
         research_profile=data.get("research_profile", ""),
         venue_aliases=data.get("venue_aliases", {}) or {},
         excluded_venues=data.get("excluded_venues"),
-        arxiv_categories=data.get("arxiv_categories", ["cs.CL", "cs.AI", "cs.LG"]),
+        arxiv=arxiv_cfg,
         days_back=data.get("days_back", 7),
         max_papers_to_rank=data.get("max_papers_to_rank", 1500),
         top_n=data.get("top_n", 10),

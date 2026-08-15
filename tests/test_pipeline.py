@@ -220,7 +220,9 @@ class TestWeeklyPipelineIntegration:
             research_profile: |
               내 연구는 대형 언어 모델(LLM)의 정렬(alignment)과 안전성에 초점을 맞추고 있습니다.
               특히 RLHF와 지시 추종, 그리고 안전한 AI 시스템 구축에 관심이 있습니다.
-            arxiv_categories: [cs.CL, cs.AI, cs.LG]
+            arxiv:
+              enabled: true
+              categories: [cs.CL, cs.AI, cs.LG]
             days_back: 7
             max_papers_to_rank: 1500
             top_n: 10
@@ -324,7 +326,9 @@ class TestWeeklyRunProducesReportFile:
               - "RAG"
             tracked_venues: []
             research_profile: "LLM alignment and safety research focusing on RLHF and instruction following."
-            arxiv_categories: [cs.CL, cs.AI, cs.LG]
+            arxiv:
+              enabled: true
+              categories: [cs.CL, cs.AI, cs.LG]
             days_back: 7
             max_papers_to_rank: 1500
             top_n: 10
@@ -365,3 +369,63 @@ class TestWeeklyRunProducesReportFile:
         # ── Write report to project root for harness artifact collection ───────
         project_report = self.PROJECT_ROOT / "run-report.json"
         shutil.copy(str(report_file), str(project_report))
+
+
+class TestSourceToggles:
+    """arXiv posts hundreds of papers a day; a conference publishes once a
+    year. With both on, essentially every slot goes to a preprint."""
+
+    def _config(self, tmp_path, arxiv_enabled: bool) -> str:
+        cfg = textwrap.dedent(f"""\
+            notion_parent_page_id: "3bc1256e05618089aaaabbbbccccdddd"
+            keywords: ["large language model", "LLM", "RLHF", "alignment"]
+            research_profile: "LLM alignment"
+            arxiv:
+              enabled: {str(arxiv_enabled).lower()}
+            days_back: 7
+            top_n: 30
+        """)
+        path = tmp_path / "config.yaml"
+        path.write_text(cfg)
+        return str(path)
+
+    def _run(self, config_path):
+        provider = MagicMock()
+        provider.complete.side_effect = lambda prompt, model, max_tokens=512, \
+            system=None: (json.dumps([{"id": str(i), "score": 9} for i in range(20)])
+                          if max_tokens <= 512 else _make_note_json())
+
+        with (
+            patch("paper_digest.pipeline.collect_arxiv_papers",
+                  return_value=_make_papers(3, source="arxiv")) as arxiv,
+            patch("paper_digest.pipeline.collect_openalex_papers", return_value=[]),
+            patch("paper_digest.pipeline.collect_conference_papers", return_value=[]),
+            patch("paper_digest.pipeline.create_provider", return_value=provider),
+            patch("paper_digest.notion_writer.requests.post",
+                  return_value=_notion_ok({"id": "db"})),
+            patch("paper_digest.notion_writer.requests.get",
+                  return_value=_notion_ok({"results": [], "has_more": False})),
+            patch("paper_digest.notion_writer.requests.patch",
+                  return_value=_notion_ok({})),
+            patch.dict(os.environ, {"NOTION_TOKEN": "t", "ANTHROPIC_API_KEY": "k"}),
+        ):
+            from paper_digest.pipeline import run_weekly
+            run_weekly(config_path)
+        return arxiv
+
+    def test_arxiv_is_not_collected_when_disabled(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        arxiv = self._run(self._config(tmp_path, arxiv_enabled=False))
+        arxiv.assert_not_called()
+
+    def test_arxiv_is_collected_when_enabled(self, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        arxiv = self._run(self._config(tmp_path, arxiv_enabled=True))
+        arxiv.assert_called_once()
+
+
+def _notion_ok(payload) -> MagicMock:
+    resp = MagicMock()
+    resp.raise_for_status = MagicMock()
+    resp.json.return_value = payload
+    return resp
