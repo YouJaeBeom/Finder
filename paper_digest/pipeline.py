@@ -165,6 +165,7 @@ def run_weekly(config_path: str = "config.yaml") -> int:
         venue_aliases={**venue_aliases_from_list(), **cfg.venue_aliases},
         excluded_venues=cfg.excluded_venues,
         mailto=cfg.openalex_mailto,
+        api_key=cfg.openalex_api_key,
         # Weekly asks "what became visible to us", not "what was published".
         # A journal issue from May indexed today is new to this digest, and a
         # publication-date window would miss it permanently.
@@ -404,6 +405,7 @@ def run_backfill(
         venue_aliases={**venue_aliases_from_list(), **cfg.venue_aliases},
         excluded_venues=cfg.excluded_venues,
         mailto=cfg.openalex_mailto,
+        api_key=cfg.openalex_api_key,
     )
     conference_papers = _collect_conferences(cfg, days_back=days,
                                              max_results=100_000)

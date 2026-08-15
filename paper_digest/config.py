@@ -155,6 +155,10 @@ class Config:
     notion_token: str = ""
     anthropic_api_key: str = ""
     openai_api_key: str = ""
+    # Optional. Anonymous OpenAlex gets 1,000 requests a day; a free account
+    # gets ten times that. The tool needs ~56 for a year-long backfill, so the
+    # key only matters if something else on the same address is also calling.
+    openalex_api_key: str = ""
 
     def parent_page_id(self) -> str:
         """The parent page ID, accepting a pasted Notion URL. "" if unusable."""
@@ -244,6 +248,7 @@ def load_config(path: str = "config.yaml") -> Config:
         notion_token=os.environ.get("NOTION_TOKEN", ""),
         anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
         openai_api_key=os.environ.get("OPENAI_API_KEY", ""),
+        openalex_api_key=os.environ.get("OPENALEX_API_KEY", ""),
     )
 
     return cfg

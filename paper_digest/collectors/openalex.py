@@ -34,30 +34,79 @@ _DEFAULT_MAILTO = "paper-digest@example.com"
 # requests into ~8, which is the difference between being throttled and not.
 _TERMS_PER_REQUEST = 12
 
-_REQUEST_INTERVAL = 1.0
-_MAX_ATTEMPTS = 4
-_BACKOFF_BASE = 4.0
+_REQUEST_INTERVAL = 2.0
+_MAX_ATTEMPTS = 5
+_BACKOFF_BASE = 10.0
+
+# A 429 can mean two different things now that OpenAlex meters by credit. A
+# short Retry-After is ordinary throttling and worth waiting out; the
+# daily-budget one comes back with the seconds remaining until midnight UTC,
+# and no amount of backoff will outlast it.
+_RETRYABLE_WAIT_SECONDS = 120
+
+
+class BudgetExhausted(RuntimeError):
+    """The day's OpenAlex credits are gone. Retrying cannot help."""
 
 
 def _user_agent(mailto: str) -> str:
     return f"paper-digest/1.0 (mailto:{mailto})"
 
 
-def _get(params: dict, mailto: str) -> Optional[dict]:
-    """One OpenAlex request, retrying while the API says to slow down."""
+def _retry_after(resp) -> Optional[float]:
+    for source in (resp.headers.get("Retry-After"),
+                   resp.headers.get("x-ratelimit-reset")):
+        try:
+            return float(source)
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def _get(params: dict, mailto: str, api_key: str = "") -> Optional[dict]:
+    """One OpenAlex request, retrying while the API says to slow down.
+
+    Raises BudgetExhausted when the day's credits are spent, so the caller
+    stops instead of grinding through every remaining batch to be told the
+    same thing.
+    """
     params = {**params, "mailto": mailto}
+    headers = {"User-Agent": _user_agent(mailto)}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
     for attempt in range(_MAX_ATTEMPTS):
         try:
             resp = requests.get(OPENALEX_URL, params=params, timeout=30,
-                                headers={"User-Agent": _user_agent(mailto)})
-            if resp.status_code == 429 or resp.status_code >= 500:
+                                headers=headers)
+
+            if resp.status_code == 429:
+                wait = _retry_after(resp)
+                if wait is not None and wait > _RETRYABLE_WAIT_SECONDS:
+                    raise BudgetExhausted(
+                        f"OpenAlex daily credits are spent; they reset in "
+                        f"{wait / 3600:.1f}h. Anonymous callers get 1,000 "
+                        f"requests a day — set OPENALEX_API_KEY (a free "
+                        f"account is 10x that) or run again tomorrow."
+                    )
+                wait = wait or _BACKOFF_BASE * (attempt + 1)
+                logger.info("OpenAlex throttled — waiting %.0fs (attempt %d/%d)",
+                            wait, attempt + 1, _MAX_ATTEMPTS)
+                time.sleep(wait)
+                continue
+
+            if resp.status_code >= 500:
                 wait = _BACKOFF_BASE * (attempt + 1)
                 logger.info("OpenAlex returned %d — waiting %.0fs (attempt %d/%d)",
                             resp.status_code, wait, attempt + 1, _MAX_ATTEMPTS)
                 time.sleep(wait)
                 continue
+
             resp.raise_for_status()
             return resp.json()
+
+        except BudgetExhausted:
+            raise
         except Exception as exc:
             wait = _BACKOFF_BASE * (attempt + 1)
             logger.info("OpenAlex error (%s) — retrying in %.0fs", exc, wait)
@@ -283,6 +332,7 @@ def collect_openalex_papers(
     excluded_venues: Optional[Sequence[str]] = None,
     by_index_date: bool = False,
     mailto: str = _DEFAULT_MAILTO,
+    api_key: str = "",
 ) -> List[Paper]:
     """Fetch papers from OpenAlex within the last *days_back* days.
 
@@ -327,8 +377,14 @@ def collect_openalex_papers(
         work_filter = base_filter
         if batch:
             work_filter += f",title_and_abstract.search:{'|'.join(batch)}"
-        _collect_one_search(work_filter, max_results, papers, seen_ids,
-                            venue_aliases, excluded_venues, mailto)
+        try:
+            _collect_one_search(work_filter, max_results, papers, seen_ids,
+                                venue_aliases, excluded_venues, mailto, api_key)
+        except BudgetExhausted as exc:
+            # Keep what was collected; the rest of the batches would only hit
+            # the same wall.
+            logger.error("%s", exc)
+            break
 
     logger.info("OpenAlex: collected %d papers (last %d days)", len(papers), days_back)
     return papers[:max_results]
@@ -342,6 +398,7 @@ def _collect_one_search(
     venue_aliases: Optional[Dict[str, str]],
     excluded_venues: Optional[Sequence[str]],
     mailto: str,
+    api_key: str,
 ) -> None:
     """Page through one search and append its new papers to *papers*."""
     cursor = "*"
@@ -355,7 +412,7 @@ def _collect_one_search(
         }
 
         time.sleep(_REQUEST_INTERVAL)
-        data = _get(params, mailto)
+        data = _get(params, mailto, api_key)
         if data is None:
             break
 

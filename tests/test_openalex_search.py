@@ -115,3 +115,70 @@ class TestRateLimiting:
             patch("paper_digest.collectors.openalex.time.sleep"),
         ):
             assert collect_openalex_papers(["political bias"], days_back=7) == []
+
+
+class TestCreditBudget:
+    """OpenAlex meters by credit now: 1,000 requests a day anonymous, ten times
+    that with a free account. A 429 therefore means two different things."""
+
+    def _resp(self, status, headers=None) -> MagicMock:
+        resp = MagicMock()
+        resp.status_code = status
+        resp.headers = headers or {}
+        resp.raise_for_status = MagicMock()
+        resp.json.return_value = {"results": [], "meta": {}}
+        return resp
+
+    def test_ordinary_throttling_waits_and_retries(self):
+        replies = [self._resp(429, {"Retry-After": "5"}), self._resp(200)]
+        waits = []
+        with (
+            patch("paper_digest.collectors.openalex.requests.get",
+                  side_effect=replies) as get,
+            patch("paper_digest.collectors.openalex.time.sleep",
+                  side_effect=waits.append),
+        ):
+            collect_openalex_papers(["political bias"], days_back=7)
+
+        assert get.call_count == 2
+        assert 5.0 in waits, "the API's own Retry-After is honoured"
+
+    def test_an_exhausted_daily_budget_stops_instead_of_retrying(self):
+        """Retry-After comes back as the seconds until midnight UTC — 18 hours
+        on the run that found this. Backing off cannot outlast it."""
+        exhausted = self._resp(429, {"Retry-After": "67186"})
+        with (
+            patch("paper_digest.collectors.openalex.requests.get",
+                  return_value=exhausted) as get,
+            patch("paper_digest.collectors.openalex.time.sleep"),
+        ):
+            papers = collect_openalex_papers(
+                [f"phrase number {i}" for i in range(_TERMS_PER_REQUEST * 3)],
+                days_back=7)
+
+        assert papers == []
+        assert get.call_count == 1, "one request, not one per batch per attempt"
+
+    def test_the_api_key_goes_in_the_authorization_header(self):
+        """A key in the query string ends up in logs and proxy records."""
+        with (
+            patch("paper_digest.collectors.openalex.requests.get",
+                  return_value=self._resp(200)) as get,
+            patch("paper_digest.collectors.openalex.time.sleep"),
+        ):
+            collect_openalex_papers(["political bias"], days_back=7,
+                                    api_key="secret-key")
+
+        headers = get.call_args.kwargs["headers"]
+        assert headers["Authorization"] == "Bearer secret-key"
+        assert "secret-key" not in str(get.call_args.kwargs["params"])
+
+    def test_no_key_sends_no_authorization_header(self):
+        with (
+            patch("paper_digest.collectors.openalex.requests.get",
+                  return_value=self._resp(200)) as get,
+            patch("paper_digest.collectors.openalex.time.sleep"),
+        ):
+            collect_openalex_papers(["political bias"], days_back=7)
+
+        assert "Authorization" not in get.call_args.kwargs["headers"]

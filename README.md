@@ -71,6 +71,7 @@ research_profile: |
 |---|---|
 | `NOTION_TOKEN` | 1번에서 복사한 통합 시크릿 |
 | `ANTHROPIC_API_KEY` | 2번에서 발급한 키 |
+| `OPENALEX_API_KEY` | *(선택)* OpenAlex 무료 계정 키 — 없어도 동작합니다 |
 
 **(2) 워크플로 쓰기 권한 켜기** ← 이걸 안 하면 실행이 실패합니다
 
