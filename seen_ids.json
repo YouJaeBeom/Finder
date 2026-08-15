@@ -1,22 +1,13 @@
 {
-  "database_id": "3bc1256e-0561-815c-90f8-e52863702e5a",
+  "database_id": "3bd1256e-0561-814b-92b6-d451e2fbf3c2",
   "records": [
-    {
-      "arxiv_id": "2608.13410",
-      "doi": null,
-      "normalized_title": "who speaks matters authorityaware multiview rag over italian parliamentary proceedings",
-      "url": null,
-      "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-813c-8468-eebbc9621cb9",
-      "title": "Who Speaks Matters: Authority-Aware Multi-View RAG over Italian Parliamentary Proceedings"
-    },
     {
       "arxiv_id": "2608.12984",
       "doi": null,
       "normalized_title": "reconcile once write anytime a trusttiered librarian and a multiagent writer for driftfree pointintime research",
       "url": null,
       "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-8110-930d-faf641841d1c",
+      "notion_page_id": "3bd1256e-0561-81e1-899b-ee8d65be3b3f",
       "title": "Reconcile Once, Write Anytime: A Trust-Tiered Librarian and a Multi-Agent Writer for Drift-Free, Point-in-Time Research"
     },
     {
@@ -25,7 +16,7 @@
       "normalized_title": "privacypreserving rag by concealing sensitive information from external llms",
       "url": null,
       "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-8176-9346-fc9fc5c31fcd",
+      "notion_page_id": "3bd1256e-0561-8112-9b46-fefab86d2c0b",
       "title": "Privacy-Preserving RAG by Concealing Sensitive Information from External LLMs"
     },
     {
@@ -34,8 +25,26 @@
       "normalized_title": "how chinaorigin visionlanguage models move from refusal to reframing in state alignment",
       "url": null,
       "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-814b-8f0f-e1c1104e68e8",
+      "notion_page_id": "3bd1256e-0561-81f9-bc01-ca72e413b9f4",
       "title": "How China-Origin Vision-Language Models Move from Refusal to Reframing in State Alignment"
+    },
+    {
+      "arxiv_id": "2608.11735",
+      "doi": null,
+      "normalized_title": "locating and controlling implicit personalization in large language models",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3bd1256e-0561-814f-aab1-ffe51e9c96ce",
+      "title": "Locating and Controlling Implicit Personalization in Large Language Models"
+    },
+    {
+      "arxiv_id": "2608.13410",
+      "doi": null,
+      "normalized_title": "who speaks matters authorityaware multiview rag over italian parliamentary proceedings",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3bd1256e-0561-8103-a385-f960737e55e5",
+      "title": "Who Speaks Matters: Authority-Aware Multi-View RAG over Italian Parliamentary Proceedings"
     },
     {
       "arxiv_id": "2608.13328",
@@ -43,7 +52,7 @@
       "normalized_title": "its how you ask genderassociated linguistic bias in llms",
       "url": null,
       "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-818a-98e4-ee50d357ee24",
+      "notion_page_id": "3bd1256e-0561-81d3-8134-d9715f5c1746",
       "title": "It's How You Ask: Gender-Associated Linguistic Bias in LLMs"
     },
     {
@@ -52,7 +61,7 @@
       "normalized_title": "applied and filtered an endtoend algorithmic fairness audit of a public employment agency",
       "url": null,
       "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-81c2-810f-e4a76932b0b4",
+      "notion_page_id": "3bd1256e-0561-81c9-94b0-fac17e17bc71",
       "title": "Applied and Filtered: An End-to-End Algorithmic Fairness Audit of A Public Employment Agency"
     },
     {
@@ -61,7 +70,7 @@
       "normalized_title": "prompts in the wild a large analyzed collection of transactional prompts in code",
       "url": null,
       "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-813a-9434-fb09703efbb9",
+      "notion_page_id": "3bd1256e-0561-8176-924a-c2b4ebf6120c",
       "title": "Prompts in the Wild: A Large Analyzed Collection of Transactional Prompts in Code"
     },
     {
@@ -70,17 +79,8 @@
       "normalized_title": "query translation vs crosslingual embeddings for sinhalatamil egovernment information retrieval",
       "url": null,
       "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-8124-9029-da39fe4bfdef",
+      "notion_page_id": "3bd1256e-0561-81d9-8930-ec4fc9b9884e",
       "title": "Query Translation vs. Cross-Lingual Embeddings for Sinhala-Tamil E-Government Information Retrieval"
-    },
-    {
-      "arxiv_id": "2608.12812",
-      "doi": null,
-      "normalized_title": "a comprehensive empirical evaluation of vector database systems for approximate nearest neighbor search performance quality and resource tradeoffs",
-      "url": null,
-      "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-8137-a162-f3b619964358",
-      "title": "A Comprehensive Empirical Evaluation of Vector Database Systems for Approximate Nearest Neighbor Search: Performance, Quality, and Resource Trade-offs"
     },
     {
       "arxiv_id": "2608.12741",
@@ -88,35 +88,35 @@
       "normalized_title": "knowledge synthesis review framework tasklevel benchmarking of llmbased systems for multisource evidence synthesis",
       "url": null,
       "content_type": "paper",
-      "notion_page_id": "3bc1256e-0561-81a6-acfd-c0998ca9347e",
+      "notion_page_id": "3bd1256e-0561-81ae-bf37-f5bf146eaf0f",
       "title": "Knowledge Synthesis Review Framework: Task-Level Benchmarking of LLM-Based Systems for Multi-Source Evidence Synthesis"
     },
     {
       "arxiv_id": null,
       "doi": null,
-      "normalized_title": "as ai eats the web the internets collective memory is disappearing",
-      "url": "https://thewalrus.ca/google-search-is-dying/",
+      "normalized_title": "google is making private ai practical with homomorphic encryption",
+      "url": "https://blog.google/security/how-google-is-making-private-ai-practical-with-homomorphic-encryption/",
       "content_type": "news",
-      "notion_page_id": "3bc1256e-0561-815a-bf79-e3318d1c656d",
-      "title": "As AI eats the web, the internet’s collective memory is disappearing"
+      "notion_page_id": "3bd1256e-0561-8138-bfdd-fec145ca6d68",
+      "title": "Google is making private AI practical with homomorphic encryption"
     },
     {
       "arxiv_id": null,
       "doi": null,
-      "normalized_title": "google will now allow users to remove visible watermark from its ai generations",
-      "url": "https://techcrunch.com/2026/08/14/google-will-now-allow-users-to-remove-visible-watermark-from-its-ai-generations/",
+      "normalized_title": "selfdriving trucks are officially testing on california highways",
+      "url": "https://techcrunch.com/2026/08/14/self-driving-trucks-are-officially-testing-on-california-highways/",
       "content_type": "news",
-      "notion_page_id": "3bc1256e-0561-81c2-9656-ec7bf2b8050b",
-      "title": "Google will now allow users to remove visible watermark from its AI generations"
+      "notion_page_id": "3bd1256e-0561-81c3-b2d1-f10e655a29de",
+      "title": "Self-driving trucks are officially testing on California highways"
     },
     {
       "arxiv_id": null,
       "doi": null,
-      "normalized_title": "you can now turn off google gemini8217s visible watermarks",
-      "url": "https://www.theverge.com/tech/980416/google-gemini-ai-watermarks-removal",
+      "normalized_title": "samsung has new galaxy headphones in the works",
+      "url": "https://www.theverge.com/gadgets/980547/samsung-galaxy-h1-over-ear-headphones",
       "content_type": "news",
-      "notion_page_id": "3bc1256e-0561-8119-a159-dfec5ac97c84",
-      "title": "You can now turn off Google Gemini&#8217;s visible watermarks"
+      "notion_page_id": "3bd1256e-0561-81bc-9c7a-c8669dcc2419",
+      "title": "Samsung has new Galaxy headphones in the works"
     },
     {
       "arxiv_id": null,
@@ -124,7 +124,7 @@
       "normalized_title": "openai and anthropic in price war as chinese ai rivals gain ground",
       "url": "https://arstechnica.com/ai/2026/08/openai-and-anthropic-in-price-war-as-chinese-ai-rivals-gain-ground/",
       "content_type": "news",
-      "notion_page_id": "3bc1256e-0561-8116-be0e-c19aeabd026d",
+      "notion_page_id": "3bd1256e-0561-8142-9792-f18179ae80a9",
       "title": "OpenAI and Anthropic in price war as Chinese AI rivals gain ground"
     },
     {
@@ -133,7 +133,7 @@
       "normalized_title": "choosing an ai model one prompt 11 models different results",
       "url": "https://www.netlify.com/blog/one-prompt-11-models-very-different-results/",
       "content_type": "news",
-      "notion_page_id": "3bc1256e-0561-81ad-93bb-e0d84071565a",
+      "notion_page_id": "3bd1256e-0561-8170-b214-fd6c3e108b0d",
       "title": "Choosing an AI model: one prompt, 11 models, different results"
     }
   ]
