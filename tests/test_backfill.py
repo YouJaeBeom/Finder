@@ -126,3 +126,50 @@ class TestBackfill:
     def test_an_empty_year_is_not_a_failure(self, config_path):
         code, pages = _run(config_path, [], limit=3)
         assert code == 0 and pages == []
+
+
+class TestSourceSelection:
+    """Conferences are the case that needs backfilling: proceedings drop once a
+    year, so a digest set up in August has missed the spring. Journals publish
+    steadily and the weekly run picks them up on its own."""
+
+    def _run_with(self, config_path, sources):
+        with (
+            patch("paper_digest.pipeline.collect_openalex_papers",
+                  return_value=[]) as openalex,
+            patch("paper_digest.pipeline.collect_conference_papers",
+                  return_value=[]) as conf,
+            patch("paper_digest.notion_writer.requests.get",
+                  return_value=_ok({"results": [], "has_more": False})),
+            patch("paper_digest.notion_writer.requests.post",
+                  return_value=_ok({"id": "db-1"})),
+            patch("paper_digest.notion_writer.requests.patch", return_value=_ok({})),
+            patch.dict(os.environ, {"NOTION_TOKEN": "t", "ANTHROPIC_API_KEY": "k"}),
+        ):
+            from paper_digest.pipeline import run_backfill
+            code = run_backfill(config_path, days=365, limit=10, sources=sources)
+        return code, openalex, conf
+
+    def test_conferences_only_skips_the_journal_source(self, config_path):
+        code, openalex, conf = self._run_with(config_path, "conferences")
+        assert code == 0
+        openalex.assert_not_called()
+        conf.assert_called_once()
+
+    def test_journals_only_skips_the_conference_source(self, config_path):
+        code, openalex, conf = self._run_with(config_path, "journals")
+        assert code == 0
+        openalex.assert_called_once()
+        conf.assert_not_called()
+
+    def test_both_uses_both(self, config_path):
+        _, openalex, conf = self._run_with(config_path, "both")
+        openalex.assert_called_once()
+        conf.assert_called_once()
+
+    def test_an_unknown_source_fails_instead_of_silently_collecting_nothing(
+            self, config_path):
+        code, openalex, conf = self._run_with(config_path, "preprints")
+        assert code == 1
+        openalex.assert_not_called()
+        conf.assert_not_called()

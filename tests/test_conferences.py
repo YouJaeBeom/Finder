@@ -211,3 +211,53 @@ class TestRateLimiting:
 
         retry_waits = [w for w in waits if w >= 5.0]
         assert retry_waits == sorted(retry_waits) and len(set(retry_waits)) > 1
+
+
+class TestPagination:
+    """One response carries at most 1,000 papers. A year of the twelve
+    best-known venues alone is 13,544."""
+
+    def _page(self, items, token=None) -> MagicMock:
+        resp = MagicMock()
+        resp.status_code = 200
+        resp.raise_for_status = MagicMock()
+        body = {"data": list(items)}
+        if token:
+            body["token"] = token
+        resp.json.return_value = body
+        return resp
+
+    def test_it_follows_the_continuation_token(self):
+        pages = [self._page([_item()], token="NEXT"),
+                 self._page([_item()], token="NEXT2"),
+                 self._page([_item()])]
+        with (
+            patch("paper_digest.collectors.conferences.requests.get",
+                  side_effect=pages) as get,
+            patch("paper_digest.collectors.conferences.time.sleep"),
+        ):
+            papers = collect_conference_papers({"ACL": "ACL"}, days_back=365)
+
+        assert len(papers) == 3
+        assert get.call_count == 3
+        assert get.call_args_list[1].kwargs["params"]["token"] == "NEXT"
+
+    def test_it_stops_when_the_token_runs_out(self):
+        with (
+            patch("paper_digest.collectors.conferences.requests.get",
+                  return_value=self._page([_item()])) as get,
+            patch("paper_digest.collectors.conferences.time.sleep"),
+        ):
+            collect_conference_papers({"ACL": "ACL"}, days_back=365)
+        assert get.call_count == 1
+
+    def test_max_results_bounds_the_paging(self):
+        endless = self._page([_item()] * 10, token="MORE")
+        with (
+            patch("paper_digest.collectors.conferences.requests.get",
+                  return_value=endless),
+            patch("paper_digest.collectors.conferences.time.sleep"),
+        ):
+            papers = collect_conference_papers({"ACL": "ACL"}, days_back=365,
+                                               max_results=25)
+        assert len(papers) == 25

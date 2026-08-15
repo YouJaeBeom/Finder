@@ -358,12 +358,33 @@ def _run_news_stage(
     return written
 
 
+def _log_rank_estimate(candidates: int, limit: int) -> None:
+    """Say what this run is about to cost, before it costs it.
+
+    Rough by construction — token counts are estimated from measured prompt
+    sizes — but the order of magnitude is what matters when the alternative is
+    finding out from a bill.
+    """
+    batches = (candidates + 19) // 20
+    rank_usd = batches * (4179 / 1e6 * 1.0 + 380 / 1e6 * 5.0)   # haiku 4.5
+    note_usd = limit * (960 / 1e6 * 3.0 + 800 / 1e6 * 15.0)     # sonnet 5
+    logger.info(
+        "Backfill will rank %d papers in %d batches and write notes for up to "
+        "%d — roughly $%.2f in ranking plus $%.2f in notes (estimate)",
+        candidates, batches, limit, rank_usd, note_usd,
+    )
+
+
 # ── Backfill mode ──────────────────────────────────────────────────────────────
+
+BACKFILL_SOURCES = ("conferences", "journals", "both")
+
 
 def run_backfill(
     config_path: str = "config.yaml",
     days: int = 365,
     limit: int = 200,
+    sources: str = "both",
 ) -> int:
     """One-off catch-up: rank a long window at once and keep the best *limit*.
 
@@ -374,7 +395,16 @@ def run_backfill(
     Every paper it ranks is marked seen, not just the ones written. They have
     been considered and judged; leaving the rejected ones unseen would make the
     next weekly run re-rank thousands of papers it has already paid to score.
+
+    *sources* narrows what is backfilled. Conferences are the case that needs
+    it: proceedings drop once a year, so a digest set up in August has missed
+    everything from the spring, while journals publish steadily and the weekly
+    run picks them up on its own.
     """
+    if sources not in BACKFILL_SOURCES:
+        logger.error("Unknown backfill source %r — expected one of %s",
+                     sources, ", ".join(BACKFILL_SOURCES))
+        return 1
     try:
         cfg = load_config(config_path)
     except Exception as exc:
@@ -396,19 +426,29 @@ def run_backfill(
         write_failure_report("backfill", f"notion: {exc}")
         return 1
 
-    logger.info("=== Backfill: last %d days, keeping the top %d ===", days, limit)
+    logger.info("=== Backfill: last %d days, %s, keeping the top %d ===",
+                days, sources, limit)
 
-    openalex_papers = collect_openalex_papers(
-        keywords=cfg.keywords,
-        days_back=days,
-        max_results=100_000,
-        venue_aliases={**venue_aliases_from_list(), **cfg.venue_aliases},
-        excluded_venues=cfg.excluded_venues,
-        mailto=cfg.openalex_mailto,
-        api_key=cfg.openalex_api_key,
+    openalex_papers = (
+        collect_openalex_papers(
+            keywords=cfg.keywords,
+            days_back=days,
+            max_results=100_000,
+            venue_aliases={**venue_aliases_from_list(), **cfg.venue_aliases},
+            excluded_venues=cfg.excluded_venues,
+            mailto=cfg.openalex_mailto,
+            api_key=cfg.openalex_api_key,
+        )
+        if sources in ("journals", "both")
+        else []
     )
-    conference_papers = _collect_conferences(cfg, days_back=days,
-                                             max_results=100_000)
+    conference_papers = (
+        _collect_conferences(cfg, days_back=days, max_results=100_000)
+        if sources in ("conferences", "both")
+        else []
+    )
+    logger.info("Backfill sources: OpenAlex %d, conferences %d",
+                len(openalex_papers), len(conference_papers))
     unique = deduplicate_collected(openalex_papers + conference_papers)
     candidates = filter_by_keywords(unique, cfg.keywords)
 
@@ -422,6 +462,12 @@ def run_backfill(
         logger.info("Nothing new to backfill")
         write_report([], 0, 0, len(candidates), 0, mode="backfill")
         return 0
+
+    # Backfill deliberately ranks everything rather than obeying
+    # max_papers_to_rank: taking the top 200 of a year means scoring the year,
+    # and a cap would drop papers in collection order, which is arbitrary.
+    # The cost scales with that count, so it is stated before it is spent.
+    _log_rank_estimate(len(fresh), limit)
 
     provider = create_provider(cfg)
     ranked_cfg = replace(cfg, top_n=limit, max_papers_to_rank=len(fresh))

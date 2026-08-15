@@ -198,18 +198,34 @@ def collect_conference_papers(
             "publicationDateOrYear": date_range,
             "fields": _FIELDS,
         }
-        data = _search(params, batch_keys[0])
-        last_request = time.time()
-        if data is None:
-            continue
 
-        for item in data.get("data") or []:
-            label = _label_for(item.get("venue", ""), batch)
-            if label is None:
-                continue
-            paper = _to_paper(item, label, collection_date)
-            if paper is not None:
-                papers.append(paper)
+        # One response carries at most 1,000 papers and a continuation token.
+        # A year of the twelve best-known venues alone is 13,544, so ignoring
+        # the token silently truncates a backfill to the first page.
+        token: Optional[str] = None
+        while len(papers) < max_results:
+            if token:
+                params = {**params, "token": token}
+                elapsed = time.time() - last_request
+                if elapsed < _REQUEST_INTERVAL:
+                    time.sleep(_REQUEST_INTERVAL - elapsed)
+
+            data = _search(params, batch_keys[0])
+            last_request = time.time()
+            if data is None:
+                break
+
+            for item in data.get("data") or []:
+                label = _label_for(item.get("venue", ""), batch)
+                if label is None:
+                    continue
+                paper = _to_paper(item, label, collection_date)
+                if paper is not None:
+                    papers.append(paper)
+
+            token = data.get("token")
+            if not token:
+                break
 
     logger.info(
         "Conferences: collected %d papers from %d venues (last %d days)",

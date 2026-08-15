@@ -38,6 +38,12 @@ def main() -> None:
         help="Backfill: how many top-ranked papers to keep (default: 200)",
     )
     run_p.add_argument(
+        "--sources",
+        choices=["conferences", "journals", "both"],
+        default="both",
+        help="Backfill: which sources to catch up on (default: both)",
+    )
+    run_p.add_argument(
         "--config",
         default="config.yaml",
         help="Path to config.yaml (default: config.yaml)",
@@ -59,7 +65,7 @@ def main() -> None:
         if args.mode == "weekly":
             sys.exit(run_weekly(args.config))
         elif args.mode == "backfill":
-            sys.exit(run_backfill(args.config, args.days, args.limit))
+            sys.exit(run_backfill(args.config, args.days, args.limit, args.sources))
         else:
             sys.exit(run_batch(args.config, args.venue))
     elif args.command == "init":
