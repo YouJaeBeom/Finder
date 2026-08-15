@@ -112,4 +112,20 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: update digest state after backfill [skip ci]"
-          git push
+
+          # A run this long races anything pushed while it works. The first
+          # backfill took 84 minutes, a config commit landed partway through,
+          # and the push was rejected as non-fast-forward — losing the entire
+          # point of the run, since the ranking it recorded had already been
+          # paid for. Rebase onto whatever arrived and try again.
+          #
+          # Two digest runs cannot overlap (the concurrency group sees to
+          # that), so the only thing to rebase over is an unrelated commit,
+          # which rebases cleanly. A genuine conflict fails loudly on purpose.
+          for attempt in 1 2 3; do
+            if git push; then exit 0; fi
+            echo "push rejected — rebasing onto origin/main (attempt $attempt)"
+            git pull --rebase origin main
+          done
+          echo "::error::could not push the dedup state after 3 attempts"
+          exit 1

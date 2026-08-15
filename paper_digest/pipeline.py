@@ -600,7 +600,7 @@ def run_batch(config_path: str = "config.yaml", venue: Optional[str] = None) -> 
 
     dedup_store.persist()
 
-    report = write_report(
+    write_report(
         papers_created=created_papers,
         venue_updated=venue_updated_count,
         duplicates_created=0,
