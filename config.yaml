@@ -193,6 +193,11 @@ conferences:
 
   max_results: 400
 
+# ── OpenAlex ─────────────────────────────────────────────────────────────────
+# OpenAlex 는 신원을 밝힌 호출자에게 훨씬 높은 rate limit 을 줍니다 (polite pool).
+# 백필처럼 요청이 많은 작업 전에는 실제 이메일로 바꿔두세요.
+openalex_mailto: "paper-digest@example.com"
+
 # ── Venue 표기 ────────────────────────────────────────────────────────────────
 # OpenAlex 는 학회를 정식 명칭으로 줍니다 ("Proceedings of the 32nd ACM
 # International Conference on Information and Knowledge Management"). Notion

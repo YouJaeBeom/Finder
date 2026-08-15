@@ -38,8 +38,16 @@ _FIELDS = "title,abstract,venue,publicationDate,year,externalIds,authors"
 # the rest.
 _VENUES_PER_REQUEST = 25
 
-# Unauthenticated Semantic Scholar tolerates roughly one request a second.
-_REQUEST_INTERVAL = 1.1
+# Unauthenticated Semantic Scholar runs on a shared pool, so the safe rate is
+# well under one request a second — a 1.1s gap lost three of four batches to
+# 429s during a year-long backfill, taking ACL, NeurIPS, CHI, SIGIR and CVPR
+# with them. Slower here costs seconds; being throttled costs whole venues.
+_REQUEST_INTERVAL = 3.0
+
+# A 429 means "later", not "never", so it is retried rather than dropped. Each
+# wait is longer than the last.
+_MAX_ATTEMPTS = 5
+_BACKOFF_BASE = 5.0
 
 
 def _batches(items: Sequence[str], size: int) -> List[Sequence[str]]:
@@ -89,6 +97,37 @@ def _to_paper(item: dict, venue_label: str, collection_date: str) -> Optional[Pa
         url=_paper_url(external, item.get("paperId") or ""),
         published_at=item.get("publicationDate"),
     )
+
+
+def _search(params: dict, label: str) -> Optional[dict]:
+    """One search request, retrying while the API says to slow down.
+
+    Returns None when the batch could not be fetched — one bad batch must not
+    take down the rest of the collection.
+    """
+    for attempt in range(_MAX_ATTEMPTS):
+        try:
+            resp = requests.get(SEARCH_URL, params=params, timeout=TIMEOUT)
+            if resp.status_code == 429 or resp.status_code >= 500:
+                wait = _BACKOFF_BASE * (attempt + 1)
+                logger.info("Semantic Scholar returned %d for %s… — waiting %.0fs "
+                            "(attempt %d/%d)", resp.status_code, label, wait,
+                            attempt + 1, _MAX_ATTEMPTS)
+                time.sleep(wait)
+                continue
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as exc:
+            # Broad on purpose: a truncated body raises from resp.json(), not
+            # from requests, and that is as transient as a dropped connection.
+            wait = _BACKOFF_BASE * (attempt + 1)
+            logger.info("Conference search error for %s… (%s) — retrying in %.0fs",
+                        label, exc, wait)
+            time.sleep(wait)
+
+    logger.warning("Conference search gave up on %s… after %d attempts",
+                   label, _MAX_ATTEMPTS)
+    return None
 
 
 def _label_for(returned_venue: str, requested: Mapping[str, str]) -> Optional[str]:
@@ -159,15 +198,9 @@ def collect_conference_papers(
             "publicationDateOrYear": date_range,
             "fields": _FIELDS,
         }
-        try:
-            resp = requests.get(SEARCH_URL, params=params, timeout=TIMEOUT)
-            last_request = time.time()
-            resp.raise_for_status()
-            data = resp.json()
-        except Exception as exc:
-            # One bad batch must not take down the rest of the collection.
-            logger.warning("Conference search failed for %s…: %s",
-                           batch_keys[0], exc)
+        data = _search(params, batch_keys[0])
+        last_request = time.time()
+        if data is None:
             continue
 
         for item in data.get("data") or []:

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import replace
 from typing import List, Optional, Set
 
 from .collectors.arxiv import collect_arxiv_papers
@@ -81,7 +82,11 @@ def preflight(cfg: Config, needs_llm: bool = True) -> Optional[str]:
     return None
 
 
-def _collect_conferences(cfg: Config) -> List[Paper]:
+def _collect_conferences(
+    cfg: Config,
+    days_back: Optional[int] = None,
+    max_results: Optional[int] = None,
+) -> List[Paper]:
     """Papers from the top conferences, or nothing if the source is disabled.
 
     Never raises: conference proceedings are a bonus source, and a Semantic
@@ -102,8 +107,9 @@ def _collect_conferences(cfg: Config) -> List[Paper]:
     try:
         return collect_conference_papers(
             venues=venues,
-            days_back=cfg.days_back,
-            max_results=cfg.conferences.max_results,
+            days_back=cfg.days_back if days_back is None else days_back,
+            max_results=(cfg.conferences.max_results if max_results is None
+                         else max_results),
         )
     except Exception as exc:
         logger.warning("Conference collection failed: %s", exc)
@@ -158,6 +164,11 @@ def run_weekly(config_path: str = "config.yaml") -> int:
         days_back=cfg.days_back,
         venue_aliases={**venue_aliases_from_list(), **cfg.venue_aliases},
         excluded_venues=cfg.excluded_venues,
+        mailto=cfg.openalex_mailto,
+        # Weekly asks "what became visible to us", not "what was published".
+        # A journal issue from May indexed today is new to this digest, and a
+        # publication-date window would miss it permanently.
+        by_index_date=True,
     )
     conference_papers = _collect_conferences(cfg)
     all_papers = arxiv_papers + openalex_papers + conference_papers
@@ -344,6 +355,104 @@ def _run_news_stage(
 
     logger.info("News: %d pages created", len(written))
     return written
+
+
+# ── Backfill mode ──────────────────────────────────────────────────────────────
+
+def run_backfill(
+    config_path: str = "config.yaml",
+    days: int = 365,
+    limit: int = 200,
+) -> int:
+    """One-off catch-up: rank a long window at once and keep the best *limit*.
+
+    The weekly run asks "what appeared since last week", which is the right
+    question forever after but leaves the whole prior year unread. This ranks
+    that year in a single pass and writes the top *limit* by relevance.
+
+    Every paper it ranks is marked seen, not just the ones written. They have
+    been considered and judged; leaving the rejected ones unseen would make the
+    next weekly run re-rank thousands of papers it has already paid to score.
+    """
+    try:
+        cfg = load_config(config_path)
+    except Exception as exc:
+        logger.error("Failed to load config: %s", exc)
+        write_failure_report("backfill", f"config load failed: {exc}")
+        return 1
+
+    if problem := preflight(cfg):
+        logger.error("Cannot start: %s", problem)
+        write_failure_report("backfill", problem)
+        return 1
+
+    try:
+        db_id, db_props = ensure_database(
+            cfg.parent_page_id(), cfg.notion_token, cfg.database_id()
+        )
+    except Exception as exc:
+        logger.error("Notion is not reachable or not configured: %s", exc)
+        write_failure_report("backfill", f"notion: {exc}")
+        return 1
+
+    logger.info("=== Backfill: last %d days, keeping the top %d ===", days, limit)
+
+    openalex_papers = collect_openalex_papers(
+        keywords=cfg.keywords,
+        days_back=days,
+        max_results=100_000,
+        venue_aliases={**venue_aliases_from_list(), **cfg.venue_aliases},
+        excluded_venues=cfg.excluded_venues,
+        mailto=cfg.openalex_mailto,
+    )
+    conference_papers = _collect_conferences(cfg, days_back=days,
+                                             max_results=100_000)
+    unique = deduplicate_collected(openalex_papers + conference_papers)
+    candidates = filter_by_keywords(unique, cfg.keywords)
+
+    dedup_store = DedupStore(database_id=db_id)
+    fresh = [p for p in candidates if not dedup_store.is_seen(p)]
+    logger.info("Backfill: %d collected → %d unique → %d matched → %d new",
+                len(openalex_papers) + len(conference_papers), len(unique),
+                len(candidates), len(fresh))
+
+    if not fresh:
+        logger.info("Nothing new to backfill")
+        write_report([], 0, 0, len(candidates), 0, mode="backfill")
+        return 0
+
+    provider = create_provider(cfg)
+    ranked_cfg = replace(cfg, top_n=limit, max_papers_to_rank=len(fresh))
+    try:
+        top_papers = rank_papers(fresh, ranked_cfg, provider)
+    except RuntimeError as exc:
+        logger.error("Backfill ranking anomaly: %s", exc)
+        write_failure_report("backfill", f"ranking anomaly: {exc}")
+        return 1
+
+    logger.info("Backfill: writing the top %d of %d ranked", len(top_papers),
+                len(fresh))
+    generate_notes(top_papers, cfg, provider)
+
+    created: List[Paper] = []
+    for paper in top_papers:
+        try:
+            paper.notion_page_id = create_page(paper, db_id, cfg.notion_token,
+                                               db_props)
+            created.append(paper)
+        except Exception as exc:
+            logger.error("Failed to create Notion page for %r: %s",
+                         paper.title[:60], exc)
+
+    # Everything considered is marked seen — see the docstring.
+    for paper in fresh:
+        dedup_store.mark_seen(paper)
+    dedup_store.persist()
+
+    write_report(created, 0, 0, len(candidates), len(fresh), mode="backfill")
+    logger.info("=== Backfill done: %d pages created, %d marked seen ===",
+                len(created), len(fresh))
+    return 0
 
 
 # ── Batch mode ─────────────────────────────────────────────────────────────────

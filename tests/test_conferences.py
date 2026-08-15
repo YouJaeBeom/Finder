@@ -7,6 +7,7 @@ papers with their venue and abstract.
 """
 from __future__ import annotations
 
+import requests
 from unittest.mock import MagicMock, patch
 
 from paper_digest.collectors.conferences import (
@@ -99,8 +100,9 @@ class TestVenueLabelling:
 
 
 class TestCollection:
-    def _response(self, items) -> MagicMock:
+    def _response(self, items, status: int = 200) -> MagicMock:
         resp = MagicMock()
+        resp.status_code = status
         resp.raise_for_status = MagicMock()
         resp.json.return_value = {"data": items}
         return resp
@@ -122,8 +124,8 @@ class TestCollection:
 
         def flaky(*a, **k):
             calls["n"] += 1
-            if calls["n"] == 1:
-                raise RuntimeError("500")
+            if calls["n"] <= 5:  # first batch exhausts its retries
+                raise requests.ConnectionError("network down")
             # Venue from the second batch (V25–V29), so it is one we asked for.
             return self._response([_item(venue="V25")])
 
@@ -153,3 +155,59 @@ class TestCollection:
         start, end = sent.split(":")
         from datetime import date
         assert (date.fromisoformat(end) - date.fromisoformat(start)).days == 7
+
+
+class TestRateLimiting:
+    """A year-long backfill lost three of four batches to 429s, taking ACL,
+    NeurIPS, CHI, SIGIR and CVPR with them. A 429 means "later", not "never"."""
+
+    def _resp(self, status: int, items=()) -> MagicMock:
+        resp = MagicMock()
+        resp.status_code = status
+        resp.raise_for_status = MagicMock()
+        resp.json.return_value = {"data": list(items)}
+        return resp
+
+    def test_a_429_is_retried_rather_than_dropped(self):
+        replies = [self._resp(429), self._resp(429), self._resp(200, [_item()])]
+
+        with (
+            patch("paper_digest.collectors.conferences.requests.get",
+                  side_effect=replies) as get,
+            patch("paper_digest.collectors.conferences.time.sleep"),
+        ):
+            papers = collect_conference_papers({"ACL": "ACL"}, days_back=7)
+
+        assert get.call_count == 3
+        assert len(papers) == 1, "the batch survived the throttling"
+
+    def test_server_errors_are_retried_too(self):
+        replies = [self._resp(503), self._resp(200, [_item()])]
+        with (
+            patch("paper_digest.collectors.conferences.requests.get",
+                  side_effect=replies),
+            patch("paper_digest.collectors.conferences.time.sleep"),
+        ):
+            assert len(collect_conference_papers({"ACL": "ACL"}, days_back=7)) == 1
+
+    def test_it_gives_up_eventually_without_taking_the_run_down(self):
+        with (
+            patch("paper_digest.collectors.conferences.requests.get",
+                  return_value=self._resp(429)) as get,
+            patch("paper_digest.collectors.conferences.time.sleep"),
+        ):
+            assert collect_conference_papers({"ACL": "ACL"}, days_back=7) == []
+        assert get.call_count == 5, "bounded retries, not an infinite loop"
+
+    def test_backoff_grows_between_attempts(self):
+        waits = []
+        with (
+            patch("paper_digest.collectors.conferences.requests.get",
+                  return_value=self._resp(429)),
+            patch("paper_digest.collectors.conferences.time.sleep",
+                  side_effect=waits.append),
+        ):
+            collect_conference_papers({"ACL": "ACL"}, days_back=7)
+
+        retry_waits = [w for w in waits if w >= 5.0]
+        assert retry_waits == sorted(retry_waits) and len(set(retry_waits)) > 1

@@ -122,6 +122,10 @@ class Config:
     tracked_venues: List[str] = field(default_factory=list)
     research_profile: str = ""
 
+    # OpenAlex gives a much higher rate limit to callers who identify
+    # themselves. Put a real address here before running a backfill.
+    openalex_mailto: str = "paper-digest@example.com"
+
     # Extra "full name fragment" -> acronym mappings for the Venue column, on
     # top of the built-in table in paper_digest/venues.py.
     venue_aliases: Dict[str, str] = field(default_factory=dict)
@@ -226,6 +230,7 @@ def load_config(path: str = "config.yaml") -> Config:
         keywords=data.get("keywords", []),
         tracked_venues=data.get("tracked_venues", []),
         research_profile=data.get("research_profile", ""),
+        openalex_mailto=data.get("openalex_mailto") or "paper-digest@example.com",
         venue_aliases=data.get("venue_aliases", {}) or {},
         excluded_venues=data.get("excluded_venues"),
         arxiv=arxiv_cfg,

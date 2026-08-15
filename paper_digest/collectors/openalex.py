@@ -10,6 +10,7 @@ abstract are excluded.
 from __future__ import annotations
 
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Sequence
 
@@ -22,8 +23,48 @@ logger = logging.getLogger(__name__)
 
 OPENALEX_URL = "https://api.openalex.org/works"
 
-# Polite pool: include an email in the User-Agent for higher rate limits
-_USER_AGENT = "paper-digest/1.0 (mailto:research@example.com)"
+# OpenAlex's polite pool gives a far higher rate limit to callers who identify
+# themselves. The address is sent both ways because OpenAlex documents the
+# query parameter and reads the User-Agent.
+_DEFAULT_MAILTO = "paper-digest@example.com"
+
+# Search terms are OR-ed together rather than sent one request each: the filter
+# accepts "a|b" and returns the union (measured: "political bias" 360 +
+# "retrieval augmented generation" 3,384, together 3,743). That turns ~95
+# requests into ~8, which is the difference between being throttled and not.
+_TERMS_PER_REQUEST = 12
+
+_REQUEST_INTERVAL = 1.0
+_MAX_ATTEMPTS = 4
+_BACKOFF_BASE = 4.0
+
+
+def _user_agent(mailto: str) -> str:
+    return f"paper-digest/1.0 (mailto:{mailto})"
+
+
+def _get(params: dict, mailto: str) -> Optional[dict]:
+    """One OpenAlex request, retrying while the API says to slow down."""
+    params = {**params, "mailto": mailto}
+    for attempt in range(_MAX_ATTEMPTS):
+        try:
+            resp = requests.get(OPENALEX_URL, params=params, timeout=30,
+                                headers={"User-Agent": _user_agent(mailto)})
+            if resp.status_code == 429 or resp.status_code >= 500:
+                wait = _BACKOFF_BASE * (attempt + 1)
+                logger.info("OpenAlex returned %d — waiting %.0fs (attempt %d/%d)",
+                            resp.status_code, wait, attempt + 1, _MAX_ATTEMPTS)
+                time.sleep(wait)
+                continue
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as exc:
+            wait = _BACKOFF_BASE * (attempt + 1)
+            logger.info("OpenAlex error (%s) — retrying in %.0fs", exc, wait)
+            time.sleep(wait)
+
+    logger.warning("OpenAlex gave up after %d attempts", _MAX_ATTEMPTS)
+    return None
 
 # OpenAlex concept IDs for broad CS/AI/ML/NLP coverage
 _CS_CONCEPTS = [
@@ -212,17 +253,42 @@ def _parse_work(
     return paper
 
 
+def search_terms_from(keywords: Sequence) -> List[str]:
+    """The keyword terms selective enough to hand to OpenAlex's own search.
+
+    Fetching by concept and date and filtering locally means downloading
+    930,000 works for a year. Letting OpenAlex do the first pass cuts that to
+    around 9,500 — but only if the terms are selective. Single words like
+    "bias" or "dataset" match most of the corpus, so only multi-word phrases
+    are sent; the full rule set still runs locally afterwards, so a rule that
+    needs "bias" AND "steering" still applies to whatever comes back.
+    """
+    from ..keywords import compile_rules
+
+    terms = {
+        term.label
+        for rule in compile_rules(keywords)
+        for group in rule.groups
+        for term in group
+        if " " in term.label.strip()
+    }
+    return sorted(terms)
+
+
 def collect_openalex_papers(
     keywords: List[str],
     days_back: int = 7,
     max_results: int = 500,
     venue_aliases: Optional[Dict[str, str]] = None,
     excluded_venues: Optional[Sequence[str]] = None,
+    by_index_date: bool = False,
+    mailto: str = _DEFAULT_MAILTO,
 ) -> List[Paper]:
-    """Fetch papers from OpenAlex published in the last *days_back* days.
+    """Fetch papers from OpenAlex within the last *days_back* days.
 
-    Uses from_publication_date to target genuinely new papers rather than
-    OpenAlex ingestion date (from_created_date).
+    *by_index_date* switches the window from "published since" to "indexed
+    since" — see the comment on date_field below for why a weekly run wants
+    the latter and a one-off backfill wants the former.
     """
     cutoff = (datetime.now(timezone.utc) - timedelta(days=days_back)).date()
     date_str = cutoff.isoformat()
@@ -232,48 +298,80 @@ def collect_openalex_papers(
     # It is the difference between 79,000 and 9,500 works a week, and it removes
     # the unmoderated deposit archives at the source rather than by name — 36%
     # of recent CS "works" were Zenodo uploads before this.
-    work_filter = (
-        f"from_publication_date:{date_str},concepts.id:{concept_filter},"
+    #
+    # from_created_date asks "indexed since", from_publication_date asks
+    # "published since". A weekly digest wants the former: a paper published in
+    # May but indexed today is new *to us*, and a publication-date window would
+    # miss it permanently.
+    date_field = "from_created_date" if by_index_date else "from_publication_date"
+    base_filter = (
+        f"{date_field}:{date_str},concepts.id:{concept_filter},"
         f"primary_location.source.is_core:true"
     )
 
+    terms = search_terms_from(keywords)
+    batches = (
+        [terms[i : i + _TERMS_PER_REQUEST]
+         for i in range(0, len(terms), _TERMS_PER_REQUEST)]
+        or [[]]
+    )
+    logger.info("OpenAlex: %d search terms in %d requests over %s since %s",
+                len(terms), len(batches), date_field, date_str)
+
     papers: List[Paper] = []
+    seen_ids: set = set()
+
+    for batch in batches:
+        if len(papers) >= max_results:
+            break
+        work_filter = base_filter
+        if batch:
+            work_filter += f",title_and_abstract.search:{'|'.join(batch)}"
+        _collect_one_search(work_filter, max_results, papers, seen_ids,
+                            venue_aliases, excluded_venues, mailto)
+
+    logger.info("OpenAlex: collected %d papers (last %d days)", len(papers), days_back)
+    return papers[:max_results]
+
+
+def _collect_one_search(
+    work_filter: str,
+    max_results: int,
+    papers: List[Paper],
+    seen_ids: set,
+    venue_aliases: Optional[Dict[str, str]],
+    excluded_venues: Optional[Sequence[str]],
+    mailto: str,
+) -> None:
+    """Page through one search and append its new papers to *papers*."""
     cursor = "*"
 
     while len(papers) < max_results:
         params = {
             "filter": work_filter,
             "select": _SELECTED_FIELDS,
-            "per_page": min(200, max_results - len(papers)),
+            "per_page": 200,
             "cursor": cursor,
         }
 
-        try:
-            resp = requests.get(
-                OPENALEX_URL,
-                params=params,
-                headers={"User-Agent": _USER_AGENT},
-                timeout=30,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-        except requests.RequestException as exc:
-            logger.error("OpenAlex API error: %s", exc)
+        time.sleep(_REQUEST_INTERVAL)
+        data = _get(params, mailto)
+        if data is None:
             break
 
         results = data.get("results") or []
         meta = data.get("meta") or {}
 
         for work in results:
+            # Searches overlap heavily — one paper matches several phrases.
+            if work.get("id") in seen_ids:
+                continue
+            seen_ids.add(work.get("id"))
             paper = _parse_work(work, venue_aliases, excluded_venues)
             if paper is not None:
                 papers.append(paper)
 
-        # Pagination
         next_cursor = meta.get("next_cursor")
         if not next_cursor or not results:
             break
         cursor = next_cursor
-
-    logger.info("OpenAlex: collected %d papers (last %d days)", len(papers), days_back)
-    return papers

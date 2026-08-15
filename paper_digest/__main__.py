@@ -16,7 +16,7 @@ def main() -> None:
     run_p = sub.add_parser("run", help="Run the collection pipeline")
     run_p.add_argument(
         "--mode",
-        choices=["weekly", "batch"],
+        choices=["weekly", "batch", "backfill"],
         required=True,
         help="Pipeline mode",
     )
@@ -24,6 +24,18 @@ def main() -> None:
         "--venue",
         default=None,
         help="Venue label for batch mode (e.g. 'ACL 2026')",
+    )
+    run_p.add_argument(
+        "--days",
+        type=int,
+        default=365,
+        help="Backfill window in days (default: 365)",
+    )
+    run_p.add_argument(
+        "--limit",
+        type=int,
+        default=200,
+        help="Backfill: how many top-ranked papers to keep (default: 200)",
     )
     run_p.add_argument(
         "--config",
@@ -41,11 +53,13 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    from .pipeline import run_batch, run_init, run_weekly
+    from .pipeline import run_backfill, run_batch, run_init, run_weekly
 
     if args.command == "run":
         if args.mode == "weekly":
             sys.exit(run_weekly(args.config))
+        elif args.mode == "backfill":
+            sys.exit(run_backfill(args.config, args.days, args.limit))
         else:
             sys.exit(run_batch(args.config, args.venue))
     elif args.command == "init":

@@ -28,7 +28,11 @@ def _no_network(monkeypatch):
             "instead — patch paper_digest.<module>.requests.{get,post,patch}."
         )
 
-    monkeypatch.setattr(socket, "socket", blocked)
+    # Block connecting, not the socket class itself. Replacing the class breaks
+    # any module that subclasses it (PySocks does, lazily, the first time a
+    # request is built), which surfaces as a baffling TypeError far from here.
+    monkeypatch.setattr(socket.socket, "connect", blocked)
+    monkeypatch.setattr(socket.socket, "connect_ex", blocked)
     monkeypatch.setattr(socket, "create_connection", blocked)
 
 
