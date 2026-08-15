@@ -204,7 +204,7 @@ conferences:
 # GitHub Secrets 에 OPENALEX_API_KEY 를 넣으세요.
 #
 # mailto 는 신원 표시용입니다. 실제 이메일로 바꿔두는 편이 좋습니다.
-openalex_mailto: "paper-digest@example.com"
+openalex_mailto: "jaebeom4011@seoultech.ac.kr"
 
 # ── Venue 표기 ────────────────────────────────────────────────────────────────
 # OpenAlex 는 학회를 정식 명칭으로 줍니다 ("Proceedings of the 32nd ACM
