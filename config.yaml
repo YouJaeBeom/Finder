@@ -137,14 +137,14 @@ max_papers_to_rank: 1500
 # OpenAI → OPENAI_API_KEY). 랭킹과 노트 작성 모델은 따로 지정하므로,
 # "싼 모델로 거르고 좋은 모델로 정리한다"는 구조는 어느 쪽이든 동일합니다.
 llm:
-#   provider: "anthropic"          # "anthropic" | "openai"
-#   ranking_model: "claude-haiku-4-5"    # cheap bulk ranking — 멤버별로 돌아갑니다
-#   notes_model: "claude-sonnet-5"       # high-quality note generation — 비용의 95%
+  provider: "anthropic"          # "anthropic" | "openai"
+  ranking_model: "claude-haiku-4-5"    # cheap bulk ranking — 멤버별로 돌아갑니다
+  notes_model: "claude-sonnet-5"       # high-quality note generation — 비용의 95%
 
   # ── ChatGPT 로 바꾸려면 위 세 줄을 지우고 아래를 쓰세요 ──
-  provider: "openai"
-  ranking_model: "gpt-5.6-luna"       # 저렴한 대량 랭킹용
-  notes_model: "gpt-5.6-terra"              # 노트 작성용
+#   provider: "openai"
+#   ranking_model: "gpt-5.6-luna"       # 저렴한 대량 랭킹용
+#   notes_model: "gpt-5.6-terra"              # 노트 작성용
 
 # ── IT news (공용) ───────────────────────────────────────────────────────────
 # 메인 페이지의 "📰 IT 뉴스" DB 에 실행당 1회 씁니다. 멤버별로 나누지 않습니다 —
