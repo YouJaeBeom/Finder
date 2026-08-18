@@ -2,8 +2,13 @@ __pycache__/
 *.pyc
 *.egg-info/
 .pytest_cache/
+.ruff_cache/
+.benchmarks/
+.coverage
+htmlcov/
 .venv/
 venv/
 .env
 .DS_Store
 run-report.json
+.claude/settings.local.json

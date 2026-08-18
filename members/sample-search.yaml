@@ -1,0 +1,52 @@
+# 연구축 3 — 검색과 RAG 에서의 공정하고 다양한 정보 접근
+#
+# 샘플 멤버입니다. 실제 인원을 붙일 때 name 과 research_profile 을 바꾸고
+# 파일명도 그 사람 ID 로 바꾸세요 (파일명 변경 = 새 Notion 페이지 생성).
+name: "샘플-검색RAG"
+enabled: true
+top_n: 5
+
+research_profile: |
+  검색과 검색증강생성(RAG)에서 공정하고 다양한 정보 접근을 연구합니다. 검색
+  개인화가 만드는 필터버블과 관점 편중을 분석하고, 관점 다양성과 정보 품질을
+  함께 보장하는 검색·RAG 방법을 설계합니다.
+
+  구체적으로는 (1) 검색·랭킹·추천 시스템의 편향과 다양성 측정,
+  (2) 개인화가 정보 노출에 미치는 영향(필터버블, 에코챔버, 선택적 노출),
+  (3) RAG 파이프라인에서 검색기가 생성 결과의 관점 편중으로 이어지는 경로,
+  (4) 생성형 검색·대화형 검색이 이용자의 정보 탐색을 바꾸는 방식에 관심이 있습니다.
+
+  관련도가 낮은 것: 다양성·공정성·정보 노출과 무관한 순수 검색 성능 최적화
+  (인덱싱 속도, 임베딩 압축, ANN 알고리즘), 추천 정확도만 올리는 모델 구조 개선,
+  비전·음성 검색 전용 연구.
+
+_model: &model
+  ["LLM", "large language model", "language model", "foundation model",
+   "generative model", "chatbot", "conversational agent", "GPT", "instruction-tuned"]
+_bias: &bias
+  ["bias", "biased", "fairness", "unfair", "skew", "imbalance", "stereotype"]
+
+keywords:
+  - "retrieval-augmented generation"
+  - "information retrieval"
+  - "filter bubble"
+  - "echo chamber"
+  - "generative search"
+  - "conversational search"
+  - "information diversity"
+  - "viewpoint diversity"
+  - "selective exposure"
+
+  - any: ["search personalization", "personalized search", "personalized ranking",
+          "search result diversification", "result diversification"]
+
+  - all:                                   # 검색·랭킹·RAG 의 편향과 다양성
+      - ["retrieval", "retriever", "search", "ranking", "ranker", "RAG",
+         "recommender", "recommendation"]
+      - [*bias, ["diversity", "diversification", "exposure", "polarization",
+                 "viewpoint", "perspective", "credibility"]]
+
+  - all:                                   # AI 매개 정보 접근
+      - ["information access", "information exposure", "information seeking",
+         "news consumption", "information ecosystem"]
+      - [*model, ["algorithmic", "search", "recommender", "AI"]]

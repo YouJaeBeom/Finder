@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, List, Pattern, Sequence, Tuple
 
 from .models import Paper
@@ -197,9 +197,40 @@ def filter_by_keywords(papers: List[Paper], keywords: Sequence[Any]) -> List[Pap
 
     result: List[Paper] = []
     for paper in papers:
-        text = _normalize(f"{paper.title} {paper.abstract or ''}")
-        matched = _matched_labels(text, rules)
-        if matched:
+        if matched := _hits(paper, rules):
             paper.matched_keywords = matched
             result.append(paper)
     return result
+
+
+def select_for_keywords(papers: List[Paper], keywords: Sequence[Any]) -> List[Paper]:
+    """Like :func:`filter_by_keywords`, but returns independent copies.
+
+    This is the multi-member entry point. One collected pool is filtered once per
+    person, and tagging the shared objects in place would give every member the
+    *last* member's tags — and then, further down the pipeline, the last member's
+    relevance score and the last member's note, since ranking and note generation
+    also write onto the item.
+
+    Copies are shallow apart from the three mutable fields that actually diverge
+    per member. ``identifiers`` is shared on purpose: it is an identity, nothing
+    downstream writes to it, and copying it would only cost memory.
+    """
+    rules = compile_rules(keywords)
+
+    result: List[Paper] = []
+    for paper in papers:
+        if matched := _hits(paper, rules):
+            result.append(replace(
+                paper,
+                matched_keywords=matched,
+                authors=list(paper.authors),
+                source=list(paper.source),
+            ))
+    return result
+
+
+def _hits(paper: Paper, rules: Sequence[Rule]) -> List[str]:
+    """The terms matching this item, or [] when no rule applies."""
+    text = _normalize(f"{paper.title} {paper.abstract or ''}")
+    return _matched_labels(text, rules)

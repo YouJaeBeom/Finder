@@ -14,12 +14,28 @@ import pytest
 from paper_digest.collectors.hackernews import _story_to_paper
 from paper_digest.collectors.rss import _strip_html
 from paper_digest.config import Config, NewsConfig
-from paper_digest.dedup import DedupStore
 from paper_digest.models import Paper, PaperIdentifiers, ResearchNote, normalize_title
 from paper_digest.news_select import select_news
 from paper_digest.notes import generate_note
-from paper_digest.pipeline import _run_news_stage
+from paper_digest.notion_query import WrittenIndex
+from paper_digest.news_stage import run_news
 from paper_digest.ranking import _is_rankable
+
+
+NEWS_DB = "news-db"
+
+
+def _run_news_with(cfg, provider, already_written=()):
+    """Call the news stage with a stand-in for what the news database holds.
+
+    The stage asks Notion what it already has rather than trusting a file — see
+    paper_digest.notion_query — so a test controls that by supplying the index.
+    """
+    index = WrittenIndex()
+    for item in already_written:
+        index.add(item)
+    with patch("paper_digest.news_stage.written_index", return_value=index):
+        return run_news(cfg, provider, NEWS_DB, None)
 
 
 def _news_item(
@@ -160,7 +176,6 @@ class TestNewsStage:
     @pytest.fixture(autouse=True)
     def _cwd(self, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
-        (tmp_path / "seen_ids.json").write_text("[]")
 
     def _cfg(self, **news_kw) -> Config:
         defaults = dict(enabled=True, hacker_news_enabled=True,
@@ -186,9 +201,7 @@ class TestNewsStage:
         return provider
 
     def test_disabled_news_does_nothing(self):
-        written = _run_news_stage(
-            self._cfg(enabled=False), MagicMock(), DedupStore(), "db"
-        )
+        written = _run_news_with(self._cfg(enabled=False), MagicMock())
         assert written == []
 
     def test_writes_matching_stories_to_notion(self):
@@ -197,12 +210,12 @@ class TestNewsStage:
             _news_item("AI chip startup raises round", "https://e.com/2"),
         ]
         with (
-            patch("paper_digest.pipeline.collect_hackernews_stories", return_value=stories),
-            patch("paper_digest.pipeline.collect_rss_entries", return_value=[]),
-            patch("paper_digest.pipeline.create_page", side_effect=["p1", "p2"]),
+            patch("paper_digest.news_stage.collect_hackernews_stories", return_value=stories),
+            patch("paper_digest.news_stage.collect_rss_entries", return_value=[]),
+            patch("paper_digest.news_stage.create_page", side_effect=["p1", "p2"]),
         ):
             provider = self._provider()
-            written = _run_news_stage(self._cfg(), provider, DedupStore(), "db")
+            written = _run_news_with(self._cfg(), provider)
 
         assert len(written) == 2
         assert all(item.content_type == "news" for item in written)
@@ -215,28 +228,27 @@ class TestNewsStage:
     def test_stories_missing_every_keyword_are_dropped(self):
         stories = [_news_item("Sourdough starter tips", "https://e.com/bread")]
         with (
-            patch("paper_digest.pipeline.collect_hackernews_stories", return_value=stories),
-            patch("paper_digest.pipeline.collect_rss_entries", return_value=[]),
-            patch("paper_digest.pipeline.create_page") as create,
+            patch("paper_digest.news_stage.collect_hackernews_stories", return_value=stories),
+            patch("paper_digest.news_stage.collect_rss_entries", return_value=[]),
+            patch("paper_digest.news_stage.create_page") as create,
         ):
-            written = _run_news_stage(self._cfg(), self._provider(), DedupStore(), "db")
+            written = _run_news_with(self._cfg(), self._provider())
 
         assert written == []
         create.assert_not_called()
 
-    def test_already_seen_url_is_not_rewritten(self):
+    def test_already_written_url_is_not_rewritten(self):
         story = _news_item("New LLM benchmark released", "https://e.com/1")
-        store = DedupStore()
-        store.mark_seen(story)
 
         # Same link, different headline — the URL is the identity for news.
         repost = _news_item("LLM benchmark, now on the front page", "https://e.com/1")
         with (
-            patch("paper_digest.pipeline.collect_hackernews_stories", return_value=[repost]),
-            patch("paper_digest.pipeline.collect_rss_entries", return_value=[]),
-            patch("paper_digest.pipeline.create_page") as create,
+            patch("paper_digest.news_stage.collect_hackernews_stories", return_value=[repost]),
+            patch("paper_digest.news_stage.collect_rss_entries", return_value=[]),
+            patch("paper_digest.news_stage.create_page") as create,
         ):
-            written = _run_news_stage(self._cfg(), self._provider(), store, "db")
+            written = _run_news_with(self._cfg(), self._provider(),
+                                     already_written=[story])
 
         assert written == []
         create.assert_not_called()
@@ -244,8 +256,90 @@ class TestNewsStage:
     def test_collector_failure_is_contained(self):
         """A dead feed must not fail a run whose papers already landed."""
         with (
-            patch("paper_digest.pipeline.collect_hackernews_stories",
+            patch("paper_digest.news_stage.collect_hackernews_stories",
                   side_effect=RuntimeError("HN down")),
-            patch("paper_digest.pipeline.collect_rss_entries", return_value=[]),
+            patch("paper_digest.news_stage.collect_rss_entries", return_value=[]),
         ):
-            assert _run_news_stage(self._cfg(), self._provider(), DedupStore(), "db") == []
+            assert _run_news_with(self._cfg(), self._provider()) == []
+
+
+class TestNewsProfile:
+    """What the shared briefing is written against.
+
+    News belongs to nobody, so it has no ``research_profile`` — that field is
+    per member now. Handing the note prompt an empty profile produced a "왜
+    알아둘 만한지" section written against nothing at all, which is how this
+    stage regressed when the config was split.
+    """
+
+    def _member(self, member_id, name, profile):
+        from paper_digest.members import Member
+
+        return Member(member_id=member_id, name=name, research_profile=profile,
+                      keywords=["AI"], top_n=5)
+
+    def test_the_lab_profile_is_used_when_set(self):
+        from paper_digest.config import Config
+        from paper_digest.news_stage import news_profile
+
+        cfg = Config(lab_profile="랩 전체의 관심사")
+        assert news_profile(cfg, []) == "랩 전체의 관심사"
+
+    def test_member_profiles_are_the_fallback(self):
+        """An unset key degrades the prompt rather than emptying it."""
+        from paper_digest.config import Config
+        from paper_digest.news_stage import news_profile
+
+        profile = news_profile(Config(), [
+            self._member("a", "가", "정치적 편향 측정"),
+            self._member("b", "나", "검색 다양성"),
+        ])
+        assert "[가] 정치적 편향 측정" in profile
+        assert "[나] 검색 다양성" in profile
+
+    def test_the_lab_profile_beats_the_fallback(self):
+        from paper_digest.config import Config
+        from paper_digest.news_stage import news_profile
+
+        profile = news_profile(Config(lab_profile="공용 맥락"),
+                                [self._member("a", "가", "개인 프로필")])
+        assert profile == "공용 맥락"
+        assert "개인 프로필" not in profile
+
+    def test_a_whitespace_only_lab_profile_falls_back(self):
+        from paper_digest.config import Config
+        from paper_digest.news_stage import news_profile
+
+        profile = news_profile(Config(lab_profile="   \n  "),
+                                [self._member("a", "가", "개인 프로필")])
+        assert "개인 프로필" in profile
+
+    def test_the_note_prompt_actually_receives_it(self):
+        """The regression was upstream of the prompt, so assert on the prompt."""
+        from paper_digest.config import Config, NewsConfig
+
+        cfg = Config(lab_profile="랩 공용 맥락 문단", notion_token="t",
+                     news=NewsConfig(enabled=True, top_n=2, keywords=["LLM"]))
+        stories = [_news_item("New LLM benchmark released", "https://e.com/1")]
+
+        prompts = []
+        provider = MagicMock()
+
+        def complete(prompt, model, max_tokens=512, system=None):
+            prompts.append(prompt)
+            return json.dumps({"one_line_summary": "요약",
+                               "key_contributions": ["a", "b", "c"],
+                               "relevance_to_profile": "연결점"})
+
+        provider.complete.side_effect = complete
+
+        with (
+            patch("paper_digest.news_stage.collect_hackernews_stories",
+                  return_value=stories),
+            patch("paper_digest.news_stage.collect_rss_entries", return_value=[]),
+            patch("paper_digest.news_stage.create_page", return_value="p1"),
+        ):
+            written = _run_news_with(cfg, provider)
+
+        assert len(written) == 1
+        assert prompts and "랩 공용 맥락 문단" in prompts[0]

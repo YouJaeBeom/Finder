@@ -1,8 +1,8 @@
 """News selection — which stories get a Korean note, decided without an LLM.
 
-Papers need the cheap-model relevance gate because arXiv delivers hundreds of
-off-topic papers a week and a keyword can match a paper that has nothing to do
-with the research profile. News does not have that problem: Hacker News is
+Papers need the cheap-model relevance gate because the venue allowlist admits
+every field its venues publish, and a keyword can match a paper that has nothing
+to do with the research profile. News does not have that problem: Hacker News is
 already filtered by community score, and the RSS feeds are hand-picked by the
 user. Almost everything collected is on-topic by construction, so paying a
 model to re-confirm relevance buys nothing and costs a call per story.

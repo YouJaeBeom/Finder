@@ -1,0 +1,50 @@
+# 연구축 5 — 대규모 웹 데이터 수집과 코퍼스 구축
+#
+# 샘플 멤버입니다. 실제 인원을 붙일 때 name 과 research_profile 을 바꾸고
+# 파일명도 그 사람 ID 로 바꾸세요 (파일명 변경 = 새 Notion 페이지 생성).
+name: "샘플-웹데이터"
+enabled: true
+top_n: 5
+
+research_profile: |
+  대규모 웹 데이터 수집과 연구용 코퍼스 구축을 연구합니다. 웹·소셜미디어
+  데이터를 안정적으로 수집하는 병렬·분산 파이프라인을 만들고, 연구 목적에 맞는
+  재현 가능한 코퍼스와 데이터셋을 구축합니다.
+
+  구체적으로는 (1) 웹 크롤링·스크래핑 파이프라인의 설계와 규모 확장,
+  (2) 대규모 데이터 처리의 분산·병렬 구조와 처리량,
+  (3) 소셜미디어 데이터의 표본 추출과 수집 방법론,
+  (4) 재현 가능한 데이터 수집과 코퍼스 문서화(출처, 구성, 큐레이션)에
+  관심이 있습니다.
+
+  관련도가 낮은 것: 데이터 수집·구축 과정을 다루지 않고 기존 데이터셋만 쓰는
+  모델링 논문, 데이터 규모와 무관한 학습 기법, 순수 스토리지·네트워크 시스템
+  최적화, 비전 전용 데이터셋 논문.
+
+keywords:
+  - "web crawling"
+  - "web crawler"
+  - "common crawl"
+  - "corpus construction"
+  - "dataset construction"
+  - "data provenance"
+  - "dataset curation"
+
+  - any: ["web corpus", "web corpora", "web archive", "crawling pipeline",
+          "scraping pipeline", "data collection pipeline"]
+
+  - all:                                   # 대규모 · 분산 수집
+      - ["large-scale", "large scale", "distributed", "parallel", "scalable",
+         "high-throughput"]
+      - ["data collection", "crawling", "crawler", "scraping", "web data",
+         "corpus", "data processing", "data pipeline", "ingestion"]
+
+  - all:                                   # 소셜미디어 데이터 수집
+      - ["social media", "twitter", "reddit", "youtube", "tiktok"]
+      - ["data collection", "dataset", "crawling", "corpus", "API", "sampling"]
+
+  - all:                                   # 재현 가능한 데이터 수집
+      - ["reproducible", "reproducibility", "replicable"]
+      # 수집 자체를 요구합니다 — "재현 가능한 실험" 은 거의 모든 논문이 주장합니다.
+      - ["data collection", "crawl", "crawling", "scraping",
+         "collection pipeline", "corpus construction"]

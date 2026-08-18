@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from .models import Paper
 
@@ -24,12 +24,23 @@ def write_report(
     mode: str,
     report_path: str = REPORT_FILE,
     error: Optional[str] = None,
+    members: Optional[List[Dict[str, Any]]] = None,
+    overlap: Optional[List[Dict[str, Any]]] = None,
 ) -> dict:
     """Write run-report.json and return the report dict.
 
     *error* records why a run that produced output still exited non-zero — a
     ranking anomaly, say. Without it the report of a failed run says only that
     zero pages were created, leaving the reason in the step log alone.
+
+    *members* is the per-member breakdown, which is the only place a lab run's
+    aggregate totals can be taken apart: "84 pages created" hides the fact that
+    one member got 80 and another got none. *overlap* lists the papers more than
+    one member received — the signal a shared database would have carried in an
+    ``Overlap`` column, and the natural shortlist for a seminar.
+
+    Both are omitted from the report when absent rather than written as empty
+    lists, so a single-member run's report keeps the shape it always had.
     """
     sections_filled: List[int] = []
     for paper in papers_created:
@@ -51,6 +62,10 @@ def write_report(
     }
     if error:
         report["error"] = error
+    if members is not None:
+        report["members"] = members
+    if overlap is not None:
+        report["overlap"] = overlap
 
     Path(report_path).write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"

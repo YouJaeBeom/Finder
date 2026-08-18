@@ -7,7 +7,6 @@ from unittest.mock import MagicMock
 import pytest
 
 from paper_digest.ranking import _parse_scores, rank_papers
-from paper_digest.models import Paper
 from tests.conftest import make_paper
 
 
@@ -119,8 +118,7 @@ class TestRankPapers:
         def counting_complete(prompt, model, max_tokens=512, system=None):
             nonlocal call_count
             call_count += 1
-            # Return scores for batch size (20 papers)
-            n = prompt.count("[")
+            # A score for every slot a full batch could hold.
             return json.dumps([{"id": str(j), "score": 8} for j in range(20)])
 
         provider = MagicMock()
@@ -128,6 +126,6 @@ class TestRankPapers:
         cfg = self._make_config()
         cfg.max_papers_to_rank = 30  # truncate to 30
 
-        result = rank_papers(papers, cfg, provider)
+        rank_papers(papers, cfg, provider)
         # Should have processed at most 30 papers (2 batches of 20 and 10)
         assert call_count <= 2

@@ -1,0 +1,80 @@
+# 연구축 1 — LLM의 정치적 편향과 맥락적 견고성
+#
+# 파일명(jaebeom)이 멤버 ID입니다. Notion 에는 나타나지 않고, 채점 캐시 파일
+# 이름과 `--member jaebeom` 에만 쓰입니다. Notion 하위 페이지 제목은 name 입니다.
+name: "유재범"
+enabled: true
+
+# 첫 라이브 실행이라 일부러 낮게 잡았습니다. 결과를 보고 20 내외로 올리세요.
+# (lab 상한은 config.yaml 의 limits.max_top_n_per_member)
+top_n: 5
+
+research_profile: |
+  LLM의 정치적 편향과 맥락적 견고성을 연구합니다. 모델이 정치적으로 어느 쪽에
+  기울어 있는지를 측정하고, 그 응답이 페르소나·언어·프롬프트 맥락에 따라 얼마나
+  달라지는지를 분석합니다.
+
+  구체적으로는 (1) 정치적 성향·이념 편향의 측정 방법과 벤치마크 설계,
+  (2) 아첨(sycophancy)과 프롬프트 민감도처럼 맥락이 응답을 흔드는 현상,
+  (3) 페르소나 프롬프팅이 정치적 입장 표명에 미치는 영향,
+  (4) 다국어·교차문화 환경에서의 편향 평가에 관심이 있습니다.
+
+  관련도가 낮은 것: 편향·공정성과 무관한 순수 성능 최적화(추론 속도, 양자화,
+  커널, 서빙), 비전 전용 연구, 순수 이론 최적화, 편향을 다루지 않는 일반적인
+  프롬프트 엔지니어링 기법.
+
+# 목록의 항목끼리는 OR 입니다. 대소문자와 하이픈은 무시하고
+# ("retrieval-augmented" = "retrieval augmented"), 제목과 초록을 함께 봅니다.
+# 짧은 약어는 단어 앞에서만 맞습니다 (RAG 가 stoRAGe 에 안 걸림).
+#
+#   - "구절"                        이 구절이 있으면 매치
+#   - all: [A, B]                   A 와 B 가 모두 있어야 매치
+#   - any: [A, B]                   A 나 B 중 하나라도 있으면 매치
+#   - all: [[A, B], [C, D]]         (A 나 B) 그리고 (C 나 D)   ← 중첩 = "이 중 하나"
+#     not: [E]                      단, E 가 있으면 제외
+
+_model: &model
+  ["LLM", "large language model", "language model", "foundation model",
+   "generative model", "chatbot", "conversational agent", "GPT", "instruction-tuned"]
+_bias: &bias
+  ["bias", "biased", "fairness", "unfair", "skew", "imbalance", "stereotype"]
+_political: &political
+  ["political", "ideological", "partisan", "polarization", "viewpoint"]
+
+keywords:
+  - "political bias"
+  - "ideological bias"
+  - "partisan bias"
+  - "political stance"
+  - "political ideology"
+  - "political leaning"
+  - "political orientation"
+  - "political compass"
+  - "sycophancy"
+  - "sycophantic"
+
+  - any: ["prompt sensitivity", "prompt robustness", "prompt perturbation",
+          "prompt variation", "prompt brittleness", "prompt template"]
+
+  - all:                                   # 페르소나 프롬프팅
+      - ["persona", "role-play", "roleplay", "persona prompting"]
+      - *model
+
+  - all:                                   # 응답 일관성 · 견고성
+      - ["robustness", "consistency", "inconsistency", "instability",
+         "sensitivity"]
+      - *model
+      # 무엇에 대한 견고성인지 못박습니다 — 그냥 "robust LLM" 은 너무 넓습니다.
+      - [*political, *bias, ["prompt", "persona", "opinion", "stance",
+                             "demographic", "cultural"]]
+
+  - all:                                   # 편향 "측정" 은 어순이 제각각이라 단어로 분리
+      - *bias
+      - ["measurement", "measuring", "measure", "quantify", "quantifying",
+         "benchmark", "probe", "elicit"]
+      - [*model, *political]
+
+  - all:                                   # 다국어 · 교차문화 편향 평가
+      - ["multilingual", "cross-lingual", "cross-cultural", "multi-lingual"]
+      # 편향·정치 축을 요구합니다. 다국어 평가 일반은 관심사가 아닙니다.
+      - [*bias, *political, ["stereotyp", "culture", "value"]]

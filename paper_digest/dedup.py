@@ -1,4 +1,24 @@
-"""Cross-source paper deduplication using multi-identifier matching."""
+"""Deduplication: within one run, and across runs via the scoring cache.
+
+Two jobs live here.
+
+:func:`deduplicate_collected` merges the same item arriving from two sources
+inside a single run — a paper carried by both a conference and a journal, a story
+carried by two feeds.
+
+:class:`DedupStore` is the **optimization** half of cross-run deduplication. It
+remembers what has already been *scored*, including the papers that were scored
+and then cut, which Notion has no record of. The **truth** half — "has this
+member already received this paper?" — is :mod:`paper_digest.notion_query`,
+which asks the database itself. That split is deliberate: this file can be lost
+without producing a duplicate page, because losing it costs re-ranking (cents on
+the cheap model) rather than correctness.
+
+There is one store per member, keyed to that member's database. Pointing a
+member at a different database makes every past record meaningless — the pages
+it refers to are not in the new one — so the store resets rather than
+suppressing papers the member has never actually seen.
+"""
 from __future__ import annotations
 
 import json
@@ -10,7 +30,11 @@ from .models import Paper
 
 logger = logging.getLogger(__name__)
 
-STATE_FILE = "seen_ids.json"
+# Per member, so ten members do not fight over one file. Written under state/
+# rather than at the repo root because the weekly workflow commits the whole
+# directory as one unit.
+SCORED_DIR = "state/scored"
+STATE_FILE = f"{SCORED_DIR}/default.json"
 
 
 def _load_seen(path: str = STATE_FILE) -> Tuple[Optional[str], List[dict]]:
@@ -40,7 +64,12 @@ def _save_seen(
     database_id: Optional[str] = None,
 ) -> None:
     """Persist seen-paper records to the state file."""
-    Path(path).write_text(
+    target = Path(path)
+    # First run on a fresh checkout has no state/ directory, and a missing
+    # parent is the difference between "cache warmed" and "re-rank everything
+    # next week".
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
         json.dumps({"database_id": database_id, "records": records},
                    ensure_ascii=False, indent=2),
         encoding="utf-8",
@@ -85,13 +114,10 @@ def _matches(paper: Paper, record: dict) -> bool:
 
 
 class DedupStore:
-    """Tracks collected papers to prevent cross-run duplicates.
+    """One member's record of the papers they have already been scored against.
 
-    "Seen" means "already written to *this* database". Pointing the tool at a
-    different database — because the old one was deleted, or because the ID was
-    repinned — makes every past record meaningless: the pages it refers to are
-    not in the new database, so suppressing them would leave it permanently
-    empty. The store therefore resets when the database changes.
+    See the module docstring for why this is the optimization layer rather than
+    the truth layer, and why it resets when the database changes.
     """
 
     def __init__(self, path: str = STATE_FILE,
@@ -175,10 +201,11 @@ _IDENTITY_FIELDS = ("arxiv_id", "doi", "url", "normalized_title")
 def deduplicate_collected(papers: List[Paper]) -> List[Paper]:
     """Within a single run, deduplicate items collected from multiple sources.
 
-    A paper appearing in both arXiv and OpenAlex is merged into one entry, as is
+    A paper appearing in both a conference and a journal is merged into one, as is
     a news story carried by two feeds. Identity follows the same rule as the
     cross-run store: any single match on arXiv ID, DOI, URL or normalized title
-    means the same item.
+    means the same item. (Semantic Scholar reports an arXiv ID for papers that
+    also have a preprint, which is why that field still earns its place.)
     """
     unique: List[Paper] = []
     index: Dict[tuple, Paper] = {}  # (field, value) -> the entry we kept

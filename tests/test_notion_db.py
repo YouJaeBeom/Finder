@@ -1,48 +1,38 @@
-"""Database resolution — every run must land in the same Notion database.
+"""The Notion structure: a news database on the main page, one per member.
 
-The failure this guards against is specific and was live before these tests:
-GitHub Actions checks out a clean tree, so state.json never survives between
-scheduled runs, and ensure_database created a brand-new database every Monday.
+The failures these guard against are all "it worked, but somewhere else":
+
+* GitHub Actions checks out a clean tree, so state.json never survives between
+  scheduled runs. Without resolution by title, every Monday created a second copy
+  of everything.
+* Deleting a database in Notion only trashes it; the API keeps reading and
+  writing it happily, so a cached ID pointing at the trash produces runs that
+  report success while every page lands somewhere invisible.
+* Notion rejects an entire page that carries one property the database lacks, so
+  a column that could not be created must not be written.
 """
 from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
-import requests
 
-from paper_digest.models import Paper, PaperIdentifiers
+from paper_digest.models import Paper, PaperIdentifiers, ResearchNote
 from paper_digest.notion_writer import (
-    _DB_PROPERTIES,
-    _DB_TITLE,
+    NEWS_DB_TITLE,
+    NEWS_PROPERTIES,
+    PAPER_PROPERTIES,
+    PAPERS_DB_TITLE,
     create_page,
-    ensure_database,
+    ensure_member_space,
+    ensure_news_database,
 )
+from tests.conftest import PARENT_PAGE_ID, make_paper
+from tests.notion_fake import FakeNotion
 
-# Derived from the schema itself, so adding a column can't silently leave these
-# tests asserting against a shape the code no longer writes.
-FULL_SCHEMA = {"properties": {name: {} for name in _DB_PROPERTIES}}
-
-
-def _resp(payload: dict) -> MagicMock:
-    resp = MagicMock()
-    resp.raise_for_status = MagicMock()
-    resp.json.return_value = payload
-    return resp
-
-
-def _children(*databases: tuple[str, str], has_more: bool = False, cursor=None) -> dict:
-    """Build a blocks/children payload containing the given (id, title) databases."""
-    return {
-        "results": [
-            {"id": db_id, "type": "child_database", "child_database": {"title": title}}
-            for db_id, title in databases
-        ],
-        "has_more": has_more,
-        "next_cursor": cursor,
-    }
+TOKEN = "tok"
+ROOT = PARENT_PAGE_ID
 
 
 @pytest.fixture(autouse=True)
@@ -52,314 +42,177 @@ def _tmp_cwd(tmp_path, monkeypatch):
     return tmp_path
 
 
-class TestDatabaseResolution:
-    def test_configured_id_wins_and_creates_nothing(self):
-        with (
-            patch("paper_digest.notion_writer.requests.get", return_value=_resp(FULL_SCHEMA)),
-            patch("paper_digest.notion_writer.requests.post") as post,
-        ):
-            db_id, _ = ensure_database("parent", "tok", configured_db_id="pinned-db")
-
-        assert db_id == "pinned-db"
-        post.assert_not_called()
-
-    def test_cached_state_is_reused(self, _tmp_cwd):
-        Path("state.json").write_text(json.dumps({"notion_database_id": "cached-db"}))
-
-        with (
-            patch("paper_digest.notion_writer.requests.get", return_value=_resp(FULL_SCHEMA)),
-            patch("paper_digest.notion_writer.requests.post") as post,
-        ):
-            db_id, _ = ensure_database("parent", "tok")
-
-        assert db_id == "cached-db"
-        post.assert_not_called()
-
-    def test_existing_database_under_parent_is_found_not_duplicated(self, _tmp_cwd):
-        """The CI case: no state.json on disk, but the database already exists."""
-        def fake_get(url, headers=None, params=None, timeout=None):
-            if "/blocks/" in url:
-                return _resp(_children(("found-db", _DB_TITLE)))
-            return _resp(FULL_SCHEMA)
-
-        with (
-            patch("paper_digest.notion_writer.requests.get", side_effect=fake_get),
-            patch("paper_digest.notion_writer.requests.post") as post,
-        ):
-            db_id, _ = ensure_database("parent", "tok")
-
-        assert db_id == "found-db"
-        post.assert_not_called()
-        # Cached so the next run on this machine skips the lookup entirely.
-        assert json.loads(Path("state.json").read_text())["notion_database_id"] == "found-db"
-
-    def test_unrelated_database_under_parent_is_ignored(self):
-        def fake_get(url, headers=None, params=None, timeout=None):
-            if "/blocks/" in url:
-                return _resp(_children(("someone-elses-db", "Reading list")))
-            return _resp(FULL_SCHEMA)
-
-        with (
-            patch("paper_digest.notion_writer.requests.get", side_effect=fake_get),
-            patch("paper_digest.notion_writer.requests.post",
-                  return_value=_resp({"id": "new-db"})) as post,
-        ):
-            assert ensure_database("parent", "tok")[0] == "new-db"
-        post.assert_called_once()
-
-    def test_lookup_paginates_before_giving_up(self):
-        pages = [
-            _resp(_children(("x", "Other"), has_more=True, cursor="c1")),
-            _resp(_children(("found-db", _DB_TITLE))),
-        ]
-
-        def fake_get(url, headers=None, params=None, timeout=None):
-            if "/blocks/" in url:
-                return pages.pop(0)
-            return _resp(FULL_SCHEMA)
-
-        with (
-            patch("paper_digest.notion_writer.requests.get", side_effect=fake_get),
-            patch("paper_digest.notion_writer.requests.post") as post,
-        ):
-            assert ensure_database("parent", "tok")[0] == "found-db"
-        post.assert_not_called()
-
-    def test_first_run_creates_and_caches(self, _tmp_cwd):
-        with (
-            patch("paper_digest.notion_writer.requests.get",
-                  return_value=_resp(_children())),
-            patch("paper_digest.notion_writer.requests.post",
-                  return_value=_resp({"id": "brand-new-db"})) as post,
-        ):
-            assert ensure_database("parent", "tok")[0] == "brand-new-db"
-
-        post.assert_called_once()
-        assert json.loads(Path("state.json").read_text())["notion_database_id"] == "brand-new-db"
-
-    def test_lookup_failure_raises_instead_of_duplicating(self):
-        """A transient 500 must not be read as 'no database exists yet'."""
-        with (
-            patch("paper_digest.notion_writer.requests.get",
-                  side_effect=requests.ConnectionError("boom")),
-            patch("paper_digest.notion_writer.requests.post") as post,
-        ):
-            with pytest.raises(RuntimeError, match="Could not list children"):
-                ensure_database("parent", "tok")
-
-        post.assert_not_called()
+@pytest.fixture()
+def notion(monkeypatch) -> FakeNotion:
+    return FakeNotion(ROOT).install(monkeypatch)
 
 
-class TestSchemaTopUp:
-    def _sync(self, schema: dict):
-        """Run ensure_database against a database with the given schema."""
-        with (
-            patch("paper_digest.notion_writer.requests.get", return_value=_resp(schema)),
-            patch("paper_digest.notion_writer.requests.patch",
-                  return_value=_resp({})) as patch_req,
-        ):
-            ensure_database("parent", "tok", configured_db_id="existing-db")
-        return patch_req
+class TestNewsDatabase:
+    def test_created_on_the_main_page(self, notion):
+        db_id, props = ensure_news_database(ROOT, TOKEN)
 
-    def test_missing_columns_are_added_to_an_older_database(self):
-        """A database from before Type/URL existed would 400 on every write."""
-        older = dict(FULL_SCHEMA["properties"])
-        del older["Type"], older["URL"]
-        patch_req = self._sync({"properties": older})
+        assert notion.databases[db_id]["parent"] == ROOT
+        assert notion.databases[db_id]["title"] == NEWS_DB_TITLE
+        assert props == set(NEWS_PROPERTIES)
 
-        patch_req.assert_called_once()
-        assert set(patch_req.call_args.kwargs["json"]["properties"]) == {"Type", "URL"}
+    def test_a_second_call_reuses_it(self, notion):
+        first, _ = ensure_news_database(ROOT, TOKEN)
+        second, _ = ensure_news_database(ROOT, TOKEN)
 
-    def test_legacy_date_column_is_renamed_not_duplicated(self):
-        """Every value ever written to "Date" was a collection date.
+        assert first == second
+        assert len(notion.databases) == 1
 
-        Renaming keeps those rows correct; adding "Collected" alongside would
-        leave the real dates stranded in a column the tool no longer writes.
-        """
-        patch_req = self._sync({"properties": {
-            "Title": {}, "Type": {}, "Venue": {}, "Score": {},
-            "Tags": {}, "Date": {}, "URL": {},
-        }})
+    def test_it_is_found_by_title_when_state_is_lost(self, notion):
+        first, _ = ensure_news_database(ROOT, TOKEN)
+        Path("state.json").unlink()
 
-        props = patch_req.call_args.kwargs["json"]["properties"]
-        assert props["Date"] == {"name": "Collected"}
-        assert "Collected" not in props, "renamed column must not also be created"
-        assert "Published" in props, "the new column is still added"
+        second, _ = ensure_news_database(ROOT, TOKEN)
+        assert second == first, "a lost state.json must not duplicate the database"
 
-    def test_a_rejected_schema_edit_does_not_kill_the_run(self):
-        """Notion accepts some schema edits and refuses others.
+    def test_a_trashed_database_is_replaced_not_reused(self, notion):
+        first, _ = ensure_news_database(ROOT, TOKEN)
+        notion.trashed.add(first)
+        # Also drop it from the children listing, as Notion does for trash.
+        notion.children[ROOT] = [c for c in notion.children[ROOT]
+                                 if c["id"] != first]
 
-        Losing a whole week of papers because one column could not be added is
-        wildly disproportionate — the run continues with what exists.
-        """
-        older = dict(FULL_SCHEMA["properties"])
-        del older["Status"]
+        second, _ = ensure_news_database(ROOT, TOKEN)
+        assert second != first
 
-        failing = MagicMock()
-        failing.raise_for_status.side_effect = requests.HTTPError("400")
-        failing.json.return_value = {"message": "select cannot be updated"}
-
-        with (
-            patch("paper_digest.notion_writer.requests.get",
-                  return_value=_resp({"properties": older})),
-            patch("paper_digest.notion_writer.requests.patch", return_value=failing),
-        ):
-            db_id, properties = ensure_database("parent", "tok",
-                                                configured_db_id="db")
-
-        assert db_id == "db"
-        assert "Status" not in properties, "a column that was refused is not claimed"
-        assert "Title" in properties, "the columns that do exist are still usable"
-
-    def test_the_schema_is_re_read_rather_than_assumed(self):
-        """A partially-accepted edit would otherwise poison every page write."""
-        after = dict(FULL_SCHEMA["properties"])
-        del after["Status"]
-        reads = [_resp({"properties": {"Title": {}}}), _resp({"properties": after})]
-
-        with (
-            patch("paper_digest.notion_writer.requests.get",
-                  side_effect=lambda *a, **k: reads.pop(0)),
-            patch("paper_digest.notion_writer.requests.patch", return_value=_resp({})),
-        ):
-            _, properties = ensure_database("parent", "tok", configured_db_id="db")
-
-        assert "Status" not in properties
-        assert "Venue" in properties
-
-    def test_complete_schema_is_left_alone(self):
-        with (
-            patch("paper_digest.notion_writer.requests.get", return_value=_resp(FULL_SCHEMA)),
-            patch("paper_digest.notion_writer.requests.patch") as patch_req,
-        ):
-            ensure_database("parent", "tok", configured_db_id="current-db")
-
-        patch_req.assert_not_called()
+    def test_it_carries_no_paper_only_columns(self, notion):
+        _, props = ensure_news_database(ROOT, TOKEN)
+        # News never goes through relevance scoring and has no review state, so
+        # an empty Score or Status column would read as a bug rather than as
+        # "not applicable".
+        assert {"Score", "Status", "Tags", "Venue"}.isdisjoint(props)
+        assert {"Source", "Points"} <= props
 
 
-class TestWritingAgainstAPartialSchema:
-    """Notion rejects the whole page if it carries an unknown property, so a
-    column that could not be created must not be written."""
+class TestMemberSpace:
+    def test_a_page_and_a_database_inside_it(self, notion):
+        space = ensure_member_space(ROOT, "jaebeom", "유재범", TOKEN)
 
-    def _paper(self) -> Paper:
-        return Paper(
-            identifiers=PaperIdentifiers(arxiv_id="2408.00001"),
-            title="A Paper", abstract="...", venue="ACL", venue_status="published",
-            collection_date="2026-08-15", source=["arxiv"],
-            url="https://arxiv.org/abs/2408.00001", published_at="2026-08-12",
+        assert notion.pages[space.page_id]["parent"] == ROOT
+        assert notion.pages[space.page_id]["title"] == "유재범"
+        assert notion.databases[space.database_id]["parent"] == space.page_id
+        assert notion.databases[space.database_id]["title"] == PAPERS_DB_TITLE
+        assert space.properties == set(PAPER_PROPERTIES)
+
+    def test_each_member_gets_a_separate_database(self, notion):
+        a = ensure_member_space(ROOT, "a", "가", TOKEN)
+        b = ensure_member_space(ROOT, "b", "나", TOKEN)
+
+        assert a.page_id != b.page_id
+        assert a.database_id != b.database_id
+        assert len(notion.databases) == 2
+
+    def test_a_second_run_reuses_both(self, notion):
+        first = ensure_member_space(ROOT, "a", "가", TOKEN)
+        second = ensure_member_space(ROOT, "a", "가", TOKEN)
+
+        assert (first.page_id, first.database_id) == (second.page_id,
+                                                     second.database_id)
+        assert len(notion.pages) == 2   # root + the member page
+        assert len(notion.databases) == 1
+
+    def test_found_by_title_when_state_is_lost(self, notion):
+        first = ensure_member_space(ROOT, "a", "가", TOKEN)
+        Path("state.json").unlink()
+
+        second = ensure_member_space(ROOT, "a", "가", TOKEN)
+        assert (second.page_id, second.database_id) == (first.page_id,
+                                                       first.database_id)
+
+    def test_a_trashed_member_page_is_replaced(self, notion):
+        first = ensure_member_space(ROOT, "a", "가", TOKEN)
+        notion.trashed.add(first.page_id)
+        notion.children[ROOT] = [c for c in notion.children[ROOT]
+                                 if c["id"] != first.page_id]
+
+        second = ensure_member_space(ROOT, "a", "가", TOKEN)
+        assert second.page_id != first.page_id
+
+    def test_state_records_both_ids_per_member(self, notion):
+        ensure_member_space(ROOT, "a", "가", TOKEN)
+        ensure_member_space(ROOT, "b", "나", TOKEN)
+
+        state = json.loads(Path("state.json").read_text(encoding="utf-8"))
+        assert set(state["members"]) == {"a", "b"}
+        assert set(state["members"]["a"]) == {"page_id", "database_id"}
+
+    def test_missing_columns_are_added_to_an_existing_database(self, notion):
+        space = ensure_member_space(ROOT, "a", "가", TOKEN)
+        # Simulate a database created by an earlier version of the schema.
+        notion.databases[space.database_id]["properties"] = {"Title", "Venue"}
+
+        again = ensure_member_space(ROOT, "a", "가", TOKEN)
+        assert again.properties == set(PAPER_PROPERTIES)
+
+
+class TestCreatePage:
+    def _space(self, notion):
+        return ensure_member_space(ROOT, "a", "가", TOKEN)
+
+    def test_a_paper_writes_the_paper_columns(self, notion):
+        space = self._space(notion)
+        paper = make_paper(doi="10.1/x", score=8.0)
+        paper.research_note = ResearchNote(
+            one_line_summary="한 줄", key_contributions=["a", "b", "c"],
+            method="방법", relevance_to_profile="연결점",
         )
+        paper.published_at = "2026-08-01"
+        paper.url = "https://doi.org/10.1/x"
 
-    def _create(self, known):
-        with patch("paper_digest.notion_writer.requests.post",
-                   return_value=_resp({"id": "page-1"})) as post:
-            create_page(self._paper(), "db", "tok", known_properties=known)
-        return post.call_args.kwargs["json"]["properties"]
+        create_page(paper, space.database_id, TOKEN, space.properties)
 
-    def test_missing_columns_are_dropped_not_sent(self):
-        known = set(_DB_PROPERTIES) - {"Status", "Published"}
-        written = self._create(known)
+        row = notion.rows[space.database_id][0]["properties"]
+        assert row["Score"]["number"] == 8.0
+        assert row["Kind"]["select"]["name"] == "conference"
+        assert row["Venue"]["select"]["name"] == "ACL"
+        assert row["Summary"]["rich_text"][0]["text"]["content"] == "한 줄"
+        assert "Source" not in row and "Points" not in row
 
-        assert "Status" not in written and "Published" not in written
-        assert written["Title"], "the page is still created"
-        assert written["Venue"] == {"select": {"name": "ACL"}}
-
-    def test_a_full_schema_gets_everything(self):
-        written = self._create(set(_DB_PROPERTIES))
-        assert {"Title", "Type", "Venue", "Status", "Tags",
-                "Collected", "Published", "URL"} <= set(written)
-
-    def test_no_schema_given_means_send_everything(self):
-        """Callers that don't know the schema keep the old behaviour."""
-        assert "Status" in self._create(None)
-
-
-class TestDeletedDatabase:
-    """Deleting a database in Notion moves it to the trash, and the API still
-    reads and writes it. A cached ID pointing there fails in the worst way: the
-    run reports success while every page lands somewhere invisible."""
-
-    def _trashed(self) -> MagicMock:
-        payload = dict(FULL_SCHEMA)
-        payload["in_trash"] = True
-        return _resp(payload)
-
-    def test_a_trashed_database_is_not_reused(self, _tmp_cwd):
-        Path("state.json").write_text(json.dumps({"notion_database_id": "trashed-db"}))
-
-        def fake_get(url, headers=None, params=None, timeout=None):
-            if "/blocks/" in url:
-                return _resp(_children())  # nothing live under the parent either
-            return self._trashed()
-
-        with (
-            patch("paper_digest.notion_writer.requests.get", side_effect=fake_get),
-            patch("paper_digest.notion_writer.requests.post",
-                  return_value=_resp({"id": "fresh-db"})),
-        ):
-            db_id, _ = ensure_database("parent", "tok")
-
-        assert db_id == "fresh-db", "a trashed database must not be written to"
-        assert json.loads(Path("state.json").read_text())["notion_database_id"] == "fresh-db"
-
-    def test_a_deleted_database_falls_back_to_the_one_under_the_page(self, _tmp_cwd):
-        Path("state.json").write_text(json.dumps({"notion_database_id": "gone-db"}))
-        gone = MagicMock(status_code=404)
-
-        def fake_get(url, headers=None, params=None, timeout=None):
-            if "/blocks/" in url:
-                return _resp(_children(("live-db", _DB_TITLE)))
-            if url.endswith("gone-db"):
-                return gone
-            return _resp(FULL_SCHEMA)
-
-        with (
-            patch("paper_digest.notion_writer.requests.get", side_effect=fake_get),
-            patch("paper_digest.notion_writer.requests.post") as post,
-        ):
-            db_id, _ = ensure_database("parent", "tok")
-
-        assert db_id == "live-db"
-        post.assert_not_called()
-
-    def test_a_live_database_is_still_reused(self):
-        live = dict(FULL_SCHEMA)
-        live["in_trash"] = False
-        with (
-            patch("paper_digest.notion_writer.requests.get", return_value=_resp(live)),
-            patch("paper_digest.notion_writer.requests.post") as post,
-        ):
-            db_id, _ = ensure_database("parent", "tok", configured_db_id="live-db")
-
-        assert db_id == "live-db"
-        post.assert_not_called()
-
-
-class TestSummaryColumn:
-    """The one-liner belongs in a column, so the table is readable without
-    opening every page."""
-
-    def _paper(self, note=None) -> Paper:
-        from paper_digest.models import ResearchNote
-        return Paper(
-            identifiers=PaperIdentifiers(), title="A Paper", abstract="...",
-            venue="ACL", collection_date="2026-08-15",
-            research_note=ResearchNote(note, ["a"], "m", "r") if note else None,
+    def test_a_news_item_writes_the_news_columns(self, notion):
+        news_db, props = ensure_news_database(ROOT, TOKEN)
+        item = Paper(
+            identifiers=PaperIdentifiers(url="https://e.com/1"),
+            title="OpenAI ships something",
+            abstract="summary",
+            venue="Hacker News",
+            content_type="news",
+            collection_date="2026-08-19",
+            source=["hackernews"],
+            url="https://e.com/1",
+            points=321,
         )
+        create_page(item, news_db, TOKEN, props)
 
-    def _write(self, paper) -> dict:
-        with patch("paper_digest.notion_writer.requests.post",
-                   return_value=_resp({"id": "p1"})) as post:
-            create_page(paper, "db", "tok")
-        return post.call_args.kwargs["json"]["properties"]
+        row = notion.rows[news_db][0]["properties"]
+        assert row["Source"]["select"]["name"] == "Hacker News"
+        assert row["Points"]["number"] == 321
+        assert "Score" not in row and "Kind" not in row
 
-    def test_the_one_line_summary_lands_in_the_column(self):
-        written = self._write(self._paper("정치적 편향을 다국어로 측정한다."))
-        assert written["Summary"]["rich_text"][0]["text"]["content"] == (
-            "정치적 편향을 다국어로 측정한다.")
+    def test_a_column_the_database_lacks_is_dropped_not_sent(self, notion):
+        """Notion rejects the whole page for one unknown property.
 
-    def test_no_note_means_no_summary_property(self):
-        assert "Summary" not in self._write(self._paper())
+        The fake enforces that too, so if the filter regressed this test would
+        fail on the write rather than on an assertion.
+        """
+        space = self._space(notion)
+        notion.databases[space.database_id]["properties"] = {"Title", "Venue"}
 
-    def test_an_overlong_summary_is_truncated_to_notions_limit(self):
-        written = self._write(self._paper("가" * 3000))
-        assert len(written["Summary"]["rich_text"][0]["text"]["content"]) == 2000
+        page_id = create_page(make_paper(doi="10.1/y"), space.database_id, TOKEN,
+                              known_properties={"Title", "Venue"})
+
+        assert page_id
+        assert set(notion.rows[space.database_id][0]["properties"]) == {"Title",
+                                                                       "Venue"}
+
+    def test_an_empty_collection_date_is_omitted(self, notion):
+        """Notion rejects a date property whose start is an empty string."""
+        space = self._space(notion)
+        paper = make_paper(doi="10.1/z")
+        paper.collection_date = ""
+
+        create_page(paper, space.database_id, TOKEN, space.properties)
+        assert "Collected" not in notion.rows[space.database_id][0]["properties"]
