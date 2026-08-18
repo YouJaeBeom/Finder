@@ -1,0 +1,1697 @@
+{
+  "database_id": "3c01256e-0561-811c-83b3-c91eed069d59",
+  "records": [
+    {
+      "arxiv_id": "2607.20926",
+      "doi": "10.18653/v1/2026.findings-acl.1117",
+      "normalized_title": "sciexplore evaluating autonomous agents from scientific navigation to information integration",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SciExplore: Evaluating Autonomous Agents from Scientific Navigation to Information Integration"
+    },
+    {
+      "arxiv_id": "2607.21936",
+      "doi": "10.18653/v1/2026.findings-acl.2148 10.18653/v1/2026.findings-acl.2148",
+      "normalized_title": "leveraging external knowledge for historical document restoration via retrievalaugmented large language models",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Leveraging External Knowledge for Historical Document Restoration via Retrieval-Augmented Large Language Models"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808547",
+      "normalized_title": "privacy preserving information retrieval defining privacy research pillars for a future research agenda",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Privacy Preserving Information Retrieval: Defining Privacy Research Pillars for a Future Research Agenda"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808543",
+      "normalized_title": "towards a general intelligent information agent framework models and evaluation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Towards a General Intelligent Information Agent: Framework, Models, and Evaluation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809948",
+      "normalized_title": "mine over yours how authorship biases evaluation in generative information retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Mine over Yours: How Authorship Biases Evaluation in Generative Information Retrieval"
+    },
+    {
+      "arxiv_id": "2607.27654",
+      "doi": "10.1145/3805712.3808607",
+      "normalized_title": "from single to crossdocument benchmarking multigranularity event analysis of large language models",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "From Single- to Cross-Document: Benchmarking Multi-Granularity Event Analysis of Large Language Models"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808521",
+      "normalized_title": "toward a telugu question answering dataset for agricultural ir to serve marginal farmers in droughtprone rayalaseema a gap analysis and roadmap",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Toward a Telugu Question Answering Dataset for Agricultural IR to Serve Marginal Farmers in Drought-Prone Rayalaseema: A Gap Analysis and Roadmap"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809405",
+      "normalized_title": "emancipatory information retrieval towards critical ir theories and practices",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Emancipatory Information Retrieval: Towards Critical IR Theories and Practices"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808586",
+      "normalized_title": "calmset a domainspecific test collection for affective music retrieval for children with asd",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "CalmSet: A Domain-Specific Test Collection for Affective Music Retrieval for Children with ASD"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808606",
+      "normalized_title": "refairmulate a largescale dataset for genderfair query reformulations",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c01256e-0561-8126-b385-fc227faf9a4a",
+      "title": "Refairmulate: A Large-Scale Dataset for Gender-Fair Query Reformulations"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808546",
+      "normalized_title": "towards inclusive retrievalaugmented generation challenges and opportunities for cognitively impaired users",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Towards Inclusive Retrieval-Augmented Generation: Challenges and Opportunities for Cognitively Impaired Users"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808648",
+      "normalized_title": "the 10th workshop on searchoriented conversational artificial intelligence scai26",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "The 10th Workshop on Search-Oriented Conversational Artificial Intelligence (SCAI'26)"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808357",
+      "normalized_title": "faithful llmassisted question answering for technical and academic search",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Faithful LLM-Assisted Question Answering for Technical and Academic Search"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808355",
+      "normalized_title": "towards structurally robust crossdevice federated recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Towards Structurally Robust Cross-Device Federated Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808359",
+      "normalized_title": "efficient continual adaptation of generative retrieval systems over dynamic corpora",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Efficient Continual Adaptation of Generative Retrieval Systems over Dynamic Corpora"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809606",
+      "normalized_title": "revisiting collaborative filtering by unleashing the power of similarity",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Revisiting Collaborative Filtering by Unleashing the Power of Similarity"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808364",
+      "normalized_title": "adaptive personalisation for effective conversational search systems",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Adaptive Personalisation for Effective Conversational Search Systems"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808527",
+      "normalized_title": "offlinefirst information retrieval for curriculumaligned stem resources in lowresource namibian schools",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Offline-First Information Retrieval for Curriculum-Aligned STEM Resources in Low-Resource Namibian Schools"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808470",
+      "normalized_title": "effective offline llm and dnn based matching filtering and ranking for search ads retrieval in ecommerce",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Effective Offline LLM and DNN based Matching, Filtering and Ranking for Search Ads Retrieval in E-Commerce"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808412",
+      "normalized_title": "bridging the topologysemantic gap a benchmark and framework for power grid work ticket generation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Bridging the Topology-Semantic Gap: A Benchmark and Framework for Power Grid Work Ticket Generation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808461",
+      "normalized_title": "m²gr generative user interest modeling via multigranularity multiobjective cot for industrial recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "M²GR: Generative User Interest Modeling via Multi-Granularity Multi-Objective CoT for Industrial Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809900",
+      "normalized_title": "temporal useragnostic ranking detecting preference evolution while preserving ethical principles",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Temporal User-Agnostic Ranking: Detecting Preference Evolution while Preserving Ethical Principles"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808514",
+      "normalized_title": "unifying user satisfaction and creator incentive a constrained optimization framework for shortvideo recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Unifying User Satisfaction and Creator Incentive: A Constrained Optimization Framework for Short-Video Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809897",
+      "normalized_title": "star adaptive structureaware reranking for semanticstructural alignment in graphrag",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "StAR: Adaptive Structure-Aware Reranking for Semantic–Structural Alignment in GraphRAG"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1007/s10515-026-00640-x",
+      "normalized_title": "from noisy feedback to evidenceaware issue specifications an agentgoverned retrievalaugmented generation approach",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "From noisy feedback to evidence-aware issue specifications: an agent-governed retrieval-augmented generation approach"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808616",
+      "normalized_title": "rregtc a geotemporal cluster dataset for realestate price estimation and marketaware search",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "RRE-GTC: A Geo-Temporal Cluster Dataset for Real-Estate Price Estimation and Market-Aware Search"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808438",
+      "normalized_title": "secret search query classification with label retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SECRET: SEarch query Classification with label RETrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809930",
+      "normalized_title": "evirag evidenceguided retrievalaugmented generation for medical visionlanguage models",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "EviRAG: Evidence-Guided Retrieval-Augmented Generation for Medical Vision-Language Models"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808654",
+      "normalized_title": "vulgen workshop on vulnerabilities in generative systems for information retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "VulGen: Workshop on Vulnerabilities in Generative Systems for Information Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808591",
+      "normalized_title": "trec ikat 2025 a test collection for the offline and interactive evaluation of conversational search",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "TREC iKAT 2025: A Test Collection for the Offline and Interactive Evaluation of Conversational Search"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808365",
+      "normalized_title": "from lab to reality an eyetracking study of how users are influenced to search in the era of genai",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c01256e-0561-8182-8b9e-da1490981445",
+      "title": "From Lab to Reality: An Eye-tracking Study of How Users are Influenced to Search in the Era of GenAI"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808513",
+      "normalized_title": "constraint persistence in conversational product search",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Constraint Persistence in Conversational Product Search"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808580",
+      "normalized_title": "a dataset of cultural heritage manipulation on english wikipedia in the russoukrainian context",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "A Dataset of Cultural Heritage Manipulation on English Wikipedia in the Russo–Ukrainian Context"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808601",
+      "normalized_title": "autojudge a crosstask benchmark for comparing llm judges for citationgrounded rag systems",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Auto-Judge: A Cross-Task Benchmark for Comparing LLM Judges for Citation-Grounded RAG Systems"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809963",
+      "normalized_title": "reformulating posttraining as matrix factorization for joint embedding refinement",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Reformulating Post-Training as Matrix Factorization for Joint Embedding Refinement"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809898",
+      "normalized_title": "targeted parameter selection for rankbiased measurement",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Targeted Parameter Selection for Rank-Biased Measurement"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808528",
+      "normalized_title": "speak beyond english multilingual prompts improve query classification in small language models",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Speak Beyond English: Multilingual Prompts Improve Query Classification in Small Language Models"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809698",
+      "normalized_title": "ruler robust unified llmbased efficient retrieval for legal information",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "RULER: Robust Unified LLM-based Efficient Retrieval for Legal Information"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808599",
+      "normalized_title": "simapi a middleware to simplify the use of user simulators for shared tasks in conversational search",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Sim.API: A Middleware to Simplify the Use of User Simulators for Shared Tasks in Conversational Search"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808633",
+      "normalized_title": "nerbenchchhattisgarh a multifamily ner dataset for lowresource indic languages",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "NERBench-Chhattisgarh: A Multi-Family NER Dataset for Low-Resource Indic Languages"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808647",
+      "normalized_title": "trustworthy personalized retrieval in the llm era fairness bias awareness privacy and multimodality",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c01256e-0561-8174-ab74-d809372ecc43",
+      "title": "Trustworthy Personalized Retrieval in the LLM Era: Fairness, Bias Awareness, Privacy, and Multimodality"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809895",
+      "normalized_title": "separating wheat from chaff finegrained defenses against poisoning in multiperspective rag",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c01256e-0561-8181-82f8-d5e3fe6d73d1",
+      "title": "Separating Wheat from Chaff: Fine-Grained Defenses Against Poisoning in Multi-Perspective RAG"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808433",
+      "normalized_title": "whats in a name product normalization for enterprise rag at netapp",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "What's in a Name? Product Normalization for Enterprise RAG at NetApp"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809738",
+      "normalized_title": "diagnosing and mitigating midsequence degradation in recommender systems",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Diagnosing and Mitigating Mid-Sequence Degradation in Recommender Systems"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809856",
+      "normalized_title": "efficient query region expansion and decomposition based spatial range query algorithm",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Efficient Query Region Expansion and Decomposition based Spatial Range Query Algorithm"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809916",
+      "normalized_title": "auditing query drift do users actually benefit from pseudorelevance feedback",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Auditing Query Drift: Do Users Actually Benefit from Pseudo-Relevance Feedback?"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808400",
+      "normalized_title": "domainspecific reranking when is adaptation worth the cost",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Domain-Specific Reranking: When is Adaptation Worth the Cost?"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808657",
+      "normalized_title": "reneuir at sigir 2026 the fifth workshop on reaching efficiency in neural information retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "ReNeuIR at SIGIR 2026: The Fifth Workshop on Reaching Efficiency in Neural Information Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809870",
+      "normalized_title": "latent retrieval augmented generation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Latent Retrieval Augmented Generation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808371",
+      "normalized_title": "somin agentic ai for automating professional visibility and countering content homogenization",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SOMIN: Agentic AI for Automating Professional Visibility and Countering Content Homogenization"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808423",
+      "normalized_title": "reasoninggrounded intent injection for generative recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Reasoning-Grounded Intent Injection for Generative Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809702",
+      "normalized_title": "srag a lightweight and specialized retrievalaugmented generation system at the edge",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SRAG: A Lightweight and Specialized Retrieval-augmented Generation System at the Edge"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808525",
+      "normalized_title": "building foundations for information retrieval in extremely lowresource ethnic languages evidence from tanzania",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Building Foundations for Information Retrieval in Extremely Low-Resource Ethnic Languages: Evidence from Tanzania"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809933",
+      "normalized_title": "from continuous pretraining to domainadaptive reranking via task vector adaptation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "From Continuous Pretraining to Domain-Adaptive Reranking via Task Vector Adaptation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809973",
+      "normalized_title": "simulating the lateral reader for news trustworthiness reports with an iterative multiagent rag system",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Simulating the Lateral Reader for News Trustworthiness Reports with an Iterative Multi-Agent RAG System"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808545",
+      "normalized_title": "deletion isnt enough auditing rag for selective forgetting",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Deletion Isn't Enough: Auditing RAG for Selective Forgetting"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808524",
+      "normalized_title": "detectability and evaluation risks of llmgenerated answers in lowresource swahili agricultural information retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Detectability and Evaluation Risks of LLM-Generated Answers in Low-Resource Swahili Agricultural Information Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809608",
+      "normalized_title": "same frequency begets shared interests popularniche wavelet graph learning for multimodal recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Same Frequency Begets Shared Interests: Popular-Niche Wavelet Graph Learning for Multimodal Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809567",
+      "normalized_title": "gnnbased anchor embedding for efficient subgraph retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "GNN-based Anchor Embedding for Efficient Subgraph Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808381",
+      "normalized_title": "sledoc system for legal document comparison",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SLeDoC: System for Legal Document Comparison"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808603",
+      "normalized_title": "weatherarchive a benchmark for retrievalaugmented reasoning over historical weather archives",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "WeatherArchive: A Benchmark for Retrieval-Augmented Reasoning over Historical Weather Archives"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809732",
+      "normalized_title": "beyond the single path divergent reasoning for llmbased recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Beyond the Single Path: Divergent Reasoning for LLM-based Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809668",
+      "normalized_title": "how variability influences podcast search queries transcriptions and judges",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "How Variability Influences Podcast Search: Queries, Transcriptions, and Judges"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809867",
+      "normalized_title": "humans llms and measures do not align in attributed information retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Humans, LLMs, and Measures Do Not Align in Attributed Information Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808533",
+      "normalized_title": "towards building a standard benchmark for lowresource nepali information retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Towards Building a Standard Benchmark for Low-Resource Nepali Information Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808565",
+      "normalized_title": "a replicability study of joint product quantisation for effective spaceefficient dense retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "A Replicability Study of Joint Product Quantisation for Effective Space-Efficient Dense Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809922",
+      "normalized_title": "crosssensory comparison of eeg signals for brainbased information retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Cross-Sensory Comparison of EEG Signals for Brain-Based Information Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808538",
+      "normalized_title": "evaluation validity in information retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Evaluation Validity in Information Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808502",
+      "normalized_title": "agentic query reformulation for contextualized hyperpersonalized product search",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Agentic Query Reformulation for Contextualized Hyper-Personalized Product Search"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809527",
+      "normalized_title": "adaptive richkernelized contrastive learning for capacity enhancement in collaborative filtering",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Adaptive Rich-kernelized Contrastive Learning for Capacity Enhancement in Collaborative Filtering"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809855",
+      "normalized_title": "does llm relevance labelling work for arabic",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Does LLM Relevance Labelling Work for Arabic?"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808407",
+      "normalized_title": "calibrate your items train ctr models in two steps for robust recommendations",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Calibrate Your Items! Train CTR Models in Two Steps for Robust Recommendations"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808655",
+      "normalized_title": "synthir the first workshop on synthetic content in information retrieval ecosystems",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SynthIR: The First Workshop on Synthetic Content in Information Retrieval Ecosystems"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808653",
+      "normalized_title": "agentsearch indexing retrieval and ranking of ai agents",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "AgentSearch: Indexing, Retrieval, and Ranking of AI Agents"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808639",
+      "normalized_title": "bridging personalization and ai from rag to agent",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Bridging Personalization and AI: From RAG to Agent"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808380",
+      "normalized_title": "xfoodrec an explainable mobile recommender for personalized healthy eating",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "XFoodRec: An Explainable Mobile Recommender for Personalized Healthy Eating"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809859",
+      "normalized_title": "failing forward understanding query failure in retrieval judgment and generation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Failing Forward: Understanding Query Failure in Retrieval, Judgment, and Generation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808478",
+      "normalized_title": "queryattention dualstream framework with crosscategory transfer for efficient finegrained interest preranking",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Query-Attention Dual-Stream Framework with Cross-Category Transfer for Efficient Fine-Grained Interest Pre-Ranking"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809840",
+      "normalized_title": "an asymmetricdifference based document exact similarity search algorithm",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "An Asymmetric-difference based Document Exact Similarity Search Algorithm"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809652",
+      "normalized_title": "fairspec expert specialization for fair llmbased recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "FairSpec: Expert Specialization for Fair LLM-based Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809938",
+      "normalized_title": "huffmanembed using huffman coding for embedding table compression in deep learning recommendation models",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "HuffmanEmbed: Using Huffman Coding for Embedding Table Compression in Deep Learning Recommendation Models"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809865",
+      "normalized_title": "graphsynthqa knowledgegraphguided query synthesis and steplevel preference optimization for web agents",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "GraphSynthQA: Knowledge-Graph-Guided Query Synthesis and Step-Level Preference Optimization for Web Agents"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809906",
+      "normalized_title": "when rag disagrees detecting latent epistemic conflict via logit interactions",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "When RAG Disagrees: Detecting Latent Epistemic Conflict via Logit Interactions"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809638",
+      "normalized_title": "demandcalibrated facet diversification with deployable soft quotas for ecommerce search",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Demand-Calibrated Facet Diversification with Deployable Soft Quotas for E-Commerce Search"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808413",
+      "normalized_title": "scope scalable crosstask orthogonal progressive experts for multitask learning in recommendations",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SCOPE: Scalable Cross-Task Orthogonal Progressive Experts for Multi-Task Learning in Recommendations"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808385",
+      "normalized_title": "easyrag a beginnerfriendly and interactive framework for retrievalaugmented generation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "EasyRAG: A Beginner-Friendly and Interactive Framework for Retrieval-Augmented Generation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809950",
+      "normalized_title": "mupp multipreference padding for sequential recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "MuPP: Multi-Preference Padding for Sequential Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808424",
+      "normalized_title": "aipo adaptive anchored intentaware policy optimization for generative recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "AIPO: Adaptive Anchored Intent-aware Policy Optimization for Generative Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809539",
+      "normalized_title": "cats clusteraware thompson sampling for negative mining in sequential recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "CATS: Cluster-Aware Thompson Sampling for Negative Mining in Sequential Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809556",
+      "normalized_title": "do simulated users need to remember analyzing the impact of memory models in conversational search evaluation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Do Simulated Users Need to Remember? Analyzing the Impact of Memory Models in Conversational Search Evaluation"
+    },
+    {
+      "arxiv_id": "2608.06947",
+      "doi": "10.1145/3805712.3809904",
+      "normalized_title": "when context bites detecting rag poisoning via documentlevel attention collapse",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "When Context Bites: Detecting RAG Poisoning via Document-Level Attention Collapse"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808382",
+      "normalized_title": "ir lens a tool for interpreting crossencoder models",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "IR Lens: A Tool for Interpreting Cross-Encoder Models"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809671",
+      "normalized_title": "incentivizing retrievalaugmented generation via inner adaptive context selection",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Incentivizing Retrieval-Augmented Generation via Inner Adaptive Context Selection"
+    },
+    {
+      "arxiv_id": "2607.28971",
+      "doi": "10.1145/3805712.3808467",
+      "normalized_title": "dont contrast the impossible regionconstrained batching for contrastive user modeling on a local community platform",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Don't Contrast the Impossible: Region-Constrained Batching for Contrastive User Modeling on a Local Community Platform"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809525",
+      "normalized_title": "a comparative study of users informationseeking practices across search engines and generative ai chatbots",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "A Comparative Study of Users' Information-Seeking Practices Across Search Engines and Generative AI Chatbots"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809649",
+      "normalized_title": "explorationandthinking agentic reasoning over knowledge graphs via an llmrl synergized framework",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Exploration-and-Thinking: Agentic Reasoning over Knowledge Graphs via an LLM-RL Synergized Framework"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808522",
+      "normalized_title": "morphologyaware retrieval for lowresource environments advancing information retrieval for shona language",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Morphology-Aware Retrieval for Low-Resource Environments: Advancing Information Retrieval for Shona Language"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809847",
+      "normalized_title": "coco conformal confidence suppression to optimize search results",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "CoCo: Conformal Confidence Suppression to Optimize Search Results"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809926",
+      "normalized_title": "efficient memory alignment for longterm conversational information seeking",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Efficient Memory Alignment for Long-term Conversational Information Seeking"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808594",
+      "normalized_title": "kcc korean civil case dataset for legal information retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "KCC: Korean Civil Case Dataset for Legal Information Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809404",
+      "normalized_title": "from search to ask to act the evolution of information access in the age of large models and agents",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "From Search to Ask to Act: The Evolution of Information Access in the Age of Large Models and Agents"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808403",
+      "normalized_title": "full retraining incremental finetuning and hybrid serving model updating and serving for industrial generative recommender systems",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Full Retraining, Incremental Fine-tuning, and Hybrid Serving: Model Updating and Serving for Industrial Generative Recommender Systems"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808651",
+      "normalized_title": "justice emancipation democracy and information access jedi the sigir workshop on resisting corporate and authoritarian capture of information access platforms",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Justice, Emancipation, Democracy, and Information Access (JEDI): The SIGIR Workshop on Resisting Corporate and Authoritarian Capture of Information Access Platforms"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808394",
+      "normalized_title": "llmclick agreement harmonizing implicit feedback and semantic judgments for enterprise search",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "LLM-Click Agreement: Harmonizing Implicit Feedback and Semantic Judgments for Enterprise Search"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808389",
+      "normalized_title": "a demonstration of wikirag an evidencebased link prediction for wikidata with retrieval augmented generation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "A Demonstration of WikiRAG: An Evidence-based Link Prediction for Wikidata with Retrieval Augmented Generation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808517",
+      "normalized_title": "rapo reasonaware preference optimization for factual table question answering over structured data",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "RAPO: Reason-Aware Preference Optimization for Factual Table Question Answering over Structured Data"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809635",
+      "normalized_title": "coupling global context with kinematic evolution for sequential recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Coupling Global Context with Kinematic Evolution for Sequential Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808406",
+      "normalized_title": "weseal wellcalibrated search for eliminating attentionsink leakage",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "WeSEAL: Well-calibrated Search for Eliminating Attention-sink Leakage"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809651",
+      "normalized_title": "fairrag an endtoend framework for mitigating political bias through fair retrievalaugmented generation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c01256e-0561-814c-9ac1-ee9ae9378651",
+      "title": "FAIR-RAG: An End-to-End Framework for Mitigating Political Bias through Fair Retrieval-Augmented Generation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809853",
+      "normalized_title": "differentiable dual anchor negative sampling for graphbased recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Differentiable Dual Anchor Negative Sampling for Graph-based Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808642",
+      "normalized_title": "manila26 sigir 2026 tutorial on information retrieval for climate change impact",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "MANILA26: SIGIR 2026 Tutorial on Information Retrieval for Climate Change Impact"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808650",
+      "normalized_title": "sigir 2026 workshop on ecommerce ecom26",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SIGIR 2026 Workshop on eCommerce (ECOM26)"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809872",
+      "normalized_title": "learndcg endtoend joint optimization of ranker and loss in neural ranking",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "LearnDCG: End-to-End Joint Optimization of Ranker and Loss in Neural Ranking"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808376",
+      "normalized_title": "mcp servers for pyserini and rankllm enabling agentic retrievalaugmented generation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "MCP Servers for Pyserini and RankLLM: Enabling Agentic Retrieval-Augmented Generation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809919",
+      "normalized_title": "clusteringbased methods for vectorbased pseudorelevance feedback",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Clustering-Based Methods for Vector-Based Pseudo-Relevance Feedback"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809406",
+      "normalized_title": "question answering fit for purpose a perspective from natural language processing and user modeling",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Question Answering Fit for Purpose: A Perspective From Natural Language Processing and User Modeling"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809934",
+      "normalized_title": "gcos an interpretable gaincost framework for user satisfaction estimation in generative information retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "G-CoS: An Interpretable Gain-Cost Framework for User Satisfaction Estimation in Generative Information Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808456",
+      "normalized_title": "libra enhancing livestreaming recommendation with bigraphbased capacityaware ranking approach",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "LiBRA: Enhancing Live-streaming Recommendation with Bigraph-based Capacity-aware Ranking Approach"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809636",
+      "normalized_title": "debiased recommendation beyond the positive propensity assumption",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Debiased Recommendation Beyond the Positive Propensity Assumption"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809596",
+      "normalized_title": "ops an orderpreserving sorting network for information retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "OPS: An Order-Preserving Sorting Network for Information Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809685",
+      "normalized_title": "multiperspective driven expected location preferences for next poi recommendations",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Multi-Perspective Driven Expected Location Preferences for Next POI Recommendations"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808534",
+      "normalized_title": "local information access in marathi evaluating llmnative web retrieval in a lowresource environment",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Local Information Access in Marathi: Evaluating LLM-Native Web Retrieval in a Low-Resource Environment"
+    },
+    {
+      "arxiv_id": "2607.23561",
+      "doi": "10.1145/3805712.3808541",
+      "normalized_title": "towards a relevance posterior in neural information access",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Towards a Relevance Posterior in Neural Information Access"
+    },
+    {
+      "arxiv_id": "2607.18712",
+      "doi": "10.1145/3805712.3809529",
+      "normalized_title": "an epistemic positionbased click model from interactions to epistemic distributions of relevance and bias",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "An Epistemic Position-Based Click Model: From Interactions to Epistemic Distributions of Relevance and Bias"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809959",
+      "normalized_title": "queryaware context selection for retrievalaugmented generation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Query-Aware Context Selection for Retrieval-Augmented Generation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809888",
+      "normalized_title": "remica reflective memory and interventional context alignment with multiagent llms for inappropriate utterance detection",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "REMICA: Reflective Memory and Interventional Context Alignment with Multi-Agent LLMs for Inappropriate Utterance Detection"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809633",
+      "normalized_title": "chunkwise quantization for graph collaborative filtering",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Chunk-Wise Quantization for Graph Collaborative Filtering"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808362",
+      "normalized_title": "characterising the effects of social conformity on information seeking in mixed humanai environments",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Characterising the Effects of Social Conformity on Information Seeking in Mixed Human-AI Environments"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808531",
+      "normalized_title": "from translation to retrieval evaluating llmbased information retrieval for hausa and fongbe",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "From Translation to Retrieval: Evaluating LLM-Based Information Retrieval for Hausa and Fongbe"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808399",
+      "normalized_title": "breaking the relevancediversity seesaw hierarchical llm reasoning with rl for industrial novelty recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Breaking the Relevance–Diversity Seesaw: Hierarchical LLM Reasoning with RL for Industrial Novelty Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808622",
+      "normalized_title": "the alignment gap a benchmark demonstrating the lack of crosslingual mapping in dialectspecialized language models the case of ehugbo",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "The Alignment Gap: A Benchmark Demonstrating the Lack of Cross-Lingual Mapping in Dialect-Specialized Language Models - The Case of Ehugbo"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808535",
+      "normalized_title": "retrieval for usercentered translation lessons from ragbased tools for lowresource domains",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Retrieval for User-Centered Translation: Lessons from RAG-based Tools for Low-Resource Domains"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808494",
+      "normalized_title": "from doxa to logos in scientific peer review",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "From Doxa to Logos in Scientific Peer Review"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809981",
+      "normalized_title": "too many questions deriving concise and effective nugget banks",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Too Many Questions: Deriving Concise and Effective Nugget Banks"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808386",
+      "normalized_title": "mathmexpdf towards accessible visual mathematics",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "MathMex-PDF: Towards Accessible Visual Mathematics"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808448",
+      "normalized_title": "generative enhanced modeling a collaborative framework for enhancing user representations via semantic id",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Generative Enhanced Modeling: A Collaborative Framework for Enhancing User Representations via Semantic ID"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809599",
+      "normalized_title": "proechomem enhancing long video understanding via multitrace probeecho memory",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "ProEchoMem: Enhancing Long Video Understanding via Multi-Trace Probe-Echo Memory"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809577",
+      "normalized_title": "largescale online learning for generative list recommendation in ecommerce an environment policy optimization approach",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Large-Scale Online Learning for Generative List Recommendation in E-commerce: An Environment Policy Optimization Approach"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808649",
+      "normalized_title": "second workshop on explainability in information retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Second Workshop on Explainability in Information Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808644",
+      "normalized_title": "reasoning for ir ir for reasoning",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Reasoning for IR & IR for Reasoning"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809666",
+      "normalized_title": "hira decoupling planning and execution with hierarchical reasoning in deep search",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "HiRA: Decoupling Planning and Execution with Hierarchical Reasoning in Deep Search"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808361",
+      "normalized_title": "evaluating proactivity in conversational search through anticipatory retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Evaluating Proactivity in Conversational Search through Anticipatory Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809595",
+      "normalized_title": "ontoel neurosymbolic biomedical entity linking with differentiable fuzzy el reasoning",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "OntoEL: Neuro-Symbolic Biomedical Entity Linking with Differentiable Fuzzy EL⊥ Reasoning"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808354",
+      "normalized_title": "towards evidenceaware retrieval and verification for scientific factchecking",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Towards Evidence-Aware Retrieval and Verification for Scientific Fact-Checking"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809914",
+      "normalized_title": "apr adaptive personalised reranking for conversational search",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "APR: Adaptive Personalised Reranking For Conversational Search"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808356",
+      "normalized_title": "user search behavior and knowledge effects in hybrid search environment",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "User Search Behavior and Knowledge Effects in Hybrid Search Environment"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808643",
+      "normalized_title": "multiagentic recommender systems foundations perspectives and lessons from large scale deployments in ecommerce",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Multi-Agentic Recommender Systems: Foundations, Perspectives, and Lessons from Large Scale Deployments in eCommerce"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809893",
+      "normalized_title": "scorerag selfcorrecting explorationexploitation retrieval for multihop question answering",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SCORE-RAG: Self-Correcting Exploration-Exploitation Retrieval for Multi-hop Question Answering"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809570",
+      "normalized_title": "hierarchical denoising entire space multitask model for postclick conversion rate prediction with noisy labels",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Hierarchical Denoising Entire Space Multi-Task Model for Post-Click Conversion Rate Prediction with Noisy Labels"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809580",
+      "normalized_title": "learning to rank with multicriteria llmjudge annotations",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Learning to Rank with Multi-Criteria LLM-Judge Annotations"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808498",
+      "normalized_title": "llminformed bayesian content exploration in ultrarecency recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "LLM-Informed Bayesian Content Exploration in Ultra-Recency Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808490",
+      "normalized_title": "policyguided rag enforcing verbatim and controlled synthesis",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Policy-Guided RAG: Enforcing Verbatim and Controlled Synthesis"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809620",
+      "normalized_title": "unsupervised 2d imagebased 3d model retrieval via decision boundary alignment and graph semantic propagation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Unsupervised 2D Image-Based 3D Model Retrieval via Decision Boundary Alignment and Graph Semantic Propagation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808462",
+      "normalized_title": "saer scalable assessment of ecommerce recommendations using large language models",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SAER: Scalable Assessment of E-commerce Recommendations using Large Language Models"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809890",
+      "normalized_title": "revisiting poison pills for neural information retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Revisiting Poison Pills for Neural Information Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809882",
+      "normalized_title": "numerical hallucinations in retrievalaugmented generation detection and analysis",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Numerical Hallucinations in Retrieval-Augmented Generation: Detection and Analysis"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808425",
+      "normalized_title": "crosscategory basket recommendation via transactional debiasing and graph propagation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Cross-Category Basket Recommendation via Transactional Debiasing and Graph Propagation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808638",
+      "normalized_title": "temporal information retrieval and extraction from foundations to rag",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Temporal Information Retrieval and Extraction: From Foundations to RAG"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809643",
+      "normalized_title": "dllmsearcher adapting diffusion language model for efficient search agents",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "DLLM-Searcher: Adapting Diffusion Language Model for Efficient Search Agents"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809844",
+      "normalized_title": "beyond unimodal perspectives generative retrieval with multimodal semantics",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Beyond Unimodal Perspectives: Generative Retrieval with Multimodal Semantics"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808572",
+      "normalized_title": "the relevance of relevant entity presence",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "The Relevance of (Relevant) Entity Presence"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809736",
+      "normalized_title": "countering interest oversmoothing distilling latent factors via diffusion for multiinterest retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Countering Interest Over-Smoothing: Distilling Latent Factors via Diffusion for Multi-Interest Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808537",
+      "normalized_title": "information seeking behavior in llmbased rag mental models and missing information",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Information Seeking Behavior in LLM-Based RAG: Mental Models and Missing Information"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809955",
+      "normalized_title": "partial label learninginspired denoising implicit feedback for recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Partial Label Learning-Inspired Denoising Implicit Feedback for Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808640",
+      "normalized_title": "retrieve rerank answer experiment handson ir research with pyterrier",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Retrieve, Rerank, Answer, Experiment: Hands-On IR Research with PyTerrier"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808656",
+      "normalized_title": "the second workshop on evaluation of multimodal generation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "The Second Workshop on Evaluation of Multimodal Generation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809585",
+      "normalized_title": "mitigating adversarial attacks by transferring llmgenerated narrative reasoning for robust fake news detection",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Mitigating Adversarial Attacks by Transferring LLM-generated Narrative Reasoning for Robust Fake News Detection"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809941",
+      "normalized_title": "is a busy search agent a good one overthinking and overretrieval at scale",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Is a Busy Search Agent a Good One? Overthinking and Overretrieval at Scale"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809534",
+      "normalized_title": "beyond exposure diversity debiasing news consumption with topiclocality calibration and personalized preview nudges",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Beyond Exposure Diversity: Debiasing News Consumption With Topic-Locality Calibration and Personalized Preview Nudges"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/TKDE.2026.3692969",
+      "normalized_title": "data augmentation for sequential recommendation a survey",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Data Augmentation for Sequential Recommendation: A Survey"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1613/jair.1.21303",
+      "normalized_title": "gepr groupknowledge enhanced personalized educational resource recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "GEPR: Group-knowledge Enhanced Personalized Educational Resource Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3840302",
+      "normalized_title": "predicting scholarly impact with temporal preference alignment",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Predicting Scholarly Impact with Temporal Preference Alignment"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/TPAMI.2026.3722665",
+      "normalized_title": "symbiotic evolutionary learning for taskadaptive infrared and visible image fusion",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Symbiotic Evolutionary Learning for Task-Adaptive Infrared and Visible Image Fusion."
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/TKDE.2026.3702349",
+      "normalized_title": "knowledge graphbased debiasing for trustworthy recommendation systems",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Knowledge Graph-Based Debiasing for Trustworthy Recommendation Systems"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3831679",
+      "normalized_title": "ragnroll learning to iteratively retrieve and generate attributable answer snippets",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "RAGnRoll: Learning to Iteratively Retrieve and Generate Attributable Answer Snippets"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/TPAMI.2026.3719106",
+      "normalized_title": "unveiling effective incontext configurations for image captioning an external internal analysis",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Unveiling Effective In-Context Configurations for Image Captioning: An External & Internal Analysis."
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/TPAMI.2026.3713379",
+      "normalized_title": "generative retrieval for unsupervised textbased person search",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Generative Retrieval for Unsupervised Text-Based Person Search."
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3837057",
+      "normalized_title": "reinforcement learning in the era of large language models challenges and opportunities",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Reinforcement Learning in the Era of Large Language Models: Challenges and Opportunities"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3831685",
+      "normalized_title": "promptguided graph contrastive learning with controllable augmentation and finegrained preference modeling for recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Prompt-Guided Graph Contrastive Learning with Controllable Augmentation and Fine-Grained Preference Modeling for Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3836738",
+      "normalized_title": "doem a novel developmentoriented evaluation metric framework for service recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "DOEM: A Novel Development-Oriented Evaluation Metric Framework for Service Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3834774",
+      "normalized_title": "how far are llms from real search rethinking the complementary roles of search and learning",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "How Far Are LLMs from Real Search: Rethinking the Complementary Roles of Search and Learning"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/TKDE.2026.3700611",
+      "normalized_title": "dualknow a descriptionaugmented and uncertaintyaware graphrag framework for anesthesiology question answering",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "DUAL-Know: A Description-Augmented and Uncertainty-Aware GraphRAG Framework for Anesthesiology Question Answering"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3840748",
+      "normalized_title": "a survey of causal learning in graphbased recommender systems",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "A Survey of Causal Learning in Graph-Based Recommender Systems"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3838705",
+      "normalized_title": "tcse timeaware causal disentanglement with semantic knowledge enhancement for personalized mobile application recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "TCSE: Time-aware Causal Disentanglement with Semantic Knowledge Enhancement for Personalized Mobile Application Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3831676",
+      "normalized_title": "d3mbr duallevel diffusion denoiser with preference guidance for multibehavior recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "D3MBR: Dual-Level Diffusion Denoiser with Preference Guidance for Multi-Behavior Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3833420",
+      "normalized_title": "rosepo customized preference alignment in llmbased recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "RosePO: Customized Preference Alignment in LLM-Based Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1613/jair.1.21172",
+      "normalized_title": "bounding the fairness of a classifier using populationlevel statistics",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Bounding the Fairness of a Classifier Using Population-level Statistics"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3837081",
+      "normalized_title": "hierarchical dual debiasing in llmbased recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Hierarchical Dual Debiasing in LLM-based Recommendation"
+    }
+  ]
+}

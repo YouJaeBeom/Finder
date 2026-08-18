@@ -1,0 +1,185 @@
+{
+  "database_id": "3c01256e-0561-811f-98e5-e99aedfacc02",
+  "records": [
+    {
+      "arxiv_id": "2607.27379",
+      "doi": "10.18653/v1/2026.findings-acl.1880",
+      "normalized_title": "hsssynth humanities and social sciences data synthesis for llms",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "HSS-Synth: Humanities and Social Sciences Data Synthesis for LLMs"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808359",
+      "normalized_title": "efficient continual adaptation of generative retrieval systems over dynamic corpora",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Efficient Continual Adaptation of Generative Retrieval Systems over Dynamic Corpora"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809960",
+      "normalized_title": "query performance prediction under corpus growth in dense retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Query Performance Prediction under Corpus Growth in Dense Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808496",
+      "normalized_title": "diver unlocking diversity in ad headline generation with large language models",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "DIVER: Unlocking Diversity in Ad Headline Generation with Large Language Models"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808525",
+      "normalized_title": "building foundations for information retrieval in extremely lowresource ethnic languages evidence from tanzania",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c01256e-0561-81b7-8731-d30b27c8c951",
+      "title": "Building Foundations for Information Retrieval in Extremely Low-Resource Ethnic Languages: Evidence from Tanzania"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808608",
+      "normalized_title": "gonets a firstlook into github organisation networks",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c01256e-0561-81b1-a7b4-ee6b72b0f89c",
+      "title": "GONets: A First-Look Into GitHub Organisation Networks"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809544",
+      "normalized_title": "corpuscentric learning for zeroshot table retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Corpus-Centric Learning for Zero-Shot Table Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808594",
+      "normalized_title": "kcc korean civil case dataset for legal information retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c01256e-0561-81bc-8453-e89050877eb4",
+      "title": "KCC: Korean Civil Case Dataset for Legal Information Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809404",
+      "normalized_title": "from search to ask to act the evolution of information access in the age of large models and agents",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "From Search to Ask to Act: The Evolution of Information Access in the Age of Large Models and Agents"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809651",
+      "normalized_title": "fairrag an endtoend framework for mitigating political bias through fair retrievalaugmented generation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "FAIR-RAG: An End-to-End Framework for Mitigating Political Bias through Fair Retrieval-Augmented Generation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809554",
+      "normalized_title": "distributionaware rerepresentations for multiscenario recommendations",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Distribution-aware Re-representations for Multi-Scenario Recommendations"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808622",
+      "normalized_title": "the alignment gap a benchmark demonstrating the lack of crosslingual mapping in dialectspecialized language models the case of ehugbo",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c01256e-0561-8165-9fbf-dbbf3e6942f5",
+      "title": "The Alignment Gap: A Benchmark Demonstrating the Lack of Cross-Lingual Mapping in Dialect-Specialized Language Models - The Case of Ehugbo"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809550",
+      "normalized_title": "depression detection from social media a mutual guidance multimodal network with complementary graph learning",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Depression Detection from Social Media: A Mutual Guidance Multi-modal Network with Complementary Graph Learning"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808360",
+      "normalized_title": "topologyconditioned weak supervision for scientific retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Topology-Conditioned Weak Supervision for Scientific Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3821530",
+      "normalized_title": "dash disasteraware socialsemantic enhanced hypergraph convolution network for human mobility forecasting",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "DASH: Disaster-Aware Social-Semantic Enhanced Hypergraph Convolution Network for Human Mobility Forecasting"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3834859",
+      "normalized_title": "quantifying social biases in language model classifiers is domaindependent",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Quantifying Social Biases in Language Model Classifiers is Domain-Dependent"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1177/08944393261469494",
+      "normalized_title": "where you are is what you get inconsistencies of digital trace data across download locations",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c01256e-0561-816f-88a1-e6f2ce2b2363",
+      "title": "Where You Are Is What You Get! Inconsistencies of Digital Trace Data across Download Locations"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/TKDE.2026.3700606",
+      "normalized_title": "fragmented graph pattern matching on large graphs",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Fragmented Graph Pattern Matching on Large Graphs"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1038/s41562-026-02522-4",
+      "normalized_title": "longitudinal effect of early social media use on standardized learning outcomes during school career",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Longitudinal effect of early social media use on standardized learning outcomes during school career."
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1613/jair.1.22096",
+      "normalized_title": "symbols and neurons a review of symbolic xai in deep learning",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Symbols and Neurons: A Review of Symbolic XAI in Deep Learning"
+    }
+  ]
+}

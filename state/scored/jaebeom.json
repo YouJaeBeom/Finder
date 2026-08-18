@@ -1,0 +1,491 @@
+{
+  "database_id": "3c01256e-0561-814b-a703-c46cde5efcd4",
+  "records": [
+    {
+      "arxiv_id": "2607.27379",
+      "doi": "10.18653/v1/2026.findings-acl.1880",
+      "normalized_title": "hsssynth humanities and social sciences data synthesis for llms",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "HSS-Synth: Humanities and Social Sciences Data Synthesis for LLMs"
+    },
+    {
+      "arxiv_id": "2607.18232",
+      "doi": "10.18653/v1/2026.acl-long.142",
+      "normalized_title": "its not what you say its how you say it evaluating llm responses to expressions of belief",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c01256e-0561-812e-8bc6-c284dc3cca5d",
+      "title": "It's Not What You Say, It's How You Say It: Evaluating LLM Responses to Expressions of Belief"
+    },
+    {
+      "arxiv_id": "2607.25218",
+      "doi": "10.18653/v1/2026.acl-long.232",
+      "normalized_title": "everyone is unique towards behaviorally heterogeneous negotiation dialogue systems for debt collection",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Everyone is unique: Towards Behaviorally Heterogeneous Negotiation Dialogue Systems for Debt Collection"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808648",
+      "normalized_title": "the 10th workshop on searchoriented conversational artificial intelligence scai26",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "The 10th Workshop on Search-Oriented Conversational Artificial Intelligence (SCAI'26)"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808357",
+      "normalized_title": "faithful llmassisted question answering for technical and academic search",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Faithful LLM-Assisted Question Answering for Technical and Academic Search"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808364",
+      "normalized_title": "adaptive personalisation for effective conversational search systems",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Adaptive Personalisation for Effective Conversational Search Systems"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809727",
+      "normalized_title": "adaptive mix preference optimization for generative recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Adaptive Mix Preference Optimization for Generative Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809979",
+      "normalized_title": "teaching small models when not to call functions structured reasoning for tool refusal in lowresource languages",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Teaching Small Models When Not to Call Functions: Structured Reasoning for Tool Refusal in Low-Resource Languages"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3799902.3811171",
+      "normalized_title": "vfavatar feedforward 3d avatar reconstruction from casual image collections",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "VFAvatar: Feed-Forward 3D Avatar Reconstruction from Casual Image Collections"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808591",
+      "normalized_title": "trec ikat 2025 a test collection for the offline and interactive evaluation of conversational search",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "TREC iKAT 2025: A Test Collection for the Offline and Interactive Evaluation of Conversational Search"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808365",
+      "normalized_title": "from lab to reality an eyetracking study of how users are influenced to search in the era of genai",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "From Lab to Reality: An Eye-tracking Study of How Users are Influenced to Search in the Era of GenAI"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809854",
+      "normalized_title": "discorec disentangled conformityaware recommendation with llmguided multiview learning",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "DisCoRec: Disentangled Conformity-aware Recommendation with LLM-Guided Multi-View Learning"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808442",
+      "normalized_title": "preliminary study of an evaluation benchmark for visionlanguage models in fashion ecommerce",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Preliminary Study of an Evaluation Benchmark for Vision–Language Models in Fashion E-Commerce"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808496",
+      "normalized_title": "diver unlocking diversity in ad headline generation with large language models",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "DIVER: Unlocking Diversity in Ad Headline Generation with Large Language Models"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808647",
+      "normalized_title": "trustworthy personalized retrieval in the llm era fairness bias awareness privacy and multimodality",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Trustworthy Personalized Retrieval in the LLM Era: Fairness, Bias Awareness, Privacy, and Multimodality"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809573",
+      "normalized_title": "improving interpretability of cognitive diagnosis models with llmbased semantic augmentation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Improving Interpretability of Cognitive Diagnosis Models with LLM-based Semantic Augmentation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809891",
+      "normalized_title": "reward shaping for robust refusal in small language models for retrievalaugmented question answering",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Reward Shaping for Robust Refusal in Small Language Models for Retrieval-Augmented Question Answering"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808371",
+      "normalized_title": "somin agentic ai for automating professional visibility and countering content homogenization",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SOMIN: Agentic AI for Automating Professional Visibility and Countering Content Homogenization"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808652",
+      "normalized_title": "llmup sigir 2026 workshop on llmpowered user profiling for search and recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "LLM-UP: SIGIR 2026 Workshop on LLM-powered User Profiling for Search and Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808646",
+      "normalized_title": "llm personalization foundations breakthroughs and frontiers",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "LLM Personalization: Foundations, Breakthroughs, and Frontiers"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809711",
+      "normalized_title": "tokens to types context editing with selective entity abstraction for grounded generation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Tokens to Types: Context Editing with Selective Entity Abstraction for Grounded Generation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809604",
+      "normalized_title": "resmr riskaware reasoning for explainable and safe medication recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "RES-MR: Risk-Aware Reasoning for Explainable and Safe Medication Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808639",
+      "normalized_title": "bridging personalization and ai from rag to agent",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Bridging Personalization and AI: From RAG to Agent"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809679",
+      "normalized_title": "mitigating bias in large language model based question answering through causal front door prompting",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c01256e-0561-81b2-9744-c4b785e9f32b",
+      "title": "Mitigating Bias in Large Language Model Based Question Answering through Causal Front Door Prompting"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808380",
+      "normalized_title": "xfoodrec an explainable mobile recommender for personalized healthy eating",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "XFoodRec: An Explainable Mobile Recommender for Personalized Healthy Eating"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809859",
+      "normalized_title": "failing forward understanding query failure in retrieval judgment and generation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Failing Forward: Understanding Query Failure in Retrieval, Judgment, and Generation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809652",
+      "normalized_title": "fairspec expert specialization for fair llmbased recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c01256e-0561-8121-87e6-fe1203f1c4b2",
+      "title": "FairSpec: Expert Specialization for Fair LLM-based Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809572",
+      "normalized_title": "how far are we from automatically identifying violations of the data minimization principle in privacy policies",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "How Far Are We from Automatically Identifying Violations of the Data Minimization Principle in Privacy Policies?"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808416",
+      "normalized_title": "personaplugin a multisource persona framework for llm personalization in telecommunications",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "PersonaPlugin: A Multi-Source Persona Framework for LLM Personalization in Telecommunications"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809525",
+      "normalized_title": "a comparative study of users informationseeking practices across search engines and generative ai chatbots",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "A Comparative Study of Users' Information-Seeking Practices Across Search Engines and Generative AI Chatbots"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809883",
+      "normalized_title": "on the robustness of llm rerankings",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "On the Robustness of LLM Re-Rankings"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809926",
+      "normalized_title": "efficient memory alignment for longterm conversational information seeking",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Efficient Memory Alignment for Long-term Conversational Information Seeking"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809404",
+      "normalized_title": "from search to ask to act the evolution of information access in the age of large models and agents",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "From Search to Ask to Act: The Evolution of Information Access in the Age of Large Models and Agents"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808487",
+      "normalized_title": "populationguided intentaware query rewriting for web search",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Population-Guided Intent-Aware Query Rewriting for Web Search"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809568",
+      "normalized_title": "gnnbased item indexing for llmenhanced recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "GNN-Based Item Indexing for LLM-Enhanced Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809651",
+      "normalized_title": "fairrag an endtoend framework for mitigating political bias through fair retrievalaugmented generation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c01256e-0561-81fc-b7b1-e6b7ee143d16",
+      "title": "FAIR-RAG: An End-to-End Framework for Mitigating Political Bias through Fair Retrieval-Augmented Generation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809957",
+      "normalized_title": "pearl profilebased explainable agent for edge llm recommendation via latent decomposition",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "PEARL: Profile-based Explainable Agent for Edge LLM Recommendation via Latent Decomposition"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809902",
+      "normalized_title": "towards emotional intelligence in conversational ai how well can llms recognise emotion in conversations",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Towards Emotional Intelligence in Conversational AI: How Well Can LLMs Recognise Emotion in Conversations?"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809593",
+      "normalized_title": "neurpiu neurobiologically inspired personalized intent understanding in large language models",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "NeurPIU: Neurobiologically Inspired Personalized Intent Understanding in Large Language Models"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808362",
+      "normalized_title": "characterising the effects of social conformity on information seeking in mixed humanai environments",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Characterising the Effects of Social Conformity on Information Seeking in Mixed Human-AI Environments"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808356",
+      "normalized_title": "user search behavior and knowledge effects in hybrid search environment",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "User Search Behavior and Knowledge Effects in Hybrid Search Environment"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808498",
+      "normalized_title": "llminformed bayesian content exploration in ultrarecency recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "LLM-Informed Bayesian Content Exploration in Ultra-Recency Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808490",
+      "normalized_title": "policyguided rag enforcing verbatim and controlled synthesis",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Policy-Guided RAG: Enforcing Verbatim and Controlled Synthesis"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3808462",
+      "normalized_title": "saer scalable assessment of ecommerce recommendations using large language models",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SAER: Scalable Assessment of E-commerce Recommendations using Large Language Models"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809619",
+      "normalized_title": "unified entity matching under scarce supervision via metarule induction and retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Unified Entity Matching under Scarce Supervision via Meta-Rule Induction and Retrieval"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809984",
+      "normalized_title": "who is shopping with you how persona design shapes cognitive and social engagement in ai shopping agents",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Who Is Shopping With You? How Persona Design Shapes Cognitive and Social Engagement in AI Shopping Agents"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805712.3809534",
+      "normalized_title": "beyond exposure diversity debiasing news consumption with topiclocality calibration and personalized preview nudges",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Beyond Exposure Diversity: Debiasing News Consumption With Topic-Locality Calibration and Personalized Preview Nudges"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1038/s41562-026-02511-7",
+      "normalized_title": "individual and differential harm in redistricting",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Individual and differential harm in redistricting."
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3832773",
+      "normalized_title": "automatic question generation with large language models a survey",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Automatic Question Generation with Large Language Models: A Survey"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3836768",
+      "normalized_title": "trip a bilevel travel routing intelligent planner informed from human planning behaviors",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "TRIP: a Bi-level Travel Routing Intelligent Planner Informed from Human Planning Behaviors"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3837857",
+      "normalized_title": "comparative analysis and unified evaluation framework of user simulators for realistic behaviour modelling",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Comparative Analysis and Unified Evaluation Framework of User Simulators for Realistic Behaviour Modelling"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3834859",
+      "normalized_title": "quantifying social biases in language model classifiers is domaindependent",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c01256e-0561-811c-bd93-d006df970d50",
+      "title": "Quantifying Social Biases in Language Model Classifiers is Domain-Dependent"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3838705",
+      "normalized_title": "tcse timeaware causal disentanglement with semantic knowledge enhancement for personalized mobile application recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "TCSE: Time-aware Causal Disentanglement with Semantic Knowledge Enhancement for Personalized Mobile Application Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3833420",
+      "normalized_title": "rosepo customized preference alignment in llmbased recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "RosePO: Customized Preference Alignment in LLM-Based Recommendation"
+    }
+  ]
+}
