@@ -1,98 +1,197 @@
-# Paper Digest — example configuration for forking
-# Copy this to config.yaml and fill in your values.
-# Secrets (NOTION_TOKEN, ANTHROPIC_API_KEY / OPENAI_API_KEY) always come from
-# environment variables or GitHub Secrets — never put them here.
-
-notion_parent_page_id: "YOUR_NOTION_PAGE_ID_HERE"
-
-# Optional. Pin the database every run appends to. Fill this in with the ID that
-# `python -m paper_digest init` prints. Left empty, the tool finds its database
-# under the parent page (or creates it on the very first run).
-notion_database_id: ""
-
-# Entries are OR-ed. Each one can be a phrase, or a rule combining terms:
+# Paper Digest — 연구실 공용 설정 (예시)
 #
-#   - "a phrase"                 this phrase appears
-#   - all: [A, B]                both appear
-#   - any: [A, B]                at least one appears
-#   - all: [[A, B], [C, D]]      (A or B) and (C or D)  — nested list = "any of"
-#     not: [E]                   ...and E does not appear
+# 이 파일을 config.yaml 로 복사하고 notion_parent_page_id 만 바꾸면 시작할 수 있습니다.
+#   cp config.example.yaml config.yaml
 #
-# A broad word on its own is a wide net — "LLM" alone matches most of cs.CL.
-# Pair broad words with a topic using `all`.
-keywords:
-  - "your-specific-phrase-here"
-  - all:
-      - ["LLM", "large language model"]
-      - ["your-topic", "another-topic"]
+# 이 파일은 **랩 전체**에 적용되는 것만 담습니다. 개인의 연구 주제와 키워드는
+# members/<id>.yaml 에 있습니다. 비밀값(NOTION_TOKEN, ANTHROPIC_API_KEY /
+# OPENAI_API_KEY)은 환경변수에서 옵니다 — 절대 이 파일에 넣지 마세요.
 
-tracked_venues:
-  - "ACL 2026"
-  - "NeurIPS 2026"
+# ── Notion ──────────────────────────────────────────────────────────────────
+# 워크스페이스 메인 페이지. 이 아래에 코드가 전부 만듭니다:
+#
+#   📄 <이 페이지>
+#   ├── 📰 IT 뉴스          공용 DB (뉴스는 전원 공유)
+#   ├── 📄 유재범            멤버 페이지
+#   │   └── 📚 논문          그 사람 전용 DB
+#   └── 📄 ...
+#
+# 페이지 링크를 그대로 붙여도 되고 32자 ID 만 넣어도 됩니다.
+# 통합(integration)에 이 페이지를 공유해야 합니다: '···' → 'Connections'.
+#
+# DB ID 를 여기 적을 필요는 없습니다. state.json 이 캐시하고, 캐시가 없으면
+# 제목으로 다시 찾습니다 — 그래서 state.json 유실은 조회 한 번의 비용입니다.
+notion_parent_page_id: "REPLACE_WITH_YOUR_NOTION_PAGE_ID"
 
-# Venue names are normalized to their acronym (CIKM, SIGIR, TKDE, ...) using a
-# built-in table. Add anything the table doesn't know: the key is a fragment of
-# the full registered name, the value is what appears in the Venue column.
+# ── 멤버 ─────────────────────────────────────────────────────────────────────
+# 한 명당 파일 하나. 파일명(확장자 제외)이 멤버 ID 입니다.
+#   python -m paper_digest members list       등록된 멤버와 예상 분량
+#   python -m paper_digest members validate   전 파일 검사 (문제를 한 번에 전부)
+members_dir: "members"
+
+# ── 랩 공용 연구 맥락 (뉴스 전용) ─────────────────────────────────────────────
+# 뉴스는 전원 공용 1회이므로 "누구의 연구와의 연결점"을 쓸 대상이 없습니다. 이 글이
+# 그 자리를 채워서, 브리핑의 "왜 알아둘 만한지" 문단이 랩의 맥락 위에서 쓰이게
+# 합니다. 논문 쪽은 이 값을 쓰지 않습니다 — 그건 멤버 각자의 research_profile 입니다.
+#
+# 비워두면 멤버들의 research_profile 을 이어붙여 씁니다 (동작은 하지만 프롬프트가
+# 길고 흐려집니다). 한 문단으로 직접 쓰는 편이 낫습니다.
+lab_profile: |
+  Trustworthy AI for Fair Information Access 를 연구하는 랩입니다. 웹 데이터,
+  검색 시스템, 프롬프트 맥락이 정치적 정보 노출과 대형 언어 모델(LLM)의 행동을
+  어떻게 형성하는지를 봅니다. 편향을 측정하고 설명하고 완화하는 것, 검색·RAG 에서
+  관점 다양성을 보장하는 것, 자동 평가가 사람의 판단을 얼마나 반영하는지 검증하는
+  것, 그리고 그 연구에 쓸 대규모 웹 코퍼스를 재현 가능하게 구축하는 것이 주제입니다.
+
+  그래서 AI 규제와 정책, 학습 데이터 출처와 저작권, 콘텐츠 모더레이션, 검색·추천
+  알고리즘의 변화, 편향·허위정보 관련 사건, 주요 모델 공개는 연구 환경 자체를
+  바꾸는 소식으로 봅니다.
+
+# ── 상한 ─────────────────────────────────────────────────────────────────────
+# 공용 API 키를 쓰므로 신뢰가 아니라 코드로 막습니다. 위반하면 경고가 아니라
+# **실행 거부**입니다 — 한 명의 오타(top_n: 300)가 전원의 예산이기 때문입니다.
+limits:
+  max_members: 15
+  max_top_n_per_member: 30
+  # 실행 전체 가드. 멤버별 상한으로는 못 잡는 경우를 잡습니다 —
+  # 15명이 각자 정당하게 최대치를 쓰는 상황.
+  max_notes_per_run: 400
+
+# ── 논문 소스: 학회와 저널 ────────────────────────────────────────────────────
+# 논문은 Semantic Scholar 한 곳에서만 가져옵니다. API 키가 필요 없고, venue 와
+# 초록과 식별자를 한 번의 요청으로 함께 줍니다.
+#
+# 핵심은 **화이트리스트**입니다. 여기 목록에 있는 학회·저널의 논문만 들어옵니다.
+# 이게 품질 장치의 전부입니다 — 주제 필터에 의존하면 "Advanced Electromagnetics"
+# 같은 약탈적 저널이 NLP 논문을 실어 결과를 뒤덮습니다. 실제로 그래서 OpenAlex
+# 소스를 제거했습니다.
+#
+# 수집은 venue 와 날짜만으로 이뤄집니다. 키워드는 그 뒤에 로컬에서만 쓰이므로
+# **멤버가 늘어도 외부 요청 수는 그대로입니다.** 이게 "수집 1회"의 근거입니다.
+#
+# 목록은 도구에 동봉돼 있습니다 (paper_digest/data/venues.csv).
+# 학회 점수는 한국정보과학회 / BK21 / KAIST / SNU / POSTECH 종합 순위를 정규화한
+# 것이며 출처는 https://gist.github.com/Pusnow/6eb933355b5cb8d31ef1abcb3c3e1206
+# 저널 점수는 손으로 매겼습니다.
+#
+# venue 목록은 랩 소유입니다. 멤버가 개인화할 수 없습니다 — 수집이 공용 1회라
+# 구조적으로 불가능합니다. 화이트리스트에 없는 곳은 누구에게도 영영 안 들어오니,
+# 새 분야가 들어오면 여기(정확히는 venues.csv)를 손봐야 합니다.
+conferences:
+  enabled: true
+
+  # 0.5 = 대략 "우수" 이상. 점수를 통과하는 86곳 가운데 Semantic Scholar 에 논문이
+  # 있는 81곳을 실제로 조회합니다 (나머지는 요청만 쓰고 0건이라 목록에서 빠집니다).
+  # 1.00 = 모든 기관이 최우수로 꼽은 곳(ACL, SIGIR,
+  # KDD, WWW, CHI, AAAI, ICML, NeurIPS, SIGMOD ...). 좁히려면 0.7~1.0 으로.
+  min_score: 0.5
+
+  # 점수와 무관하게 반드시 포함/제외할 학회 (약자)
+  include: []
+  exclude: []
+
+  # 프로시딩이 통째로 떨어지는 주를 감당할 만큼 넉넉해야 합니다. 수집은
+  # 요청 비용뿐이고, 실제 지출은 max_papers_to_rank 가 따로 막습니다.
+  max_results: 3000
+
+journals:
+  enabled: true
+
+  # 0.5 = 26곳 (TPAMI, TOIS, TACL, TKDE, CL, JMLR, JAIR, AIJ, JASIST, TOCHI,
+  # CSUR, TKDD, TWEB, IPM, NatMI, CACM, TIST, TORS, DMKD, NatHB, NMS,
+  # Political Communication, SSCR, EPJ Data Science, POQ, IJHCS)
+  min_score: 0.5
+
+  include: []
+  exclude: []
+
+  max_results: 1000
+
+# ── Venue 표기 ────────────────────────────────────────────────────────────────
+# Semantic Scholar 는 학회를 정식 명칭으로 줍니다 ("Annual Meeting of the
+# Association for Computational Linguistics"). Notion Venue 컬럼에는 짧은 약칭이
+# 들어가도록 자동 변환합니다 → ACL
+#
+# 주요 학회/저널은 내장 표에 있습니다. 표에 없는 곳은 아래에 추가하세요.
+# 왼쪽은 정식 명칭의 일부(부분 문자열), 오른쪽이 Venue 에 찍힐 이름입니다.
 venue_aliases: {}
   # "Workshop on Machine Learning for Systems": "MLSys Workshop"
+  # "Korea Software Congress": "KSC"
 
-research_profile: |
-  Describe your research focus here in 2-5 sentences.
-  The LLM uses this both for relevance scoring and for generating the
-  "내 연구와의 연결점" section in each Korean note.
-  Be specific about your methods, datasets, and open questions.
-
-arxiv_categories:
-  - cs.CL
-  - cs.AI
-  - cs.LG
-
-days_back: 7
-max_papers_to_rank: 1500
-top_n: 10
-
-# Claude (Anthropic) and ChatGPT (OpenAI) are both supported. Switch the
-# provider and supply that provider's key (ANTHROPIC_API_KEY / OPENAI_API_KEY).
-# Ranking and note generation take separate models either way, so the
-# cheap-filter / good-writer split works on both.
-llm:
-  provider: "anthropic"                # "anthropic" | "openai"
-  ranking_model: "claude-haiku-4-5"    # cheap model, one call per 20 papers
-  notes_model: "claude-opus-5"         # high-quality model, top-N only
-
-  # --- ChatGPT alternative ---
-  # provider: "openai"
-  # ranking_model: "gpt-4o-mini"
-  # notes_model: "gpt-4o"
-
-# ── IT news (optional) ───────────────────────────────────────────────────────
-# Off by default. When enabled, news is collected in the same weekly run and
-# written to the same Notion DB with Type = "뉴스" (papers are "논문").
+# ── Collection window ─────────────────────────────────────────────────────────
+# 게재일 기준이며, 주간 실행이 매번 이 창 전체를 다시 훑습니다. 겹치는 부분은
+# 이미 받은 논문이라 중복 제거가 걸러내고, 그 제거는 **랭킹 이전에** 돌기 때문에
+# 창을 넓혀도 LLM 비용은 늘지 않습니다. 늘어나는 건 수집 요청 몇 초뿐입니다.
 #
-# News skips LLM relevance scoring — the sources are already curated. Selection
-# is keyword filter → score/recency order → one story per source in turn → top_n.
+# 그래서 7일이 아니라 30일입니다. 색인은 게재보다 늦게 붙습니다 — 3주 전에 나온
+# 논문이 오늘에야 Semantic Scholar 에 들어오는 일이 흔한데, 7일 창은 그걸 영영
+# 놓칩니다. 넓은 창이 그 지연을 흡수하는 그물입니다.
+#
+# 실측 (2026-08 기준): 7일 → 후보 10편 / 30일 → 후보 213편.
+days_back: 30
+
+# ── Cost controls ─────────────────────────────────────────────────────────────
+# 멤버 한 명의 랭킹 상한. top_n(실제 Notion 페이지 수)은 멤버 파일에 있습니다.
+max_papers_to_rank: 1500
+
+# ── LLM provider ─────────────────────────────────────────────────────────────
+# Claude(Anthropic) 와 ChatGPT(OpenAI) 둘 다 됩니다. provider 를 바꾸고 해당
+# 제공자의 키를 GitHub Secrets 에 넣으면 끝입니다 (Anthropic → ANTHROPIC_API_KEY,
+# OpenAI → OPENAI_API_KEY). 랭킹과 노트 작성 모델은 따로 지정하므로,
+# "싼 모델로 거르고 좋은 모델로 정리한다"는 구조는 어느 쪽이든 동일합니다.
+llm:
+  provider: "anthropic"          # "anthropic" | "openai"
+  ranking_model: "claude-haiku-4-5"    # cheap bulk ranking — 멤버별로 돌아갑니다
+  notes_model: "claude-sonnet-5"       # high-quality note generation — 비용의 95%
+
+  # ── ChatGPT 로 바꾸려면 위 세 줄을 주석 처리하고 아래를 쓰세요 ──
+  # provider: "openai"
+  # ranking_model: "<싼 모델 ID>"      # 저렴한 대량 랭킹용
+  # notes_model: "<좋은 모델 ID>"      # 노트 작성용
+  # (계정에서 실제로 쓸 수 있는 chat 모델 ID 를 확인해서 넣으세요)
+
+# ── IT news (공용) ───────────────────────────────────────────────────────────
+# 메인 페이지의 "📰 IT 뉴스" DB 에 실행당 1회 씁니다. 멤버별로 나누지 않습니다 —
+# 출처가 이미 큐레이션돼 있어 개인화할 게 없고, 1회 처리가 10회의 1/10 비용입니다.
+#
+# 논문과 달리 뉴스는 LLM 관련도 채점을 거치지 않습니다. Hacker News 는 커뮤니티
+# 점수로 이미 걸러져 있고 아래 피드는 손으로 골랐으니, 소스가 구조적으로
+# 큐레이션돼 있습니다. 선별은: 키워드 필터 → 점수/최신순 → 출처별 라운드로빈 →
+# top_n. 모델은 통과한 기사의 한국어 브리핑을 쓰는 데만 씁니다.
 news:
-  enabled: false
+  enabled: true
 
   hacker_news:
     enabled: true
     min_points: 100      # community score floor — free first-pass filter
 
-  # Any RSS or Atom feed. Adding a publication is a config edit, not a code change.
+  # 어떤 RSS·Atom 피드든 됩니다. 매체 추가는 코드 변경이 아니라 설정 변경입니다.
   rss_feeds:
     - "https://techcrunch.com/feed/"
     - "https://www.theverge.com/rss/index.xml"
     - "https://feeds.arstechnica.com/arstechnica/technology-lab"
 
-  top_n: 5               # max news pages per weekly run
+  # 공용이 됐다고 늘릴 이유는 없습니다. 보는 사람이 10명이어도 이번 주 IT 소식이
+  # 두 배가 되는 건 아니니까요 — 오히려 공용이라 기준이 더 높아야 합니다.
+  top_n: 5
 
-  # Leave EMPTY to keep everything the sources deliver; fill in to narrow the
-  # digest. A story matching any one keyword in its title or summary is kept.
+  # 비우면 소스가 준 것을 다 남깁니다.
+  # 뉴스는 논문보다 넓게 잡아도 됩니다 — 출처가 이미 큐레이션돼 있으니까요.
   keywords:
     - "AI"
     - "LLM"
     - "OpenAI"
     - "Anthropic"
-    - "GPU"
-    - "chip"
+    - "chatbot"
     - "open source"
+    # 연구 주제와 겹치는 것들
+    - "bias"
+    - "misinformation"
+    - "disinformation"
+    - "content moderation"
+    - "search engine"
+    - "recommendation algorithm"
+    - "AI regulation"
+    - "AI policy"
+    - "copyright"
+    - "training data"

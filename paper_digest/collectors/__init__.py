@@ -1,1 +1,1 @@
-"""Paper collectors for arXiv and OpenAlex."""
+"""Collectors: Semantic Scholar for papers, Hacker News and RSS for news."""

@@ -1,0 +1,45 @@
+name: CI
+
+# The test suite existed for months without ever running on push. Adding a
+# member is now a config change anyone in the lab might make, so the suite has to
+# gate it rather than sit there waiting to be run by hand.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+          pip install pytest pytest-cov ruff
+
+      - name: Lint
+        run: ruff check paper_digest tests
+
+      - name: Test
+        run: pytest -q --cov=paper_digest --cov-report=term-missing
+
+      # The member files are configuration the lab edits directly, so a typo in
+      # one should fail here rather than on Monday morning. No secrets needed —
+      # validation never touches Notion or an LLM.
+      - name: Validate the committed member files
+        run: python -m paper_digest members list

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from paper_digest.venues import normalize_venue
+from paper_digest.venues import load_venues, normalize_venue, select_venues
 
 
 class TestKnownVenues:
@@ -119,3 +119,36 @@ class TestNotionLimits:
     def test_result_fits_a_notion_select_option(self):
         """Notion rejects a select option longer than 100 characters."""
         assert len(normalize_venue("Workshop on " + "Very " * 60 + "Long")) <= 100
+
+
+class TestVenueKinds:
+    """Conferences and journals are selected separately.
+
+    Their scores mean different things — the conference numbers come from a
+    community ranking, the journal ones are hand-set — and the pipeline fetches
+    them in separate calls so one failing cannot cost the other.
+    """
+
+    def test_journals_and_conferences_are_both_in_the_shipped_list(self):
+        kinds = {v.kind for v in load_venues()}
+        assert kinds == {"conference", "journal"}
+
+    def test_kind_narrows_the_selection(self):
+        conferences = select_venues(min_score=0.5, kind="conference")
+        journals = select_venues(min_score=0.5, kind="journal")
+
+        assert conferences and journals
+        assert not set(conferences) & set(journals)
+        assert set(select_venues(min_score=0.5)) == set(conferences) | set(journals)
+
+    def test_the_journals_worth_reading_are_there(self):
+        journals = set(select_venues(min_score=0.5, kind="journal").values())
+        # A sample across the areas the digest covers: IR, NLP, data, HCI and
+        # the computational social science venues that publish on media bias.
+        for abbr in ("TOIS", "TACL", "TKDE", "TPAMI", "JASIST", "PolComm"):
+            assert abbr in journals, f"{abbr} dropped out of the journal list"
+
+    def test_an_unknown_kind_is_an_error_not_an_empty_result(self):
+        """Silently returning nothing would look like a quiet week forever."""
+        with pytest.raises(ValueError, match="preprint"):
+            select_venues(kind="preprint")

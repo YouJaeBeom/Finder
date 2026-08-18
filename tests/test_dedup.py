@@ -2,9 +2,7 @@
 from __future__ import annotations
 
 import json
-import os
 
-import pytest
 
 from paper_digest.dedup import DedupStore, deduplicate_collected
 from paper_digest.models import Paper, PaperIdentifiers, normalize_title
@@ -131,18 +129,18 @@ class TestCrossIdentifierMerge:
 
 class TestDedupStore:
     def test_new_paper_not_seen(self, tmp_path):
-        store = DedupStore(str(tmp_path / "seen_ids.json"))
+        store = DedupStore(str(tmp_path / "scored.json"))
         paper = make_paper(arxiv_id="2401.00099")
         assert not store.is_seen(paper)
 
     def test_after_mark_seen(self, tmp_path):
-        store = DedupStore(str(tmp_path / "seen_ids.json"))
+        store = DedupStore(str(tmp_path / "scored.json"))
         paper = make_paper(arxiv_id="2401.00099")
         store.mark_seen(paper)
         assert store.is_seen(paper)
 
     def test_persists_across_instances(self, tmp_path):
-        path = str(tmp_path / "seen_ids.json")
+        path = str(tmp_path / "scored.json")
         store1 = DedupStore(path)
         paper = make_paper(arxiv_id="2401.00099")
         store1.mark_seen(paper)
@@ -152,7 +150,7 @@ class TestDedupStore:
         assert store2.is_seen(paper)
 
     def test_doi_match_across_sources(self, tmp_path):
-        path = str(tmp_path / "seen_ids.json")
+        path = str(tmp_path / "scored.json")
         store = DedupStore(path)
         p1 = make_paper(doi="10.1234/abc", title="Paper Z")
         store.mark_seen(p1)
@@ -161,7 +159,7 @@ class TestDedupStore:
         assert store.is_seen(p2)
 
     def test_title_match(self, tmp_path):
-        path = str(tmp_path / "seen_ids.json")
+        path = str(tmp_path / "scored.json")
         store = DedupStore(path)
         p1 = make_paper(title="Attention Is All You Need")
         store.mark_seen(p1)
@@ -180,7 +178,7 @@ class TestStateBelongsToADatabase:
     """
 
     def _write(self, tmp_path, payload) -> str:
-        path = tmp_path / "seen_ids.json"
+        path = tmp_path / "scored.json"
         path.write_text(json.dumps(payload), encoding="utf-8")
         return str(path)
 
@@ -210,7 +208,7 @@ class TestStateBelongsToADatabase:
         assert store.is_seen(make_paper(arxiv_id="2401.00001")) is True
 
     def test_persist_stamps_the_database_id(self, tmp_path):
-        path = str(tmp_path / "seen_ids.json")
+        path = str(tmp_path / "scored.json")
         store = DedupStore(path, database_id="db-1")
         store.mark_seen(make_paper(arxiv_id="2401.00002"))
         store.persist()

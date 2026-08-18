@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 import yaml
 
@@ -77,70 +77,87 @@ class NewsConfig:
 
 
 @dataclass
-class ArxivConfig:
-    """arXiv preprint collection.
+class VenueSourceConfig:
+    """One venue class — conferences or journals — collected via Semantic Scholar.
 
-    Off by default now: arXiv drowns out the peer-reviewed sources. It posts
-    hundreds of papers a day against a conference's once-a-year proceedings, so
-    with both enabled essentially every slot goes to a preprint.
-    """
+    The venue list ships with the tool (paper_digest/data/venues.csv); *kind*
+    selects the rows this source draws from. *min_score* is the quality floor
+    within that kind, and include/exclude adjust the result by abbreviation.
 
-    enabled: bool = False
-    categories: List[str] = field(
-        default_factory=lambda: ["cs.CL", "cs.IR", "cs.CY", "cs.AI", "cs.LG"]
-    )
-
-
-@dataclass
-class ConferenceConfig:
-    """Top-conference collection via Semantic Scholar.
-
-    The venue list ships with the tool (paper_digest/data/venues.csv), built
-    from the Korean CS community's combined ranking. *min_score* selects from
-    it; include/exclude adjust the result by abbreviation.
+    Both classes are allowlisted by construction. That is the whole quality
+    mechanism: a digest that trusts a topic filter instead ends up reading
+    predatory journals, which is exactly what the OpenAlex source did before it
+    was removed.
     """
 
     enabled: bool = True
     min_score: float = 0.5
     include: List[str] = field(default_factory=list)
     exclude: List[str] = field(default_factory=list)
-    max_results: int = 400
+    # Generous on purpose. Collection costs requests, not money — the bill is
+    # set by max_papers_to_rank, which caps ranking after the keyword filter has
+    # already cut the pool. A tighter limit truncates in venue order, which
+    # silently drops whole conferences in the week their proceedings land: a
+    # measured SIGIR week collected 474 papers against a limit of 400.
+    max_results: int = 3000
+
+
+@dataclass
+class LimitsConfig:
+    """Hard ceilings on what one run may spend.
+
+    The lab shares one API key, so a member file with ``top_n: 300`` is not that
+    person's bill — it is everyone's. These are refused rather than clamped:
+    quietly doing something other than what the file says is worse than a stop
+    that names the file.
+    """
+
+    max_members: int = 15
+    max_top_n_per_member: int = 30
+    # Whole-run guard, checked after every member's cut is known. Catches the
+    # case no single member's limit can: fifteen people at the maximum.
+    max_notes_per_run: int = 400
 
 
 @dataclass
 class Config:
-    """Full application configuration."""
+    """Lab-wide configuration — everything that is *not* per member.
 
-    # Notion settings
+    Three fields here belong to a member rather than to the lab and are left as
+    injection points rather than YAML keys: *research_profile*, *keywords* and
+    *top_n*. :func:`paper_digest.members.effective_config` fills them in per
+    person, which is what lets ranking.py and notes.py stay unaware that this
+    tool serves more than one researcher.
+    """
+
+    # Notion settings — the workspace page everything is created under
     notion_parent_page_id: str = ""
-    # Optional. Pin the database every run writes to. Leave empty and the tool
-    # finds or creates it under the parent page.
-    notion_database_id: str = ""
 
-    # Research parameters
+    # Where the per-member YAML files live
+    members_dir: str = "members"
+
+    # ── Injected per member, never read from config.yaml ──
     keywords: List[str] = field(default_factory=list)
-    tracked_venues: List[str] = field(default_factory=list)
     research_profile: str = ""
 
-    # OpenAlex gives a much higher rate limit to callers who identify
-    # themselves. Put a real address here before running a backfill.
-    openalex_mailto: str = "paper-digest@example.com"
+    # The lab's shared context, used for the *news* briefing only. News is
+    # written once for everybody, so there is no member whose profile it could
+    # be written against — and the note's "why this matters" section is useless
+    # without one. Left empty, the news stage falls back to joining the members'
+    # own profiles, so an unset key degrades rather than breaking.
+    lab_profile: str = ""
 
     # Extra "full name fragment" -> acronym mappings for the Venue column, on
     # top of the built-in table in paper_digest/venues.py.
     venue_aliases: Dict[str, str] = field(default_factory=dict)
 
-    # Venues to drop entirely. None means "use the built-in list of unmoderated
-    # deposit archives"; an explicit list (including []) overrides it.
-    excluded_venues: Optional[List[str]] = None
-
     # Collection settings
-    arxiv: ArxivConfig = field(default_factory=ArxivConfig)
     days_back: int = 7
 
     # Cost controls
     max_papers_to_rank: int = 1500
-    top_n: int = 10
+    top_n: int = 20            # injected per member
+    limits: LimitsConfig = field(default_factory=LimitsConfig)
 
     # LLM configuration
     llm: LLMConfig = field(default_factory=LLMConfig)
@@ -148,27 +165,20 @@ class Config:
     # IT news collection (opt-in)
     news: NewsConfig = field(default_factory=NewsConfig)
 
-    # Top-conference collection
-    conferences: ConferenceConfig = field(default_factory=ConferenceConfig)
+    # The two paper sources, both allowlisted from the shipped venue table.
+    conferences: VenueSourceConfig = field(default_factory=VenueSourceConfig)
+    journals: VenueSourceConfig = field(default_factory=VenueSourceConfig)
 
     # Secrets — loaded from environment at runtime
     notion_token: str = ""
     anthropic_api_key: str = ""
     openai_api_key: str = ""
-    # Optional. Anonymous OpenAlex gets 1,000 requests a day; a free account
-    # gets ten times that. The tool needs ~56 for a year-long backfill, so the
-    # key only matters if something else on the same address is also calling.
-    openalex_api_key: str = ""
 
     def parent_page_id(self) -> str:
         """The parent page ID, accepting a pasted Notion URL. "" if unusable."""
         if self.notion_parent_page_id in PLACEHOLDERS:
             return ""
         return extract_notion_id(self.notion_parent_page_id)
-
-    def database_id(self) -> str:
-        """The pinned database ID, accepting a pasted Notion URL. "" if unset."""
-        return extract_notion_id(self.notion_database_id)
 
     def llm_api_key(self) -> str:
         """The API key for the configured provider."""
@@ -210,45 +220,44 @@ def load_config(path: str = "config.yaml") -> Config:
         keywords=news_data.get("keywords", []) or [],
     )
 
-    arxiv_data = data.get("arxiv", {}) or {}
-    arxiv_cfg = ArxivConfig(
-        enabled=arxiv_data.get("enabled", False),
-        categories=arxiv_data.get("categories") or ["cs.CL", "cs.IR", "cs.CY",
-                                                    "cs.AI", "cs.LG"],
-    )
+    def venue_source(key: str, default_max: int) -> VenueSourceConfig:
+        raw = data.get(key, {}) or {}
+        return VenueSourceConfig(
+            enabled=raw.get("enabled", True),
+            min_score=float(raw.get("min_score", 0.5)),
+            include=raw.get("include", []) or [],
+            exclude=raw.get("exclude", []) or [],
+            max_results=int(raw.get("max_results", default_max)),
+        )
 
-    conf_data = data.get("conferences", {}) or {}
-    conf_cfg = ConferenceConfig(
-        enabled=conf_data.get("enabled", True),
-        min_score=float(conf_data.get("min_score", 0.5)),
-        include=conf_data.get("include", []) or [],
-        exclude=conf_data.get("exclude", []) or [],
-        max_results=int(conf_data.get("max_results", 400)),
+    conf_cfg = venue_source("conferences", 3000)
+    journal_cfg = venue_source("journals", 1000)
+
+    limits_data = data.get("limits", {}) or {}
+    limits_cfg = LimitsConfig(
+        max_members=int(limits_data.get("max_members", 15)),
+        max_top_n_per_member=int(limits_data.get("max_top_n_per_member", 30)),
+        max_notes_per_run=int(limits_data.get("max_notes_per_run", 400)),
     )
 
     cfg = Config(
         # Kept raw so the error message can quote what the user actually wrote;
         # normalized on access via parent_page_id() / database_id().
         notion_parent_page_id=data.get("notion_parent_page_id", "") or "",
-        notion_database_id=data.get("notion_database_id", "") or "",
-        keywords=data.get("keywords", []),
-        tracked_venues=data.get("tracked_venues", []),
-        research_profile=data.get("research_profile", ""),
-        openalex_mailto=data.get("openalex_mailto") or "paper-digest@example.com",
+        members_dir=data.get("members_dir", "members") or "members",
+        lab_profile=data.get("lab_profile", "") or "",
         venue_aliases=data.get("venue_aliases", {}) or {},
-        excluded_venues=data.get("excluded_venues"),
-        arxiv=arxiv_cfg,
         days_back=data.get("days_back", 7),
         max_papers_to_rank=data.get("max_papers_to_rank", 1500),
-        top_n=data.get("top_n", 10),
+        limits=limits_cfg,
         llm=llm_cfg,
         news=news_cfg,
         conferences=conf_cfg,
+        journals=journal_cfg,
         # Secrets always come from the environment, never from the config file
         notion_token=os.environ.get("NOTION_TOKEN", ""),
         anthropic_api_key=os.environ.get("ANTHROPIC_API_KEY", ""),
         openai_api_key=os.environ.get("OPENAI_API_KEY", ""),
-        openalex_api_key=os.environ.get("OPENALEX_API_KEY", ""),
     )
 
     return cfg

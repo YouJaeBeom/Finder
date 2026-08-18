@@ -1,9 +1,9 @@
 """Turning a source's name into the venue acronym people actually use.
 
-OpenAlex reports venues by their full registered title — "Proceedings of the
-32nd ACM International Conference on Information and Knowledge Management",
-not "CIKM". A Notion column of those is unreadable and unsortable, so names are
-normalized to the short form: CIKM, WSDM, SIGIR, ACL, EMNLP, TKDE.
+Semantic Scholar reports conference venues by their full registered title —
+"Annual Meeting of the Association for Computational Linguistics", not "ACL".
+A Notion column of those is unreadable and unsortable, so names are normalized
+to the short form: CIKM, WSDM, SIGIR, ACL, EMNLP, TKDE.
 
 Resolution order, most reliable first:
 
@@ -80,8 +80,6 @@ _KNOWN_VENUES: List[Tuple[str, Tuple[str, ...]]] = [
     ("ICCV", ("international conference on computer vision",)),
     ("ECCV", ("european conference on computer vision",)),
 
-    # ── Preprint servers ──
-    ("arXiv", ("arxiv",)),
 ]
 
 # "... (CIKM '24)" / "(NeurIPS 2025)" — the acronym conferences put in their
@@ -95,8 +93,8 @@ _BOILERPLATE = re.compile(
     re.IGNORECASE,
 )
 
-# The operating institution repositories are registered under — OpenAlex stores
-# "Zenodo (CERN European Organization for Nuclear Research)".
+# A trailing "(...)" is the operating institution or host city, never part of
+# the name people use.
 _TRAILING_PARENTHETICAL = re.compile(r"\s*\([^)]*\)\s*$")
 
 _MAX_VENUE_LEN = 100  # Notion select option limit
@@ -145,7 +143,7 @@ def normalize_venue(
         if hit := _from_aliases(candidate, aliases):
             return hit[:_MAX_VENUE_LEN]
 
-    # Already short and capitalised — OpenAlex sometimes stores "SIGIR" itself.
+    # Already short and capitalised — some records store "SIGIR" itself.
     if _looks_like_acronym(name):
         return name
 
@@ -175,9 +173,14 @@ def normalize_venue(
 _VENUE_CSV = Path(__file__).parent / "data" / "venues.csv"
 
 
+CONFERENCE = "conference"
+JOURNAL = "journal"
+KINDS = (CONFERENCE, JOURNAL)
+
+
 @dataclass(frozen=True)
 class Venue:
-    """One conference from the shipped list."""
+    """One conference or journal from the shipped list."""
 
     abbr: str        # "ACL" — what the Venue column shows
     query: str       # the name Semantic Scholar answers to, often not the abbr
@@ -185,6 +188,7 @@ class Venue:
     dblp: str        # DBLP stream key, e.g. "conf/acl"
     score: float     # 0–1, the community ranking's normalized average
     papers: int      # papers Semantic Scholar has for it (0 = not collectable)
+    kind: str        # "conference" | "journal"
 
     @property
     def collectable(self) -> bool:
@@ -193,7 +197,11 @@ class Venue:
 
 @lru_cache(maxsize=1)
 def load_venues() -> Tuple[Venue, ...]:
-    """The venue table shipped with the package."""
+    """The venue table shipped with the package.
+
+    ``kind`` defaults to conference for rows written before journals were added,
+    which is what every row in the original ranking export was.
+    """
     if not _VENUE_CSV.exists():
         logger.warning("Venue list missing at %s", _VENUE_CSV)
         return ()
@@ -202,7 +210,8 @@ def load_venues() -> Tuple[Venue, ...]:
         return tuple(
             Venue(abbr=row["abbr"], query=row["query"], name=row["name"],
                   dblp=row["dblp"], score=float(row["score"] or 0),
-                  papers=int(row["papers"] or 0))
+                  papers=int(row["papers"] or 0),
+                  kind=(row.get("kind") or CONFERENCE).strip() or CONFERENCE)
             for row in csv.DictReader(fh)
         )
 
@@ -211,6 +220,7 @@ def select_venues(
     min_score: float = 0.5,
     include: Sequence[str] = (),
     exclude: Sequence[str] = (),
+    kind: Optional[str] = None,
 ) -> Dict[str, str]:
     """Venues to collect from, as ``{search name: abbreviation}``.
 
@@ -219,10 +229,19 @@ def select_venues(
     "S&P". The abbreviation is what the Venue column should show, so both are
     carried.
 
+    *kind* narrows to conferences or journals; None returns both. They are
+    selected separately because their thresholds mean different things — the
+    conference scores come from a community ranking, the journal scores are
+    hand-set — and because proceedings arrive in yearly bursts while journals
+    publish steadily.
+
     Venues Semantic Scholar has no papers for are dropped — asking for them
     costs a request and returns nothing. *include* adds back a venue below the
     threshold; *exclude* removes one above it.
     """
+    if kind is not None and kind not in KINDS:
+        raise ValueError(f"Unknown venue kind {kind!r} — expected one of {KINDS}")
+
     excluded = {e.lower() for e in exclude}
     included = {i.lower() for i in include}
 
@@ -230,6 +249,7 @@ def select_venues(
         v.query: v.abbr
         for v in load_venues()
         if v.collectable
+        and (kind is None or v.kind == kind)
         and v.abbr.lower() not in excluded
         and (v.score >= min_score or v.abbr.lower() in included)
     }

@@ -4,10 +4,16 @@ name: Weekly paper digest
 on:
   schedule:
     - cron: "0 23 * * 0"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      member:
+        description: "Serve only this member ID (blank = everyone). Use it to retry one person after a failure."
+        required: false
+        default: ""
+        type: string
 
 permissions:
-  contents: write        # required to commit the updated seen_ids.json
+  contents: write        # required to commit the scoring caches under state/
 
 concurrency:
   group: paper-digest
@@ -16,7 +22,10 @@ concurrency:
 jobs:
   digest:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Members are served sequentially in one job — Notion's rate limit is per
+    # integration token, so parallel jobs would share one budget while each
+    # behaved as though it owned the whole thing. Budget ~3 minutes a member.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -31,40 +40,69 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
 
+      # Catches a broken member file before anything is collected or spent.
+      - name: Validate members
+        run: python -m paper_digest members list
+
       - name: Run weekly digest
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
-        run: python -m paper_digest run --mode weekly
+          MEMBER: ${{ inputs.member }}
+        run: |
+          if [ -n "$MEMBER" ]; then
+            python -m paper_digest run --mode weekly --member "$MEMBER"
+          else
+            python -m paper_digest run --mode weekly
+          fi
 
-      # Surface the reason on the run page itself. Without this the only record
-      # of *why* a run failed is inside a zip you have to download, so the
-      # Annotations box says nothing more useful than "exit code 1".
-      - name: Explain the failure
-        if: failure()
+      # Surface what happened on the run page itself. Without this the only
+      # record is inside a zip you have to download, so the Annotations box says
+      # nothing more useful than "exit code 1" — and with ten members, "84 pages
+      # created" hides the fact that one person got none.
+      - name: Summarise the run
+        if: always()
         run: |
           python - <<'PY'
           import json, os, pathlib
 
           report = pathlib.Path("run-report.json")
-          if report.exists():
-              data = json.loads(report.read_text(encoding="utf-8"))
-              reason = data.get("error") or "no error recorded — see the step log"
-          else:
-              reason = "the run died before it could write a report — see the step log"
+          if not report.exists():
+              print("::error::the run died before it could write a report — see the step log")
+              raise SystemExit(0)
 
-          # ::error:: is one line; newlines have to be escaped to survive.
-          print("::error::" + str(reason).replace("\n", "%0A"))
+          data = json.loads(report.read_text(encoding="utf-8"))
+          lines = ["## Weekly digest", "",
+                   f"- pages created: **{data.get('pages_created', 0)}**",
+                   f"- candidates: {data.get('candidates_found', 0)}", ""]
+
+          if members := data.get("members"):
+              lines += ["| member | candidates | new | written | error |",
+                        "|---|---:|---:|---:|---|"]
+              for row in members:
+                  lines.append(
+                      f"| {row['name']} | {row['candidates']} | {row['new']} | "
+                      f"{row['created']} | {row['error'] or ''} |"
+                  )
+              lines.append("")
+
+          if overlap := data.get("overlap"):
+              lines += ["### 두 명 이상이 받은 논문", ""]
+              for entry in overlap:
+                  lines.append(f"- **{entry['title']}** ({entry['venue']}) — "
+                               f"{', '.join(entry['members'])}")
+              lines.append("")
+
+          if reason := data.get("error"):
+              lines += ["### 실패", "", "```", str(reason), "```"]
+              print("::error::" + str(reason).replace("\n", "%0A"))
 
           if summary := os.environ.get("GITHUB_STEP_SUMMARY"):
               with open(summary, "a", encoding="utf-8") as fh:
-                  fh.write(f"## Weekly digest failed\n\n```\n{reason}\n```\n")
+                  fh.write("\n".join(lines) + "\n")
           PY
 
-      # Always upload the report: on a failed run it is the evidence of what
-      # went wrong, so this must not be skipped when the previous step exits 1.
       - name: Upload run report
         if: always()
         uses: actions/upload-artifact@v4
@@ -73,20 +111,22 @@ jobs:
           path: run-report.json
           if-no-files-found: warn
 
-      # Only commit when the digest succeeded — a failed run must not persist a
-      # half-written dedup state that would hide those papers from the retry.
+      # Committed even on a failed run, which is a change from when this file was
+      # the source of truth for "already delivered". It no longer is — Notion is
+      # (see paper_digest/notion_query.py) — so the worst a stale or missing
+      # cache can cost is re-ranking on the cheap model, never a duplicate page.
+      # Meanwhile skipping the commit on failure had a real cost: one member
+      # failing threw away every other member's cache.
       #
-      # state.json rides along because it caches the Notion database ID. The
-      # runner starts from a clean checkout every week, so without it the tool
-      # has to re-discover the database under the parent page on each run.
-      - name: Commit dedup state
-        if: success()
+      # Nothing is written to a cache before the work it records succeeded, so
+      # there is no half-finished state to persist here.
+      - name: Commit scoring caches
+        if: always()
         run: |
           # Staged one at a time on purpose: `git add a b` with a missing b is a
-          # fatal pathspec error that stages NOTHING, which would silently drop
-          # seen_ids.json on every run before the database is first created.
-          for f in seen_ids.json state.json; do
-            if [ -f "$f" ]; then git add -- "$f"; fi
+          # fatal pathspec error that stages NOTHING.
+          for f in state.json state; do
+            if [ -e "$f" ]; then git add -- "$f"; fi
           done
           if git diff --cached --quiet; then
             echo "state unchanged — nothing to commit"
@@ -97,13 +137,12 @@ jobs:
           git commit -m "chore: update digest state after weekly run [skip ci]"
 
           # Anything pushed while the run was working leaves this checkout
-          # behind, and the push is rejected as non-fast-forward. Rebase onto
-          # it and retry rather than dropping the state — a run whose state
-          # never lands has to re-rank the same papers next week.
+          # behind, and the push is rejected as non-fast-forward. Rebase onto it
+          # and retry rather than dropping the caches.
           for attempt in 1 2 3; do
             if git push; then exit 0; fi
             echo "push rejected — rebasing onto origin/main (attempt $attempt)"
             git pull --rebase origin main
           done
-          echo "::error::could not push the dedup state after 3 attempts"
+          echo "::error::could not push the scoring caches after 3 attempts"
           exit 1

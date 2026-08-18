@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 import socket
-import textwrap
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import List
 
 import pytest
+import yaml
 
 from paper_digest.models import Paper, PaperIdentifiers, normalize_title
 
@@ -47,7 +48,7 @@ def make_paper(
     score: float = 0.0,
 ) -> Paper:
     if source is None:
-        source = ["arxiv"]
+        source = ["conference"]
     norm = normalize_title(title)
     return Paper(
         identifiers=PaperIdentifiers(
@@ -58,8 +59,8 @@ def make_paper(
         title=title,
         abstract=abstract,
         authors=["Alice Smith", "Bob Jones"],
-        venue="arXiv preprint",
-        venue_status="preprint",
+        venue="ACL",
+        venue_status="published",
         collection_date=datetime.now(timezone.utc).date().isoformat(),
         source=source,
         matched_keywords=["LLM", "RLHF"],
@@ -67,43 +68,153 @@ def make_paper(
     )
 
 
-# ── Minimal config fixture ─────────────────────────────────────────────────────
+# ── Collector stand-in ─────────────────────────────────────────────────────────
+
+def venue_collector(conference: List[Paper] = (), journal: List[Paper] = ()):
+    """A stand-in for ``collect_venue_papers`` that answers per venue class.
+
+    The pipeline calls one collector twice — once for conferences, once for
+    journals — so a single ``return_value`` would hand the same papers to both
+    and the dedup stage would quietly halve them again. Keying on
+    *source_label* is what makes a test able to say "conferences returned these,
+    journals returned nothing".
+    """
+    by_label = {"conference": list(conference), "journal": list(journal)}
+
+    def _collect(venues, days_back=7, max_results=500,
+                 source_label="conference", exact_venue_match=False):
+        return by_label.get(source_label, [])
+
+    return _collect
+
+
+# ── Lab config fixtures ────────────────────────────────────────────────────────
+
+# The keyword set and profile every pipeline test used before the lab split. It
+# now lives in a member file rather than in config.yaml, which is the whole point
+# of the split — but the terms are unchanged so the tests' expectations about what
+# matches are still the expectations they were written with.
+# preflight requires a real Notion ID, so the fixtures use one. The raw form is
+# what a user pastes; the dashed form is what parent_page_id() normalizes it to
+# and therefore what the fake Notion is keyed on.
+PARENT_PAGE_RAW = "3bc1256e056180898608c39506c43463"
+PARENT_PAGE_ID = "3bc1256e-0561-8089-8608-c39506c43463"
+
+DEFAULT_KEYWORDS = [
+    "large language model", "LLM", "RLHF", "alignment", "transformer",
+    "retrieval augmented generation", "RAG", "instruction tuning",
+    "chain of thought", "reasoning",
+]
+
+DEFAULT_PROFILE = (
+    "내 연구는 대형 언어 모델(LLM)의 정렬(alignment)과 안전성에 초점을 맞추고 있습니다.\n"
+    "특히 RLHF(인간 피드백을 통한 강화 학습)와 지시 추종에 관심이 있습니다.\n"
+)
+
+LAB_CONFIG_TEMPLATE = """\
+notion_parent_page_id: "{parent}"
+members_dir: "{members_dir}"
+limits:
+  max_members: {max_members}
+  max_top_n_per_member: {max_top_n}
+  max_notes_per_run: {max_notes}
+conferences:
+  enabled: {conferences}
+  min_score: 0.5
+journals:
+  enabled: {journals}
+  min_score: 0.5
+days_back: {days_back}
+max_papers_to_rank: 1500
+llm:
+  provider: "anthropic"
+  ranking_model: "claude-haiku-4-5"
+  notes_model: "claude-opus-5"
+news:
+  enabled: {news}
+  top_n: {news_top_n}
+"""
+
+
+def write_member(
+    directory,
+    member_id: str,
+    name: str = None,
+    top_n: int = 10,
+    keywords=None,
+    profile: str = None,
+    enabled: bool = True,
+) -> Path:
+    """Write one member YAML and return its path."""
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "name": name or member_id,
+        "enabled": enabled,
+        "top_n": top_n,
+        "research_profile": profile or DEFAULT_PROFILE,
+        "keywords": list(DEFAULT_KEYWORDS if keywords is None else keywords),
+    }
+    path = directory / f"{member_id}.yaml"
+    path.write_text(yaml.safe_dump(payload, allow_unicode=True), encoding="utf-8")
+    return path
+
+
+def write_lab_config(
+    tmp_path,
+    members=(("jaebeom", "유재범", 10),),
+    parent: str = PARENT_PAGE_RAW,
+    days_back: int = 7,
+    conferences: bool = True,
+    journals: bool = True,
+    news: bool = False,
+    news_top_n: int = 5,
+    max_members: int = 15,
+    max_top_n: int = 30,
+    max_notes: int = 400,
+) -> str:
+    """Write a lab config plus its member files, and return the config path.
+
+    *members* is a sequence of ``(member_id, name, top_n)``. The members
+    directory is written as an absolute path: it is resolved relative to the
+    process's working directory, and tests that chdir would otherwise find an
+    empty lab.
+    """
+    members_dir = Path(tmp_path) / "members"
+    for member_id, name, top_n in members:
+        write_member(members_dir, member_id, name=name, top_n=top_n)
+
+    cfg_file = Path(tmp_path) / "config.yaml"
+    cfg_file.write_text(
+        LAB_CONFIG_TEMPLATE.format(
+            parent=parent,
+            members_dir=str(members_dir),
+            days_back=days_back,
+            conferences=str(bool(conferences)).lower(),
+            journals=str(bool(journals)).lower(),
+            news=str(bool(news)).lower(),
+            news_top_n=news_top_n,
+            max_members=max_members,
+            max_top_n=max_top_n,
+            max_notes=max_notes,
+        ),
+        encoding="utf-8",
+    )
+    return str(cfg_file)
+
 
 @pytest.fixture()
 def sample_config(tmp_path):
-    """Write a minimal config.yaml and return its path."""
-    cfg_content = textwrap.dedent("""\
-        notion_parent_page_id: "3bc1256e05618089aaaabbbbccccdddd"
-        keywords:
-          - "large language model"
-          - "LLM"
-          - "RLHF"
-          - "alignment"
-          - "transformer"
-          - "retrieval augmented generation"
-          - "RAG"
-          - "instruction tuning"
-          - "chain of thought"
-          - "reasoning"
-        tracked_venues:
-          - "ACL 2026"
-        research_profile: |
-          내 연구는 대형 언어 모델(LLM)의 정렬(alignment)과 안전성에 초점을 맞추고 있습니다.
-          특히 RLHF(인간 피드백을 통한 강화 학습)와 지시 추종에 관심이 있습니다.
-        arxiv:
-          enabled: true
-          categories: [cs.CL, cs.AI, cs.LG]
-        days_back: 7
-        max_papers_to_rank: 1500
-        top_n: 10
-        llm:
-          provider: "anthropic"
-          ranking_model: "claude-haiku-4-5"
-          notes_model: "claude-opus-5"
-    """)
-    cfg_file = tmp_path / "config.yaml"
-    cfg_file.write_text(cfg_content, encoding="utf-8")
-    return str(cfg_file)
+    """A one-member lab: config.yaml plus members/jaebeom.yaml."""
+    return write_lab_config(tmp_path)
+
+
+@pytest.fixture()
+def fake_notion(monkeypatch):
+    """A Notion workspace in memory, wired into paper_digest.notion_api."""
+    from tests.notion_fake import FakeNotion
+
+    return FakeNotion(PARENT_PAGE_ID).install(monkeypatch)
 
 
 @pytest.fixture()
@@ -139,7 +250,7 @@ def sample_papers():
                 doi=f"10.18653/test/{i}",
                 title=title,
                 abstract=abstract,
-                source=["arxiv"],
+                source=["conference"],
             )
         )
     return papers

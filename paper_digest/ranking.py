@@ -41,8 +41,8 @@ def _is_rankable(paper: Paper) -> bool:
     """Whether a paper carries enough text for the ranking model.
 
     An abstract is required: a title alone is not enough to judge research
-    relevance, and an abstract-less paper is the OpenAlex takedown case the
-    requirements chose to drop rather than rank blind.
+    relevance. Semantic Scholar's abstract coverage is uneven across publishers,
+    so this drops a real share of what is collected rather than ranking blind.
 
     Only papers reach this module. News is selected mechanically without an LLM
     — see :mod:`paper_digest.news_select`.

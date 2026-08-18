@@ -84,10 +84,10 @@ class Paper:
     title: str
     abstract: Optional[str]
     authors: List[str] = field(default_factory=list)
-    venue: str = "arXiv preprint"  # news: the site or feed name
+    venue: str = "unknown"  # ACL / SIGIR / TKDE; news: the site or feed name
     venue_status: str = "preprint"  # "preprint" | "accepted" | "published"
     collection_date: str = ""
-    source: List[str] = field(default_factory=list)  # arxiv|openalex|hackernews|rss
+    source: List[str] = field(default_factory=list)  # conference|journal|hackernews|rss
     matched_keywords: List[str] = field(default_factory=list)
     content_type: str = "paper"  # "paper" | "news"
     url: Optional[str] = None  # article/story link, shown in the Notion header
@@ -97,8 +97,8 @@ class Paper:
     points: Optional[int] = None  # None for RSS and for papers
 
     # The item's own date (ISO 8601), as distinct from collection_date, which is
-    # the day this run happened to fetch it. arXiv: the v1 submission date;
-    # OpenAlex: publication_date; news: the feed or story timestamp.
+    # the day this run happened to fetch it. Papers: the venue's publication
+    # date; news: the feed or story timestamp.
     published_at: Optional[str] = None
 
     # Populated after ranking (papers only — news keeps 0.0)

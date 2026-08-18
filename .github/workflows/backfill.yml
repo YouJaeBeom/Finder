@@ -4,9 +4,13 @@ name: Backfill
 # since last week", which leaves everything published before it was set up
 # unread. This ranks a long window in a single pass and keeps the best of it.
 #
-# Every paper it ranks is marked seen, not just the ones written — so running
-# it twice does nothing the second time, and the weekly run afterwards only
-# considers genuinely new arrivals.
+# Every paper it ranks is cached, not just the ones written — so running it twice
+# does nothing the second time, and the weekly run afterwards only considers
+# genuinely new arrivals.
+#
+# Leave "member" blank to backfill everyone. Set it when one person joins an
+# established lab: backfilling everyone again would bill the whole lab's catch-up
+# a second time.
 on:
   workflow_dispatch:
     inputs:
@@ -15,8 +19,13 @@ on:
         required: true
         default: "365"
         type: string
+      member:
+        description: "Backfill only this member ID (blank = everyone)"
+        required: false
+        default: ""
+        type: string
       limit:
-        description: "How many top-ranked papers to keep"
+        description: "How many top-ranked papers to keep, per member"
         required: true
         default: "200"
         type: string
@@ -30,8 +39,8 @@ on:
 permissions:
   contents: write
 
-# Shares the weekly digest's group: both write seen_ids.json, and two runs
-# doing that at once would lose one of them.
+# Shares the weekly digest's group: both write the scoring caches under state/,
+# and two runs doing that at once would lose one of them.
 concurrency:
   group: paper-digest
   cancel-in-progress: false
@@ -56,17 +65,21 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
 
+      - name: Validate members
+        run: python -m paper_digest members list
+
       - name: Run backfill
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENALEX_API_KEY: ${{ secrets.OPENALEX_API_KEY }}
+          MEMBER: ${{ inputs.member }}
         run: |
-          python -m paper_digest run --mode backfill \
-            --days "${{ inputs.days }}" \
-            --limit "${{ inputs.limit }}" \
-            --sources "${{ inputs.sources }}"
+          args=(--days "${{ inputs.days }}"
+                --limit "${{ inputs.limit }}"
+                --sources "${{ inputs.sources }}")
+          if [ -n "$MEMBER" ]; then args+=(--member "$MEMBER"); fi
+          python -m paper_digest run --mode backfill "${args[@]}"
 
       - name: Explain the failure
         if: failure()
@@ -96,14 +109,14 @@ jobs:
           path: run-report.json
           if-no-files-found: warn
 
-      # The dedup state is the whole point of the run: it records every paper
-      # considered, so the weekly digest never re-ranks them. Losing it would
-      # mean paying for the ranking again.
-      - name: Commit dedup state
-        if: success()
+      # The scoring caches are the whole point of the run: they record every
+      # paper considered, so the weekly digest never re-ranks them. Losing them
+      # would mean paying for the ranking again.
+      - name: Commit scoring caches
+        if: always()
         run: |
-          for f in seen_ids.json state.json; do
-            if [ -f "$f" ]; then git add -- "$f"; fi
+          for f in state.json state; do
+            if [ -e "$f" ]; then git add -- "$f"; fi
           done
           if git diff --cached --quiet; then
             echo "state unchanged — nothing to commit"
@@ -127,5 +140,5 @@ jobs:
             echo "push rejected — rebasing onto origin/main (attempt $attempt)"
             git pull --rebase origin main
           done
-          echo "::error::could not push the dedup state after 3 attempts"
+          echo "::error::could not push the scoring caches after 3 attempts"
           exit 1

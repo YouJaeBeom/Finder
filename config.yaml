@@ -1,295 +1,135 @@
-# Paper Digest Configuration
-# Secrets (NOTION_TOKEN, ANTHROPIC_API_KEY / OPENAI_API_KEY) come from environment variables
-# — never put secrets in this file.
+# Paper Digest — 연구실 공용 설정
+#
+# 이 파일은 **랩 전체**에 적용되는 것만 담습니다. 개인의 연구 주제와 키워드는
+# members/<id>.yaml 에 있습니다. 비밀값(NOTION_TOKEN, ANTHROPIC_API_KEY /
+# OPENAI_API_KEY)은 환경변수에서 옵니다 — 절대 이 파일에 넣지 마세요.
 
 # ── Notion ──────────────────────────────────────────────────────────────────
-# The page ID from your Notion workspace where the database will be created.
-# Get it from the page URL: notion.so/<workspace>/<PAGE_ID>
+# 워크스페이스 메인 페이지. 이 아래에 코드가 전부 만듭니다:
+#
+#   📄 <이 페이지>
+#   ├── 📰 IT 뉴스          공용 DB (뉴스는 전원 공유)
+#   ├── 📄 유재범            멤버 페이지
+#   │   └── 📚 논문          그 사람 전용 DB
+#   └── 📄 ...
+#
+# 페이지 링크를 그대로 붙여도 되고 32자 ID 만 넣어도 됩니다.
+# 통합(integration)에 이 페이지를 공유해야 합니다: '···' → 'Connections'.
+#
+# DB ID 를 여기 적을 필요는 없습니다. state.json 이 캐시하고, 캐시가 없으면
+# 제목으로 다시 찾습니다 — 그래서 state.json 유실은 조회 한 번의 비용입니다.
 notion_parent_page_id: "https://app.notion.com/p/Finder-3bc1256e056180898608c39506c43463?source=copy_link"
 
-# Optional but recommended once you have run `python -m paper_digest init`.
-# Pinning the database ID here guarantees every run — local or GitHub Actions —
-# appends to the same database instead of creating a new one. Leave it empty and
-# the tool looks for its database under the parent page each run.
-notion_database_id: ""
+# ── 멤버 ─────────────────────────────────────────────────────────────────────
+# 한 명당 파일 하나. 파일명(확장자 제외)이 멤버 ID 입니다.
+#   python -m paper_digest members list       등록된 멤버와 예상 분량
+#   python -m paper_digest members validate   전 파일 검사 (문제를 한 번에 전부)
+members_dir: "members"
 
-# ── Research keywords ────────────────────────────────────────────────────────
-# 연구 아젠다 5개 축을 그대로 옮긴 것입니다. 각 축마다 Core 키워드는 단독으로
-# 두거나 규칙의 축으로 삼고, "use when applicable" 키워드는 다른 조건과 AND 로
-# 묶어 정밀도를 지킵니다.
+# ── 랩 공용 연구 맥락 (뉴스 전용) ─────────────────────────────────────────────
+# 뉴스는 전원 공용 1회이므로 "누구의 연구와의 연결점"을 쓸 대상이 없습니다. 이 글이
+# 그 자리를 채워서, 브리핑의 "왜 알아둘 만한지" 문단이 랩의 맥락 위에서 쓰이게
+# 합니다. 논문 쪽은 이 값을 쓰지 않습니다 — 그건 멤버 각자의 research_profile 입니다.
 #
-# 목록의 항목끼리는 OR 입니다. 대소문자와 하이픈은 무시하고
-# ("retrieval-augmented" = "retrieval augmented"), 제목과 초록을 함께 봅니다.
-# 짧은 약어는 단어 앞에서만 맞습니다 (RAG 가 stoRAGe 에 안 걸림).
+# 비워두면 멤버들의 research_profile 을 이어붙여 씁니다 (동작은 하지만 프롬프트가
+# 길고 흐려집니다). 한 문단으로 직접 쓰는 편이 낫습니다.
+lab_profile: |
+  Trustworthy AI for Fair Information Access 를 연구하는 랩입니다. 웹 데이터,
+  검색 시스템, 프롬프트 맥락이 정치적 정보 노출과 대형 언어 모델(LLM)의 행동을
+  어떻게 형성하는지를 봅니다. 편향을 측정하고 설명하고 완화하는 것, 검색·RAG 에서
+  관점 다양성을 보장하는 것, 자동 평가가 사람의 판단을 얼마나 반영하는지 검증하는
+  것, 그리고 그 연구에 쓸 대규모 웹 코퍼스를 재현 가능하게 구축하는 것이 주제입니다.
+
+  그래서 AI 규제와 정책, 학습 데이터 출처와 저작권, 콘텐츠 모더레이션, 검색·추천
+  알고리즘의 변화, 편향·허위정보 관련 사건, 주요 모델 공개는 연구 환경 자체를
+  바꾸는 소식으로 봅니다.
+
+# ── 상한 ─────────────────────────────────────────────────────────────────────
+# 공용 API 키를 쓰므로 신뢰가 아니라 코드로 막습니다. 위반하면 경고가 아니라
+# **실행 거부**입니다 — 한 명의 오타(top_n: 300)가 전원의 예산이기 때문입니다.
+limits:
+  max_members: 15
+  max_top_n_per_member: 30
+  # 실행 전체 가드. 멤버별 상한으로는 못 잡는 경우를 잡습니다 —
+  # 15명이 각자 정당하게 최대치를 쓰는 상황.
+  max_notes_per_run: 400
+
+# ── 논문 소스: 학회와 저널 ────────────────────────────────────────────────────
+# 논문은 Semantic Scholar 한 곳에서만 가져옵니다. API 키가 필요 없고, venue 와
+# 초록과 식별자를 한 번의 요청으로 함께 줍니다.
 #
-#   - "구절"                        이 구절이 있으면 매치
-#   - all: [A, B]                   A 와 B 가 모두 있어야 매치
-#   - any: [A, B]                   A 나 B 중 하나라도 있으면 매치
-#   - all: [[A, B], [C, D]]         (A 나 B) 그리고 (C 나 D)   ← 중첩 = "이 중 하나"
-#     not: [E]                      단, E 가 있으면 제외
-
-# 여러 규칙에서 재사용하는 묶음 (YAML 앵커)
-_model: &model
-  ["LLM", "large language model", "language model", "foundation model",
-   "generative model", "chatbot", "conversational agent", "GPT", "instruction-tuned"]
-_bias: &bias
-  ["bias", "biased", "fairness", "unfair", "skew", "imbalance", "stereotype"]
-_political: &political
-  ["political", "ideological", "partisan", "polarization", "viewpoint"]
-
-keywords:
-  # ── 1. LLM 정치적 편향과 맥락적 견고성 ────────────────────────────────────
-  # Core: political bias / prompt sensitivity / persona prompting / robustness
-  - "political bias"
-  - "ideological bias"
-  - "partisan bias"
-  - "political stance"
-  - "political ideology"
-  - "political leaning"
-  - "political orientation"
-  - "political compass"
-  - "sycophancy"
-  - "sycophantic"
-  - any: ["prompt sensitivity", "prompt robustness", "prompt perturbation",
-          "prompt variation", "prompt brittleness", "prompt template"]
-  - all:                                   # 페르소나 프롬프팅
-      - ["persona", "role-play", "roleplay", "persona prompting"]
-      - *model
-  - all:                                   # 응답 일관성 · 견고성
-      - ["robustness", "consistency", "inconsistency", "instability",
-         "sensitivity"]
-      - *model
-      # 무엇에 대한 견고성인지 못박습니다 — 그냥 "robust LLM" 은 너무 넓습니다.
-      - [*political, *bias, ["prompt", "persona", "opinion", "stance",
-                             "demographic", "cultural"]]
-  - all:                                   # 편향 "측정" 은 어순이 제각각이라 단어로 분리
-      - *bias
-      - ["measurement", "measuring", "measure", "quantify", "quantifying",
-         "benchmark", "probe", "elicit"]
-      - [*model, *political]
-  - all:                                   # 다국어 · 교차문화 편향 평가
-      - ["multilingual", "cross-lingual", "cross-cultural", "multi-lingual"]
-      # 편향·정치 축을 요구합니다. 다국어 평가 일반은 관심사가 아닙니다.
-      - [*bias, *political, ["stereotyp", "culture", "value"]]
-
-  # ── 2. 데이터 중심 · 인과적 편향 분석 ─────────────────────────────────────
-  # Core: training data bias / web data bias / bias propagation / causal / controlled pretraining
-  - "bias propagation"
-  - "bias amplification"
-  - "bias transfer"
-  - "controlled pretraining"
-  - "data provenance"
-  - "dataset curation"
-  - "representation bias"
-  - all:                                   # 데이터의 편향
-      - ["training data", "pretraining data", "pre-training data", "web data",
-         "web corpus", "web corpora", "corpus", "corpora", "dataset",
-         "data source"]
-      # "representation" 과 "diversity" 는 뺐습니다 — representation learning,
-      # data diversity 증강 논문이 통째로 걸립니다.
-      - [*bias, ["provenance", "curation", "composition", "contamination",
-                 "toxicity", "stereotyp"]]
-  - all:                                   # 인과적 분석 · 통제 실험
-      - ["causal", "causally", "causality", "intervention", "counterfactual",
-         "ablation", "controlled experiment"]
-      - [*bias, ["pretraining", "training data", "model behavior"]]
-      - *model
-
-  # ── 3. 검색 · RAG 에서의 공정하고 다양한 정보 접근 ────────────────────────
-  # Core: information retrieval / search personalization / filter bubbles /
-  #       information diversity / RAG
-  - "retrieval-augmented generation"
-  - "information retrieval"
-  - "filter bubble"
-  - "echo chamber"
-  - "generative search"
-  - "conversational search"
-  - "information diversity"
-  - "viewpoint diversity"
-  - "selective exposure"
-  - any: ["search personalization", "personalized search", "personalized ranking",
-          "search result diversification", "result diversification"]
-  - all:                                   # 검색·랭킹·RAG 의 편향과 다양성
-      - ["retrieval", "retriever", "search", "ranking", "ranker", "RAG",
-         "recommender", "recommendation"]
-      - [*bias, ["diversity", "diversification", "exposure", "polarization",
-                 "viewpoint", "perspective", "credibility"]]
-  - all:                                   # AI 매개 정보 접근
-      - ["information access", "information exposure", "information seeking",
-         "news consumption", "information ecosystem"]
-      - [*model, ["algorithmic", "search", "recommender", "AI"]]
-
-  # ── 4. AI 매개 정보 시스템의 인간 중심 평가 ───────────────────────────────
-  # Core: human evaluation / LLM evaluation / survey experiments /
-  #       evaluation reliability / human-AI interaction
-  - "LLM-as-a-judge"
-  - "computational social science"
-  - "political communication"
-  - "human-AI interaction"
-  - "public opinion"
-  # "preregistered" 는 뺐습니다 — 사전등록 실험이 아닌 곳에서도 흔히 쓰입니다.
-  - any: ["survey experiment", "user study", "crowdsourced evaluation",
-          "vignette experiment", "participants were", "human subjects"]
-  - all:                                   # 자동 평가 vs 사람 평가
-      - ["human evaluation", "human annotation", "human judgment",
-         "human preference", "annotator"]
-      - *model
-  - any:                                   # 평가 자체의 신뢰성 — 구절로 못박습니다.
-      # "evaluation" + "validity" 처럼 일반어 두 개를 AND 하면 거의 모든 논문이
-      # 걸립니다 (speculative decoding 논문까지 통과했습니다).
-      ["construct validity", "meta-evaluation", "evaluation reliability",
-       "annotator agreement", "inter-annotator", "annotation quality",
-       "evaluator bias", "judge bias", "position bias", "correlate with human",
-       "correlation with human", "agreement with human", "human-LLM agreement"]
-
-  # ── 5. 대규모 웹 데이터 수집 · 코퍼스 구축 ────────────────────────────────
-  # Core: web data collection / web crawling / corpus construction /
-  #       large-scale collection / distributed processing
-  - "web crawling"
-  - "web crawler"
-  - "common crawl"
-  - "corpus construction"
-  - "dataset construction"
-  # "web corpus" 는 그 자체로 5번 축입니다. 2번 축에서는 편향어와 묶여 있어서
-  # 편향을 다루지 않는 코퍼스 구축 논문이 걸리지 않습니다.
-  - any: ["web corpus", "web corpora", "web archive", "crawling pipeline",
-          "scraping pipeline", "data collection pipeline"]
-  - all:                                   # 대규모 · 분산 수집
-      - ["large-scale", "large scale", "distributed", "parallel", "scalable",
-         "high-throughput"]
-      - ["data collection", "crawling", "crawler", "scraping", "web data",
-         "corpus", "data processing", "data pipeline", "ingestion"]
-  - all:                                   # 소셜미디어 데이터 수집
-      - ["social media", "twitter", "reddit", "youtube", "tiktok"]
-      - ["data collection", "dataset", "crawling", "corpus", "API", "sampling"]
-  - all:                                   # 재현 가능한 데이터 수집
-      - ["reproducible", "reproducibility", "replicable"]
-      # 수집 자체를 요구합니다 — "재현 가능한 실험" 은 거의 모든 논문이 주장합니다.
-      - ["data collection", "crawl", "crawling", "scraping",
-         "collection pipeline", "corpus construction"]
-
-# ── Top conferences ──────────────────────────────────────────────────────────
-# 학회 논문은 OpenAlex 로 못 가져옵니다. ACL 논문은 venue 레코드가 비어 있고
-# (source: null), 있는 학회 source 는 연도별 파편이라 venue 필터를 걸면 정작
-# 읽을 가치가 있는 곳이 통째로 빠집니다. 그래서 Semantic Scholar 를 씁니다 —
-# 같은 논문을 venue 와 초록까지 함께 주고, 약자를 그대로 받습니다. 키 불필요.
+# 핵심은 **화이트리스트**입니다. 여기 목록에 있는 학회·저널의 논문만 들어옵니다.
+# 이게 품질 장치의 전부입니다 — 주제 필터에 의존하면 "Advanced Electromagnetics"
+# 같은 약탈적 저널이 NLP 논문을 실어 결과를 뒤덮습니다. 실제로 그래서 OpenAlex
+# 소스를 제거했습니다.
 #
-# 학회 목록은 도구에 동봉돼 있습니다 (paper_digest/data/venues.csv).
-# 한국정보과학회 / BK21 / KAIST / SNU / POSTECH 종합 순위를 정규화한 점수이며,
-# 출처: https://gist.github.com/Pusnow/6eb933355b5cb8d31ef1abcb3c3e1206
+# 수집은 venue 와 날짜만으로 이뤄집니다. 키워드는 그 뒤에 로컬에서만 쓰이므로
+# **멤버가 늘어도 외부 요청 수는 그대로입니다.** 이게 "수집 1회"의 근거입니다.
 #
-# 학회 논문은 프로시딩이 나올 때 한꺼번에 들어옵니다. 조용한 주가 대부분이고
-# 어느 주에 갑자기 한 학회가 통째로 들어오는 게 정상입니다.
+# 목록은 도구에 동봉돼 있습니다 (paper_digest/data/venues.csv).
+# 학회 점수는 한국정보과학회 / BK21 / KAIST / SNU / POSTECH 종합 순위를 정규화한
+# 것이며 출처는 https://gist.github.com/Pusnow/6eb933355b5cb8d31ef1abcb3c3e1206
+# 저널 점수는 손으로 매겼습니다.
+#
+# venue 목록은 랩 소유입니다. 멤버가 개인화할 수 없습니다 — 수집이 공용 1회라
+# 구조적으로 불가능합니다. 화이트리스트에 없는 곳은 누구에게도 영영 안 들어오니,
+# 새 분야가 들어오면 여기(정확히는 venues.csv)를 손봐야 합니다.
 conferences:
   enabled: true
 
-  # 0.5 = 대략 "우수" 이상. 1.00 = 모든 기관이 최우수로 꼽은 곳(ACL, SIGIR, KDD,
-  # WWW, CHI, AAAI, ICML, NeurIPS, SIGMOD ...). 좁히려면 0.7~1.0 으로 올리세요.
+  # 0.5 = 대략 "우수" 이상. 점수를 통과하는 86곳 가운데 Semantic Scholar 에 논문이
+  # 있는 81곳을 실제로 조회합니다 (나머지는 요청만 쓰고 0건이라 목록에서 빠집니다).
+  # 1.00 = 모든 기관이 최우수로 꼽은 곳(ACL, SIGIR,
+  # KDD, WWW, CHI, AAAI, ICML, NeurIPS, SIGMOD ...). 좁히려면 0.7~1.0 으로.
   min_score: 0.5
 
   # 점수와 무관하게 반드시 포함/제외할 학회 (약자)
   include: []
   exclude: []
 
-  max_results: 400
+  # 프로시딩이 통째로 떨어지는 주를 감당할 만큼 넉넉해야 합니다. 수집은
+  # 요청 비용뿐이고, 실제 지출은 max_papers_to_rank 가 따로 막습니다.
+  max_results: 3000
 
-# ── OpenAlex ─────────────────────────────────────────────────────────────────
-# OpenAlex 는 2026 년부터 크레딧 과금제입니다. 요청 1회 = 1 크레딧 = $0.0001.
-#
-#   익명       하루 1,000 크레딧 ($0.10)
-#   무료 계정  하루 10,000 크레딧 ($1)   ← 계정만 만들면 됩니다
-#
-# 이 도구가 쓰는 양은 적습니다 — 주간 실행 약 10회, 1년 백필 약 56회.
-# 익명으로도 충분하지만, 같은 IP 에서 다른 작업도 한다면 계정을 만들어
-# GitHub Secrets 에 OPENALEX_API_KEY 를 넣으세요.
-#
-# mailto 는 신원 표시용입니다. 실제 이메일로 바꿔두는 편이 좋습니다.
-openalex_mailto: "jaebeom4011@seoultech.ac.kr"
+journals:
+  enabled: true
+
+  # 0.5 = 26곳 (TPAMI, TOIS, TACL, TKDE, CL, JMLR, JAIR, AIJ, JASIST, TOCHI,
+  # CSUR, TKDD, TWEB, IPM, NatMI, CACM, TIST, TORS, DMKD, NatHB, NMS,
+  # Political Communication, SSCR, EPJ Data Science, POQ, IJHCS)
+  min_score: 0.5
+
+  include: []
+  exclude: []
+
+  max_results: 1000
 
 # ── Venue 표기 ────────────────────────────────────────────────────────────────
-# OpenAlex 는 학회를 정식 명칭으로 줍니다 ("Proceedings of the 32nd ACM
-# International Conference on Information and Knowledge Management"). Notion
-# Venue 컬럼에는 짧은 약칭이 들어가도록 자동 변환합니다 → CIKM
+# Semantic Scholar 는 학회를 정식 명칭으로 줍니다 ("Annual Meeting of the
+# Association for Computational Linguistics"). Notion Venue 컬럼에는 짧은 약칭이
+# 들어가도록 자동 변환합니다 → ACL
 #
-# 주요 학회/저널(ACL, EMNLP, NAACL, SIGIR, CIKM, WSDM, KDD, RecSys, WWW,
-# SIGMOD, VLDB, ICDE, TKDE, TOIS, NeurIPS, ICML, ICLR, AAAI, IJCAI, CVPR ...)
-# 은 내장 표에 있습니다. 표에 없는 곳은 아래에 추가하세요.
+# 주요 학회/저널은 내장 표에 있습니다. 표에 없는 곳은 아래에 추가하세요.
 # 왼쪽은 정식 명칭의 일부(부분 문자열), 오른쪽이 Venue 에 찍힐 이름입니다.
 venue_aliases: {}
   # "Workshop on Machine Learning for Systems": "MLSys Workshop"
   # "Korea Software Congress": "KSC"
 
-# ── Tracked venues (for batch mode) ──────────────────────────────────────────
-# batch 모드에서 게재 확정을 찍을 때 쓰는 목록입니다.
-tracked_venues:
-  - "ACL 2026"       # NLP
-  - "EMNLP 2026"
-  - "NAACL 2026"
-  - "SIGIR 2026"     # 정보 검색
-  - "CIKM 2026"
-  - "WSDM 2026"
-  - "WWW 2026"
-  - "FAccT 2026"     # 공정성 · 책임성 · 투명성
-  - "AIES 2026"
-  - "ICWSM 2026"     # 웹 · 소셜 미디어
-  - "CSCW 2026"      # 인간-AI 상호작용
-  - "ICLR 2026"
-  - "NeurIPS 2026"
-
-# ── Research profile ─────────────────────────────────────────────────────────
-# 논문 관련도 채점(싼 모델)과 "내 연구와의 연결점" 작성(좋은 모델)에 모두
-# 쓰입니다. 키워드가 후보를 넓게 잡아오면, 이 글이 그중 무엇이 실제로 중요한지
-# 판단합니다.
-research_profile: |
-  Trustworthy AI for Fair Information Access — 웹 데이터, 검색 시스템, 프롬프트
-  맥락이 정치적 정보 노출과 대형 언어 모델(LLM)의 행동을 어떻게 형성하는지를
-  연구합니다. 편향을 측정하고(measure), 설명하고(explain), 완화하는(mitigate)
-  것이 일관된 목표입니다.
-
-  1. LLM의 정치적 편향과 맥락적 견고성. 정치적 편향을 측정하고, 페르소나·언어·
-     프롬프트 맥락에 따라 응답이 얼마나 달라지는지 분석합니다. 아첨(sycophancy),
-     프롬프트 민감도, 다국어 평가, 편향 평가 벤치마크 설계에 관심이 있습니다.
-
-  2. 데이터 중심·인과적 편향 분석. 웹 코퍼스와 학습 데이터의 편향이 모델 내부와
-     생성 결과의 정치적 편향으로 이어지는 경로를 봅니다. 통제된 사전학습과 인과
-     실험으로 데이터 특성·학습 과정·모델 행동의 관계를 규명하며, 편향 전파와
-     증폭, 데이터 큐레이션과 출처 문서화를 다룹니다.
-
-  3. 검색과 RAG에서의 공정하고 다양한 정보 접근. 검색 개인화가 만드는 필터버블,
-     관점 편중, 검색·검색증강생성의 편향을 분석하고, 관점 다양성과 정보 품질을
-     함께 보장하는 검색·RAG 방법을 설계합니다.
-
-  4. AI 매개 정보 시스템의 인간 중심 평가. LLM 기반 자동 평가와 사람 대상 실험을
-     결합해, 자동 평가가 실제 이용자의 판단·인식·정보 탐색 행동을 얼마나 충실히
-     반영하는지 검증합니다. LLM-as-a-judge의 타당성, 평가 신뢰도, 설문 실험,
-     계산사회과학적 접근을 포함합니다.
-
-  5. 대규모 웹 데이터 수집과 코퍼스 구축. 웹·소셜미디어 데이터를 안정적으로
-     수집하는 병렬·분산 파이프라인을 만들고, 연구 목적에 맞는 재현 가능한
-     코퍼스와 데이터셋을 구축합니다.
-
-  관련도가 낮은 것: 편향·공정성·정보 접근·데이터 구축과 무관한 순수 성능 최적화
-  (추론 속도, 양자화, 커널, 서빙), 비전 전용 연구, 순수 이론 최적화 논문.
-
-# ── arXiv (기본 꺼짐) ────────────────────────────────────────────────────────
-# arXiv 는 하루에 수백 편이 올라옵니다. 학회 프로시딩은 1년에 한 번, 저널은 한
-# 달에 한 번 나오므로, 둘을 함께 켜면 자리를 전부 프리프린트가 가져갑니다.
-# 심사를 거친 논문만 보려면 꺼두세요.
-arxiv:
-  enabled: false
-  categories:
-    - cs.CL   # Computation and Language
-    - cs.IR   # Information Retrieval
-    - cs.CY   # Computers and Society
-    - cs.AI
-    - cs.LG
-
 # ── Collection window ─────────────────────────────────────────────────────────
-days_back: 7
+# 게재일 기준이며, 주간 실행이 매번 이 창 전체를 다시 훑습니다. 겹치는 부분은
+# 이미 받은 논문이라 중복 제거가 걸러내고, 그 제거는 **랭킹 이전에** 돌기 때문에
+# 창을 넓혀도 LLM 비용은 늘지 않습니다. 늘어나는 건 수집 요청 몇 초뿐입니다.
+#
+# 그래서 7일이 아니라 30일입니다. 색인은 게재보다 늦게 붙습니다 — 3주 전에 나온
+# 논문이 오늘에야 Semantic Scholar 에 들어오는 일이 흔한데, 7일 창은 그걸 영영
+# 놓칩니다. 넓은 창이 그 지연을 흡수하는 그물입니다.
+#
+# 실측 (2026-08 기준): 7일 → 후보 10편 / 30일 → 후보 213편.
+days_back: 30
 
 # ── Cost controls ─────────────────────────────────────────────────────────────
-max_papers_to_rank: 1500  # truncate by score estimate if exceeded
-top_n: 30                 # maximum Notion pages per weekly run
+# 멤버 한 명의 랭킹 상한. top_n(실제 Notion 페이지 수)은 멤버 파일에 있습니다.
+max_papers_to_rank: 1500
 
 # ── LLM provider ─────────────────────────────────────────────────────────────
 # Claude(Anthropic) 와 ChatGPT(OpenAI) 둘 다 됩니다. provider 를 바꾸고 해당
@@ -297,24 +137,23 @@ top_n: 30                 # maximum Notion pages per weekly run
 # OpenAI → OPENAI_API_KEY). 랭킹과 노트 작성 모델은 따로 지정하므로,
 # "싼 모델로 거르고 좋은 모델로 정리한다"는 구조는 어느 쪽이든 동일합니다.
 llm:
-  provider: "anthropic"          # "anthropic" | "openai"
-  ranking_model: "claude-haiku-4-5"    # cheap bulk ranking
-  notes_model: "claude-sonnet-5"       # high-quality note generation
+#   provider: "anthropic"          # "anthropic" | "openai"
+#   ranking_model: "claude-haiku-4-5"    # cheap bulk ranking — 멤버별로 돌아갑니다
+#   notes_model: "claude-sonnet-5"       # high-quality note generation — 비용의 95%
 
   # ── ChatGPT 로 바꾸려면 위 세 줄을 지우고 아래를 쓰세요 ──
-  # provider: "openai"
-  # ranking_model: "gpt-4o-mini"       # 저렴한 대량 랭킹용
-  # notes_model: "gpt-4o"              # 노트 작성용
-  # (계정에서 쓸 수 있는 어떤 chat 모델 ID 든 넣을 수 있습니다)
+  provider: "openai"
+  ranking_model: "gpt-5.6-luna"       # 저렴한 대량 랭킹용
+  notes_model: "gpt-5.6-terra"              # 노트 작성용
 
-# ── IT news (optional) ───────────────────────────────────────────────────────
-# Written to the same Notion DB as papers, with Type = "뉴스" (papers are "논문").
+# ── IT news (공용) ───────────────────────────────────────────────────────────
+# 메인 페이지의 "📰 IT 뉴스" DB 에 실행당 1회 씁니다. 멤버별로 나누지 않습니다 —
+# 출처가 이미 큐레이션돼 있어 개인화할 게 없고, 1회 처리가 10회의 1/10 비용입니다.
 #
-# Unlike papers, news does NOT go through LLM relevance scoring. Hacker News is
-# already filtered by community score and the feeds below are hand-picked, so
-# the sources are curated by construction. Selection is: keyword filter →
-# score/recency order → one story per source in turn → top_n. The model is used
-# only to write the Korean briefing for the stories that made the cut.
+# 논문과 달리 뉴스는 LLM 관련도 채점을 거치지 않습니다. Hacker News 는 커뮤니티
+# 점수로 이미 걸러져 있고 아래 피드는 손으로 골랐으니, 소스가 구조적으로
+# 큐레이션돼 있습니다. 선별은: 키워드 필터 → 점수/최신순 → 출처별 라운드로빈 →
+# top_n. 모델은 통과한 기사의 한국어 브리핑을 쓰는 데만 씁니다.
 news:
   enabled: true
 
@@ -322,15 +161,17 @@ news:
     enabled: true
     min_points: 100      # community score floor — free first-pass filter
 
-  # Any RSS or Atom feed. Adding a publication is a config edit, not a code change.
+  # 어떤 RSS·Atom 피드든 됩니다. 매체 추가는 코드 변경이 아니라 설정 변경입니다.
   rss_feeds:
     - "https://techcrunch.com/feed/"
     - "https://www.theverge.com/rss/index.xml"
     - "https://feeds.arstechnica.com/arstechnica/technology-lab"
 
-  top_n: 5               # max news pages per weekly run
+  # 공용이 됐다고 늘릴 이유는 없습니다. 보는 사람이 10명이어도 이번 주 IT 소식이
+  # 두 배가 되는 건 아니니까요 — 오히려 공용이라 기준이 더 높아야 합니다.
+  top_n: 5
 
-  # Leave this list EMPTY to keep everything the sources deliver.
+  # 비우면 소스가 준 것을 다 남깁니다.
   # 뉴스는 논문보다 넓게 잡아도 됩니다 — 출처가 이미 큐레이션돼 있으니까요.
   keywords:
     - "AI"

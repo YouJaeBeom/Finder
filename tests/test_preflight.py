@@ -12,8 +12,15 @@ from pathlib import Path
 
 import pytest
 
-from paper_digest.config import Config, LLMConfig, extract_notion_id
-from paper_digest.pipeline import preflight
+from paper_digest.config import (
+    Config,
+    LimitsConfig,
+    LLMConfig,
+    NewsConfig,
+    extract_notion_id,
+)
+from paper_digest.members import Member
+from paper_digest.pipeline import check_budget, preflight
 from paper_digest.reporter import write_failure_report
 
 PAGE_ID = "3bc1256e056180898608c39506c43463"
@@ -55,6 +62,16 @@ def _cfg(**kw) -> Config:
     return Config(**base)
 
 
+def _member(member_id: str, top_n: int) -> Member:
+    return Member(
+        member_id=member_id,
+        name=member_id,
+        research_profile="profile",
+        keywords=["LLM"],
+        top_n=top_n,
+    )
+
+
 class TestPreflight:
     def test_a_complete_config_passes(self):
         assert preflight(_cfg()) is None
@@ -94,12 +111,35 @@ class TestPreflight:
             notion_parent_page_id=f"https://app.notion.com/p/F-{PAGE_ID}?source=copy_link"
         )) is None
 
-    def test_unusable_pinned_database_id_is_rejected(self):
-        problem = preflight(_cfg(notion_database_id="not-an-id"))
-        assert problem and "notion_database_id" in problem
 
-    def test_empty_database_id_is_fine(self):
-        assert preflight(_cfg(notion_database_id="")) is None
+class TestBudgetGate:
+    """The lab shares one API key, so the run refuses rather than clamps.
+
+    A clamp would quietly serve someone fewer papers than their file asks for,
+    and the person reading the digest has no way to tell that happened.
+    """
+
+    def test_a_run_within_the_limit_passes(self):
+        cfg = _cfg(limits=LimitsConfig(max_notes_per_run=100))
+        assert check_budget(cfg, [_member("a", 20), _member("b", 20)]) is None
+
+    def test_the_sum_over_members_is_what_is_checked(self):
+        # No single member is over the per-member limit; together they are over
+        # the run limit. This is the case max_top_n_per_member cannot catch.
+        cfg = _cfg(limits=LimitsConfig(max_top_n_per_member=30,
+                                       max_notes_per_run=50))
+        problem = check_budget(cfg, [_member(str(i), 30) for i in range(3)])
+        assert problem and "90 notes" in problem and "50" in problem
+
+    def test_news_counts_toward_the_limit_when_enabled(self):
+        cfg = _cfg(limits=LimitsConfig(max_notes_per_run=10),
+                   news=NewsConfig(enabled=True, top_n=5))
+        assert check_budget(cfg, [_member("a", 10)]) is not None
+
+    def test_news_costs_nothing_when_disabled(self):
+        cfg = _cfg(limits=LimitsConfig(max_notes_per_run=10),
+                   news=NewsConfig(enabled=False, top_n=5))
+        assert check_budget(cfg, [_member("a", 10)]) is None
 
     def test_init_mode_does_not_require_an_llm_key(self):
         """init only ever talks to Notion."""

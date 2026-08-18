@@ -1,3 +1,3 @@
-"""Paper Digest: automated arXiv/OpenAlex → Notion weekly research digest."""
+"""Paper Digest: peer-reviewed papers and IT news → Notion, weekly."""
 
 __version__ = "1.0.0"

@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 from unittest.mock import MagicMock
 
-import pytest
 
 from paper_digest.notes import _parse_note, generate_note
 from paper_digest.models import ResearchNote

@@ -1,32 +1,51 @@
-"""Main pipeline orchestration for weekly and batch modes."""
+"""Main pipeline: collect once, write news once, then serve each member in turn.
+
+The shape of a run, and why it is this shape:
+
+    1. Notion first        a wrong token costs two seconds here, not a full
+                           collection run and a ranking bill
+    2. Collect once        Semantic Scholar is queried by venue and date, never
+                           by keyword, so ten members cost exactly what one does
+    3. News once           shared by everyone, written to the main page
+    4. Members in turn     keyword filter → already-received → rank → note → write
+
+Step 2 is what makes the lab version cheap. Nothing about collection depends on
+who is reading: the venue allowlist and the date window are lab-wide, and each
+member's keywords are applied afterwards as a local string match. Adding a
+member adds zero external requests to the collection stage.
+
+Members are processed **sequentially in one process**, not as parallel GitHub
+Actions jobs. Notion's rate limit is per integration token, so parallel jobs
+share one budget while each behaves as though it owns the whole thing — the
+throttle in :mod:`paper_digest.notion_api` can only hold a line it can see. Fault
+isolation, the one thing parallel jobs would buy, is a ``try``/``except`` here.
+"""
 from __future__ import annotations
 
 import logging
-from dataclasses import replace
-from typing import List, Optional, Set
+from dataclasses import dataclass, field, replace
+from typing import List, Optional, Sequence, Set, Tuple
 
-from .collectors.arxiv import collect_arxiv_papers
-from .collectors.conferences import collect_conference_papers
-from .collectors.hackernews import collect_hackernews_stories
-from .collectors.rss import collect_rss_entries
-from .collectors.openalex import collect_openalex_papers
+from .collectors.semantic_scholar import collect_venue_papers
 from .config import PLACEHOLDERS, Config, load_config
 from .dedup import DedupStore, deduplicate_collected
-from .keywords import filter_by_keywords
+from .keywords import select_for_keywords
 from .llm.base import LLMProvider
 from .llm.factory import create_provider
+from .members import Member, MemberConfigError, effective_config, load_members
 from .models import Paper
-from .news_select import select_news
+from .news_stage import run_news
 from .notes import generate_notes
+from .notion_query import written_index
 from .notion_writer import (
     create_page,
-    ensure_database,
-    query_preprint_pages,
-    update_venue,
+    ensure_member_space,
+    ensure_news_database,
+    page_exists,
 )
 from .ranking import rank_papers
-from .venues import select_venues, venue_aliases_from_list
 from .reporter import write_failure_report, write_report
+from .venues import CONFERENCE, JOURNAL, select_venues
 
 logger = logging.getLogger(__name__)
 
@@ -36,15 +55,38 @@ logging.basicConfig(
 )
 
 
+# ── Per-member outcome ─────────────────────────────────────────────────────────
+
+@dataclass
+class MemberOutcome:
+    """What one member's turn produced, including how it failed."""
+
+    member: Member
+    candidates: int = 0
+    fresh: int = 0
+    created: List[Paper] = field(default_factory=list)
+    error: Optional[str] = None
+
+    def as_report_row(self) -> dict:
+        return {
+            "member_id": self.member.member_id,
+            "name": self.member.name,
+            "candidates": self.candidates,
+            "new": self.fresh,
+            "created": len(self.created),
+            "error": self.error,
+        }
+
+
 # ── Preflight ──────────────────────────────────────────────────────────────────
 
 def preflight(cfg: Config, needs_llm: bool = True) -> Optional[str]:
     """Return why this run cannot possibly succeed, or None if it can.
 
-    Checked before any collection or LLM call. Everything here is a
-    configuration mistake that no amount of work downstream can recover from,
-    and finding out after forty minutes of collection and a bill for ranking is
-    the wrong time to learn about it.
+    Checked before any collection or LLM call. Everything here is a configuration
+    mistake that no amount of work downstream can recover from, and finding out
+    after forty minutes of collection and a bill for ranking is the wrong time to
+    learn about it.
 
     *needs_llm* is False for init mode, which only ever talks to Notion.
     """
@@ -73,306 +115,356 @@ def preflight(cfg: Config, needs_llm: bool = True) -> Optional[str]:
             "Paste the page link (or the 32-character ID) from Notion."
         )
 
-    if cfg.notion_database_id and not cfg.database_id():
-        return (
-            f"notion_database_id does not contain a Notion ID: "
-            f"{cfg.notion_database_id!r}. Leave it empty to auto-resolve."
-        )
-
     return None
 
 
-def _collect_conferences(
-    cfg: Config,
-    days_back: Optional[int] = None,
-    max_results: Optional[int] = None,
-) -> List[Paper]:
-    """Papers from the top conferences, or nothing if the source is disabled.
+def check_budget(cfg: Config, members: Sequence[Member]) -> Optional[str]:
+    """Refuse a run that would write more notes than the lab allows.
 
-    Never raises: conference proceedings are a bonus source, and a Semantic
-    Scholar outage must not cost the arXiv and journal papers of the same run.
+    Notes are ~95% of the bill and the lab shares one key, so this is the guard
+    that no per-member limit can provide: fifteen people each legitimately at
+    their own maximum is still a bill nobody approved.
     """
-    if not cfg.conferences.enabled:
-        return []
+    planned = sum(m.top_n for m in members)
+    if cfg.news.enabled:
+        planned += cfg.news.top_n
 
-    venues = select_venues(
-        min_score=cfg.conferences.min_score,
-        include=cfg.conferences.include,
-        exclude=cfg.conferences.exclude,
-    )
-    if not venues:
-        logger.warning("No conferences selected — check conferences.min_score")
-        return []
-
-    try:
-        return collect_conference_papers(
-            venues=venues,
-            days_back=cfg.days_back if days_back is None else days_back,
-            max_results=(cfg.conferences.max_results if max_results is None
-                         else max_results),
+    if planned > cfg.limits.max_notes_per_run:
+        return (
+            f"This run would write up to {planned} notes, over the lab limit of "
+            f"{cfg.limits.max_notes_per_run} (limits.max_notes_per_run). Lower "
+            "someone's top_n or raise the limit deliberately."
         )
-    except Exception as exc:
-        logger.warning("Conference collection failed: %s", exc)
-        return []
+    return None
 
 
-# ── Weekly mode ────────────────────────────────────────────────────────────────
+def _load_run_inputs(
+    config_path: str,
+    only: Optional[str] = None,
+) -> Tuple[Optional[Config], List[Member], Optional[str]]:
+    """Config plus members, or the reason the run cannot start.
 
-def run_weekly(config_path: str = "config.yaml") -> int:
-    """Run the full weekly collection → filter → rank → note → Notion pipeline.
-
-    Returns exit code: 0 for success or clean empty run, 1 for anomalies.
+    Everything that can be checked without touching the network is checked here,
+    together, so a misconfigured member file and a missing token are both
+    reported before anything is collected or spent.
     """
     try:
         cfg = load_config(config_path)
     except Exception as exc:
-        logger.error("Failed to load config from %s: %s", config_path, exc)
-        write_failure_report("weekly", f"config load failed: {exc}")
-        return 1
+        return None, [], f"config load failed ({config_path}): {exc}"
+
+    try:
+        members = load_members(
+            cfg.members_dir,
+            max_members=cfg.limits.max_members,
+            max_top_n=cfg.limits.max_top_n_per_member,
+        )
+    except MemberConfigError as exc:
+        return cfg, [], str(exc)
+
+    if only:
+        members = [m for m in members if m.member_id == only]
+        if not members:
+            return cfg, [], (
+                f"No enabled member with id {only!r} in {cfg.members_dir!r}. "
+                "Run `python -m paper_digest members list` to see them."
+            )
 
     if problem := preflight(cfg):
+        return cfg, members, problem
+
+    if problem := check_budget(cfg, members):
+        return cfg, members, problem
+
+    return cfg, members, None
+
+
+# ── Collection (shared by every member) ────────────────────────────────────────
+
+def _collect_venues(
+    cfg: Config,
+    kind: str,
+    days_back: Optional[int] = None,
+    max_results: Optional[int] = None,
+) -> List[Paper]:
+    """Papers from one venue class, or nothing if that source is disabled.
+
+    Never raises. The two classes fail independently on purpose: proceedings
+    arrive in yearly bursts and journals publish steadily, so a Semantic Scholar
+    error while fetching one must not cost the other its whole run.
+    """
+    source = cfg.conferences if kind == CONFERENCE else cfg.journals
+    if not source.enabled:
+        return []
+
+    venues = select_venues(
+        min_score=source.min_score,
+        include=source.include,
+        exclude=source.exclude,
+        kind=kind,
+    )
+    if not venues:
+        logger.warning("No %ss selected — check %ss.min_score", kind, kind)
+        return []
+
+    try:
+        return collect_venue_papers(
+            venues=venues,
+            days_back=cfg.days_back if days_back is None else days_back,
+            max_results=(source.max_results if max_results is None
+                         else max_results),
+            source_label=kind,
+            # Journals answer with their exact registered name; conferences do
+            # not. See semantic_scholar._label_for.
+            exact_venue_match=(kind == JOURNAL),
+        )
+    except Exception as exc:
+        logger.warning("%s collection failed: %s", kind.capitalize(), exc)
+        return []
+
+
+def _collect_papers(
+    cfg: Config,
+    days_back: Optional[int] = None,
+    max_results: Optional[int] = None,
+    kinds: Sequence[str] = (CONFERENCE, JOURNAL),
+) -> List[Paper]:
+    """Every paper this run should consider, from both venue classes."""
+    collected: List[Paper] = []
+    counts = []
+    for kind in kinds:
+        papers = _collect_venues(cfg, kind, days_back, max_results)
+        collected.extend(papers)
+        counts.append(f"{kind}s: {len(papers)}")
+    logger.info("Collected %d papers (%s)", len(collected), ", ".join(counts))
+    return collected
+
+
+def _build_pool(
+    cfg: Config,
+    days_back: Optional[int] = None,
+    max_results: Optional[int] = None,
+    kinds: Sequence[str] = (CONFERENCE, JOURNAL),
+) -> List[Paper]:
+    """The deduplicated candidate pool every member is filtered against."""
+    collected = _collect_papers(cfg, days_back, max_results, kinds)
+    pool = deduplicate_collected(collected)
+    logger.info("%d unique papers in the pool", len(pool))
+    return pool
+
+
+# ── One member's turn ──────────────────────────────────────────────────────────
+
+def _serve_member(
+    cfg: Config,
+    member: Member,
+    pool: Sequence[Paper],
+    provider: LLMProvider,
+    top_n: Optional[int] = None,
+    rank_all: bool = False,
+) -> MemberOutcome:
+    """Filter, rank, annotate and write one member's papers into their database.
+
+    *top_n* and *rank_all* are the backfill overrides: a catch-up run keeps far
+    more than a week's worth and scores the entire window rather than obeying
+    ``max_papers_to_rank``, because taking the best 200 of a year means ranking
+    the year — a cap would drop papers in collection order, which is arbitrary.
+
+    Raises only on Notion problems that make the member unservable (their page or
+    database could not be resolved, or their database could not be read). Those
+    are caught by the caller so one member's Notion trouble cannot end everyone
+    else's run.
+    """
+    space = ensure_member_space(
+        cfg.parent_page_id(), member.member_id, member.name, cfg.notion_token
+    )
+    # Truth layer: what this member already has. Queried, not remembered — see
+    # paper_digest.notion_query.
+    index = written_index(space.database_id, cfg.notion_token)
+    # Optimization layer: what was scored and cut, which Notion has no record of.
+    scored = DedupStore(path=member.scored_cache_path(),
+                        database_id=space.database_id)
+
+    candidates = select_for_keywords(pool, member.keywords)
+    fresh = [p for p in candidates
+             if not index.contains(p) and not scored.is_seen(p)]
+
+    outcome = MemberOutcome(member=member, candidates=len(candidates),
+                            fresh=len(fresh))
+    logger.info("%s: %d candidates, %d not yet seen", member.name,
+                len(candidates), len(fresh))
+
+    if not fresh:
+        return outcome
+
+    member_cfg = effective_config(cfg, member)
+    if top_n is not None:
+        member_cfg = replace(member_cfg, top_n=top_n)
+    if rank_all:
+        member_cfg = replace(member_cfg, max_papers_to_rank=len(fresh))
+
+    try:
+        top = rank_papers(fresh, member_cfg, provider)
+    except RuntimeError as exc:
+        # Candidates existed and none cleared the cutoff. Reported as an error
+        # rather than as a quiet week: that pattern means a misconfigured profile
+        # or a degraded LLM API, and it must not pass silently.
+        outcome.error = f"ranking anomaly: {exc}"
+        logger.error("%s: %s", member.name, outcome.error)
+        return outcome
+
+    if not top:
+        # Candidates cleared the keyword filter and produced no pages. Reported
+        # as an error, not as a quiet week: a quiet week has *zero* candidates,
+        # while this pattern is what a collapse in abstract coverage looks like —
+        # the failure that let the old OpenAlex source return nothing for weeks
+        # while every run reported success.
+        outcome.error = (
+            f"{len(fresh)} new candidates but none were rankable — every one "
+            "arrived without an abstract"
+        )
+        logger.error("%s: %s", member.name, outcome.error)
+        return outcome
+
+    generate_notes(top, member_cfg, provider)
+
+    for paper in top:
+        try:
+            paper.notion_page_id = create_page(
+                paper, space.database_id, cfg.notion_token, space.properties
+            )
+            index.add(paper)
+            outcome.created.append(paper)
+        except Exception as exc:
+            logger.error("%s: could not write %r: %s", member.name,
+                         paper.title[:60], exc)
+
+    # Everything considered is cached, not just what was written. These papers
+    # have been judged; leaving the rejected ones out would make next week
+    # re-rank what it already paid to score.
+    for paper in fresh:
+        scored.mark_seen(paper)
+    scored.persist()
+
+    logger.info("%s: %d page(s) written", member.name, len(outcome.created))
+    return outcome
+
+
+# ── Reporting helpers ──────────────────────────────────────────────────────────
+
+def _overlap(outcomes: Sequence[MemberOutcome]) -> List[dict]:
+    """Papers more than one member received, most-shared first.
+
+    The signal a shared database would have carried in an ``Overlap`` column.
+    With one database per member it belongs in the run report instead, which is
+    also where anyone deciding what to discuss at a seminar would look.
+    """
+    by_title: dict = {}
+    for outcome in outcomes:
+        for paper in outcome.created:
+            key = paper.identifiers.normalized_title or paper.title
+            entry = by_title.setdefault(key, {"title": paper.title,
+                                              "venue": paper.venue,
+                                              "members": []})
+            entry["members"].append(outcome.member.name)
+
+    shared = [e for e in by_title.values() if len(e["members"]) > 1]
+    shared.sort(key=lambda e: len(e["members"]), reverse=True)
+    return shared
+
+
+def _weekly_exit_code(outcomes: Sequence[MemberOutcome]) -> Tuple[int, Optional[str]]:
+    """0 when every member was served, 1 with a summary when any failed."""
+    failed = [o for o in outcomes if o.error]
+    if not failed:
+        return 0, None
+    summary = "; ".join(f"{o.member.name}: {o.error}" for o in failed)
+    return 1, f"{len(failed)} of {len(outcomes)} members failed — {summary}"
+
+
+# ── Weekly mode ────────────────────────────────────────────────────────────────
+
+def run_weekly(config_path: str = "config.yaml", only: Optional[str] = None) -> int:
+    """Collect once, write news once, then serve every enabled member in turn.
+
+    Returns 0 when every member was served (including quiet weeks where nobody
+    had new papers), 1 when any member failed or hit a ranking anomaly.
+    """
+    cfg, members, problem = _load_run_inputs(config_path, only)
+    if problem:
         logger.error("Cannot start: %s", problem)
         write_failure_report("weekly", problem)
         return 1
+    assert cfg is not None  # _load_run_inputs returns a problem otherwise
 
-    # ── 0. Notion first ───────────────────────────────────────────────────────
-    # Resolved before collection and before any LLM call. A wrong token or page
-    # ID is the most common setup mistake, and it should cost two seconds to
-    # discover, not a full collection run and a ranking bill.
+    # ── Notion first ──────────────────────────────────────────────────────────
+    # Before collection and before any LLM call: a wrong token or an unshared
+    # page is the most common setup mistake and should cost two seconds.
+    news_db_id: Optional[str] = None
+    news_props: Optional[Set[str]] = None
     try:
-        db_id, db_props = ensure_database(
-            cfg.parent_page_id(), cfg.notion_token, cfg.database_id()
-        )
+        if not page_exists(cfg.parent_page_id(), cfg.notion_token):
+            raise RuntimeError(
+                f"parent page {cfg.parent_page_id()} is not visible to this "
+                "integration — open the page in Notion and share it via "
+                "'···' → 'Connections'"
+            )
+        if cfg.news.enabled:
+            news_db_id, news_props = ensure_news_database(
+                cfg.parent_page_id(), cfg.notion_token
+            )
     except Exception as exc:
         logger.error("Notion is not reachable or not configured: %s", exc)
         write_failure_report("weekly", f"notion: {exc}")
         return 1
 
-    # ── 1. Collection ──────────────────────────────────────────────────────────
-    logger.info("=== Stage 1: Collection ===")
-    arxiv_papers = (
-        collect_arxiv_papers(
-            categories=cfg.arxiv.categories,
-            keywords=cfg.keywords,
-            days_back=cfg.days_back,
-        )
-        if cfg.arxiv.enabled
-        else []
-    )
-    openalex_papers = collect_openalex_papers(
-        keywords=cfg.keywords,
-        days_back=cfg.days_back,
-        venue_aliases={**venue_aliases_from_list(), **cfg.venue_aliases},
-        excluded_venues=cfg.excluded_venues,
-        mailto=cfg.openalex_mailto,
-        api_key=cfg.openalex_api_key,
-        # Weekly asks "what became visible to us", not "what was published".
-        # A journal issue from May indexed today is new to this digest, and a
-        # publication-date window would miss it permanently.
-        by_index_date=True,
-    )
-    conference_papers = _collect_conferences(cfg)
-    all_papers = arxiv_papers + openalex_papers + conference_papers
-    logger.info(
-        "Collected %d total papers (arXiv: %d, OpenAlex: %d, conferences: %d)",
-        len(all_papers), len(arxiv_papers), len(openalex_papers),
-        len(conference_papers),
-    )
+    # ── Collection, once for everyone ─────────────────────────────────────────
+    logger.info("=== Collection (shared by %d member(s)) ===", len(members))
+    pool = _build_pool(cfg)
 
-    # ── 2. Within-run deduplication ───────────────────────────────────────────
-    logger.info("=== Stage 2: Deduplication ===")
-    unique_papers = deduplicate_collected(all_papers)
-    logger.info("%d unique papers after cross-source dedup", len(unique_papers))
+    provider = create_provider(cfg)
 
-    # ── 3. Keyword filtering ──────────────────────────────────────────────────
-    logger.info("=== Stage 3: Keyword filtering ===")
-    candidates = filter_by_keywords(unique_papers, cfg.keywords)
-    candidates_count = len(candidates)
-    logger.info("%d candidates after keyword filtering", candidates_count)
+    # ── News, once for everyone ───────────────────────────────────────────────
+    created_news = run_news(cfg, provider, news_db_id, news_props, members)
 
-    # ── 4. Cross-run deduplication ────────────────────────────────────────────
-    dedup_store = DedupStore(database_id=db_id)
-    new_candidates = [p for p in candidates if not dedup_store.is_seen(p)]
-    duplicates_skipped = len(candidates) - len(new_candidates)
-    logger.info(
-        "%d new candidates (%d already seen)", len(new_candidates), duplicates_skipped
-    )
-
-    # From here the paper side can come up empty without ending the run: news is
-    # a separate delivery and must not be suppressed by a quiet paper week.
-    # paper_exit carries the paper pipeline's verdict to the end.
-    paper_exit = 0
-    paper_error: Optional[str] = None
-    top_papers: List[Paper] = []
-    provider: Optional[LLMProvider] = None
-
-    if not new_candidates:
-        if candidates_count == 0:
-            logger.info("No keyword candidates this week (quiet week)")
-        else:
-            logger.info("All candidates already seen — no new pages to create")
-    else:
-        # ── 5. LLM ranking ────────────────────────────────────────────────────
-        logger.info("=== Stage 4: LLM ranking (%s / %s) ===",
-                    cfg.llm.provider, cfg.llm.ranking_model)
-        provider = create_provider(cfg)
-
+    # ── Members, in turn ──────────────────────────────────────────────────────
+    outcomes: List[MemberOutcome] = []
+    for member in members:
+        logger.info("=== Member: %s (%s) ===", member.name, member.member_id)
         try:
-            top_papers = rank_papers(new_candidates, cfg, provider)
-        except RuntimeError as exc:
-            logger.error("Ranking anomaly: %s", exc)
-            top_papers = []
-            paper_exit = 1
-            paper_error = f"ranking anomaly: {exc}"
-        else:
-            if not top_papers:
-                # Keyword candidates existed but nothing cleared the cutoff. Exit 1
-                # so the Actions run is marked failed and the alert fires — a
-                # misconfigured cutoff or a degraded LLM API must not pass
-                # silently. A genuinely quiet week has zero candidates and keeps 0.
-                paper_error = (
-                    f"ranking anomaly: {len(new_candidates)} candidates were "
-                    f"ranked but none passed the cutoff"
-                )
-                logger.error("%s", paper_error)
-                paper_exit = 1
-
-    # ── 6/7. Notes + Notion write ─────────────────────────────────────────────
-    created_papers: List[Paper] = []
-
-    if top_papers:
-        logger.info("=== Stage 5: Note generation (%s / %s) ===",
-                    cfg.llm.provider, cfg.llm.notes_model)
-        generate_notes(top_papers, cfg, provider)
-
-        logger.info("=== Stage 6: Notion write ===")
-        for paper in top_papers:
-            try:
-                page_id = create_page(paper, db_id, cfg.notion_token, db_props)
-                paper.notion_page_id = page_id
-                dedup_store.mark_seen(paper)
-                created_papers.append(paper)
-            except Exception as exc:
-                logger.error("Failed to create Notion page for '%s': %s",
-                             paper.title[:60], exc)
-
-    # ── 8. IT news (opt-in) ───────────────────────────────────────────────────
-    # Runs after the papers so a news-side failure can never cost us the paper
-    # pages that were already written.
-    if cfg.news.enabled and provider is None:
-        provider = create_provider(cfg)
-    created_news = _run_news_stage(cfg, provider, dedup_store, db_id, db_props)
-    created_papers.extend(created_news)
-
-    dedup_store.persist()
-
-    # ── 9. Report ─────────────────────────────────────────────────────────────
-    report = write_report(
-        papers_created=created_papers,
-        venue_updated=0,
-        duplicates_created=duplicates_skipped,
-        candidates_found=candidates_count,
-        papers_ranked=len(new_candidates),
-        mode="weekly",
-        error=paper_error,
-    )
-
-    logger.info(
-        "=== Done: %d pages created (%d news), %d duplicates skipped ===",
-        report["pages_created"],
-        len(created_news),
-        report["duplicates_created"],
-    )
-    return paper_exit
-
-
-def _run_news_stage(
-    cfg: Config,
-    provider: Optional[LLMProvider],
-    dedup_store: DedupStore,
-    db_id: Optional[str],
-    db_props: Optional[Set[str]] = None,
-) -> List[Paper]:
-    """Collect, select and write IT news. Returns the items written to Notion.
-
-    Unlike papers, news never goes through the cheap-model relevance gate — see
-    :mod:`paper_digest.news_select` for why. The provider here is used only to
-    write the Korean briefing for the stories already selected.
-
-    Deliberately never raises and never changes the run's exit code: the
-    exit-code contract in the requirements is about the paper pipeline, and a
-    flaky RSS feed must not fail a run whose papers landed fine. News trouble is
-    logged as a warning instead.
-    """
-    if not cfg.news.enabled or db_id is None:
-        return []
-
-    logger.info("=== Stage 7: IT news ===")
-    collected: List[Paper] = []
-
-    try:
-        if cfg.news.hacker_news_enabled:
-            collected.extend(collect_hackernews_stories(
-                min_points=cfg.news.hacker_news_min_points,
-                days_back=cfg.days_back,
-            ))
-        if cfg.news.rss_feeds:
-            collected.extend(collect_rss_entries(
-                feed_urls=cfg.news.rss_feeds,
-                days_back=cfg.days_back,
-            ))
-    except Exception as exc:
-        logger.warning("News collection failed: %s", exc)
-        return []
-
-    if not collected:
-        logger.info("News: nothing collected this run")
-        return []
-
-    unique_news = deduplicate_collected(collected)
-    # Drop already-written stories before selecting, so a repost from last week
-    # cannot consume one of this run's top_n slots.
-    fresh = [item for item in unique_news if not dedup_store.is_seen(item)]
-    logger.info(
-        "News: %d collected, %d unique, %d not yet written",
-        len(collected), len(unique_news), len(fresh),
-    )
-
-    top_news = select_news(fresh, cfg.news.keywords, cfg.news.top_n)
-    if not top_news:
-        return []
-
-    generate_notes(top_news, cfg, provider)
-
-    written: List[Paper] = []
-    for item in top_news:
-        try:
-            item.notion_page_id = create_page(item, db_id, cfg.notion_token, db_props)
-            dedup_store.mark_seen(item)
-            written.append(item)
+            outcomes.append(_serve_member(cfg, member, pool, provider))
         except Exception as exc:
-            logger.error("Failed to create Notion page for news '%s': %s",
-                         item.title[:60], exc)
+            logger.error("Member %s could not be served: %s", member.name, exc)
+            outcomes.append(MemberOutcome(member=member, error=str(exc)))
 
-    logger.info("News: %d pages created", len(written))
-    return written
+    exit_code, error = _weekly_exit_code(outcomes)
 
-
-def _log_rank_estimate(candidates: int, limit: int) -> None:
-    """Say what this run is about to cost, before it costs it.
-
-    Rough by construction — token counts are estimated from measured prompt
-    sizes — but the order of magnitude is what matters when the alternative is
-    finding out from a bill.
-    """
-    batches = (candidates + 19) // 20
-    rank_usd = batches * (4179 / 1e6 * 1.0 + 380 / 1e6 * 5.0)   # haiku 4.5
-    note_usd = limit * (960 / 1e6 * 3.0 + 800 / 1e6 * 15.0)     # sonnet 5
-    logger.info(
-        "Backfill will rank %d papers in %d batches and write notes for up to "
-        "%d — roughly $%.2f in ranking plus $%.2f in notes (estimate)",
-        candidates, batches, limit, rank_usd, note_usd,
+    created_papers = [p for o in outcomes for p in o.created]
+    report = write_report(
+        papers_created=created_papers + created_news,
+        venue_updated=0,
+        duplicates_created=sum(o.candidates - o.fresh for o in outcomes),
+        candidates_found=sum(o.candidates for o in outcomes),
+        papers_ranked=sum(o.fresh for o in outcomes),
+        mode="weekly",
+        error=error,
+        members=[o.as_report_row() for o in outcomes],
+        overlap=_overlap(outcomes),
     )
+
+    logger.info(
+        "=== Done: %d paper page(s) across %d member(s), %d news page(s) ===",
+        len(created_papers), len(outcomes), len(created_news),
+    )
+    for row in report.get("members", []):
+        logger.info("  %-12s candidates %4d → new %4d → written %3d%s",
+                    row["name"], row["candidates"], row["new"], row["created"],
+                    f"  [{row['error']}]" if row["error"] else "")
+    for entry in report.get("overlap", []):
+        logger.info("  겹침 %d명: %s (%s)", len(entry["members"]),
+                    entry["title"][:70], ", ".join(entry["members"]))
+
+    return exit_code
 
 
 # ── Backfill mode ──────────────────────────────────────────────────────────────
@@ -380,251 +472,126 @@ def _log_rank_estimate(candidates: int, limit: int) -> None:
 BACKFILL_SOURCES = ("conferences", "journals", "both")
 
 
+def _log_rank_estimate(candidates: int, limit: int, members: int) -> None:
+    """Say what this run is about to cost, before it costs it.
+
+    Rough by construction — token counts are estimated from measured prompt sizes
+    — but the order of magnitude is what matters when the alternative is finding
+    out from a bill.
+    """
+    batches = (candidates + 19) // 20
+    rank_usd = batches * (4179 / 1e6 * 1.0 + 380 / 1e6 * 5.0)   # haiku 4.5
+    note_usd = limit * (960 / 1e6 * 3.0 + 800 / 1e6 * 15.0)     # sonnet 5
+    logger.info(
+        "Backfill will rank up to %d papers per member in %d batches and write "
+        "up to %d notes each — roughly $%.2f + $%.2f per member, $%.2f for all "
+        "%d (estimate)",
+        candidates, batches, limit, rank_usd, note_usd,
+        (rank_usd + note_usd) * members, members,
+    )
+
+
 def run_backfill(
     config_path: str = "config.yaml",
     days: int = 365,
     limit: int = 200,
     sources: str = "both",
+    only: Optional[str] = None,
 ) -> int:
     """One-off catch-up: rank a long window at once and keep the best *limit*.
 
     The weekly run asks "what appeared since last week", which is the right
-    question forever after but leaves the whole prior year unread. This ranks
-    that year in a single pass and writes the top *limit* by relevance.
+    question forever after but leaves the whole prior year unread. This ranks that
+    year in one pass per member and writes their top *limit* by relevance.
 
-    Every paper it ranks is marked seen, not just the ones written. They have
-    been considered and judged; leaving the rejected ones unseen would make the
-    next weekly run re-rank thousands of papers it has already paid to score.
+    *sources* narrows what is backfilled. Conferences are the case that needs it:
+    proceedings drop once a year, so a digest set up in August has missed
+    everything from the spring, while journals publish steadily and the weekly run
+    picks them up on its own.
 
-    *sources* narrows what is backfilled. Conferences are the case that needs
-    it: proceedings drop once a year, so a digest set up in August has missed
-    everything from the spring, while journals publish steadily and the weekly
-    run picks them up on its own.
+    Use ``--member`` when one person joins an established lab — backfilling
+    everyone again would cost the whole lab's catch-up a second time.
     """
     if sources not in BACKFILL_SOURCES:
         logger.error("Unknown backfill source %r — expected one of %s",
                      sources, ", ".join(BACKFILL_SOURCES))
         return 1
-    try:
-        cfg = load_config(config_path)
-    except Exception as exc:
-        logger.error("Failed to load config: %s", exc)
-        write_failure_report("backfill", f"config load failed: {exc}")
-        return 1
 
-    if problem := preflight(cfg):
+    cfg, members, problem = _load_run_inputs(config_path, only)
+    if problem:
         logger.error("Cannot start: %s", problem)
         write_failure_report("backfill", problem)
         return 1
+    assert cfg is not None
 
     try:
-        db_id, db_props = ensure_database(
-            cfg.parent_page_id(), cfg.notion_token, cfg.database_id()
-        )
+        if not page_exists(cfg.parent_page_id(), cfg.notion_token):
+            raise RuntimeError(f"parent page {cfg.parent_page_id()} is not "
+                               "visible to this integration")
     except Exception as exc:
         logger.error("Notion is not reachable or not configured: %s", exc)
         write_failure_report("backfill", f"notion: {exc}")
         return 1
 
-    logger.info("=== Backfill: last %d days, %s, keeping the top %d ===",
-                days, sources, limit)
+    logger.info("=== Backfill: last %d days, %s, top %d per member, %d member(s) ===",
+                days, sources, limit, len(members))
 
-    openalex_papers = (
-        collect_openalex_papers(
-            keywords=cfg.keywords,
-            days_back=days,
-            max_results=100_000,
-            venue_aliases={**venue_aliases_from_list(), **cfg.venue_aliases},
-            excluded_venues=cfg.excluded_venues,
-            mailto=cfg.openalex_mailto,
-            api_key=cfg.openalex_api_key,
-        )
-        if sources in ("journals", "both")
-        else []
-    )
-    conference_papers = (
-        _collect_conferences(cfg, days_back=days, max_results=100_000)
-        if sources in ("conferences", "both")
-        else []
-    )
-    logger.info("Backfill sources: OpenAlex %d, conferences %d",
-                len(openalex_papers), len(conference_papers))
-    unique = deduplicate_collected(openalex_papers + conference_papers)
-    candidates = filter_by_keywords(unique, cfg.keywords)
-
-    dedup_store = DedupStore(database_id=db_id)
-    fresh = [p for p in candidates if not dedup_store.is_seen(p)]
-    logger.info("Backfill: %d collected → %d unique → %d matched → %d new",
-                len(openalex_papers) + len(conference_papers), len(unique),
-                len(candidates), len(fresh))
-
-    if not fresh:
-        logger.info("Nothing new to backfill")
-        write_report([], 0, 0, len(candidates), 0, mode="backfill")
+    kinds = {
+        "conferences": (CONFERENCE,),
+        "journals": (JOURNAL,),
+        "both": (CONFERENCE, JOURNAL),
+    }[sources]
+    pool = _build_pool(cfg, days_back=days, max_results=100_000, kinds=kinds)
+    if not pool:
+        logger.info("Nothing collected — nothing to backfill")
+        write_report([], 0, 0, 0, 0, mode="backfill")
         return 0
 
-    # Backfill deliberately ranks everything rather than obeying
-    # max_papers_to_rank: taking the top 200 of a year means scoring the year,
-    # and a cap would drop papers in collection order, which is arbitrary.
-    # The cost scales with that count, so it is stated before it is spent.
-    _log_rank_estimate(len(fresh), limit)
+    _log_rank_estimate(len(pool), limit, len(members))
 
     provider = create_provider(cfg)
-    ranked_cfg = replace(cfg, top_n=limit, max_papers_to_rank=len(fresh))
-    try:
-        top_papers = rank_papers(fresh, ranked_cfg, provider)
-    except RuntimeError as exc:
-        logger.error("Backfill ranking anomaly: %s", exc)
-        write_failure_report("backfill", f"ranking anomaly: {exc}")
-        return 1
 
-    logger.info("Backfill: writing the top %d of %d ranked", len(top_papers),
-                len(fresh))
-    generate_notes(top_papers, cfg, provider)
-
-    created: List[Paper] = []
-    for paper in top_papers:
+    outcomes: List[MemberOutcome] = []
+    for member in members:
+        logger.info("=== Backfilling %s (%s) ===", member.name, member.member_id)
         try:
-            paper.notion_page_id = create_page(paper, db_id, cfg.notion_token,
-                                               db_props)
-            created.append(paper)
+            outcomes.append(_serve_member(cfg, member, pool, provider,
+                                          top_n=limit, rank_all=True))
         except Exception as exc:
-            logger.error("Failed to create Notion page for %r: %s",
-                         paper.title[:60], exc)
+            logger.error("Backfill failed for %s: %s", member.name, exc)
+            outcomes.append(MemberOutcome(member=member, error=str(exc)))
 
-    # Everything considered is marked seen — see the docstring.
-    for paper in fresh:
-        dedup_store.mark_seen(paper)
-    dedup_store.persist()
-
-    write_report(created, 0, 0, len(candidates), len(fresh), mode="backfill")
-    logger.info("=== Backfill done: %d pages created, %d marked seen ===",
-                len(created), len(fresh))
-    return 0
-
-
-# ── Batch mode ─────────────────────────────────────────────────────────────────
-
-def run_batch(config_path: str = "config.yaml", venue: Optional[str] = None) -> int:
-    """Batch mode: stamp accepted venue onto preprint pages, add at most top_n new ones.
-
-    Triggered manually via workflow_dispatch.
-    """
-    if not venue:
-        logger.error("--venue must be specified for batch mode (e.g. 'ACL 2026')")
-        return 1
-
-    try:
-        cfg = load_config(config_path)
-    except Exception as exc:
-        logger.error("Failed to load config: %s", exc)
-        write_failure_report("batch", f"config load failed: {exc}")
-        return 1
-
-    if problem := preflight(cfg):
-        logger.error("Cannot start: %s", problem)
-        write_failure_report("batch", problem)
-        return 1
-
-    # Resolves to the same database the weekly run uses — by config, by the
-    # cached ID, or by finding it under the parent page. Batch mode used to
-    # require a local state.json, which never exists on a fresh CI checkout.
-    try:
-        db_id, db_props = ensure_database(
-            cfg.parent_page_id(), cfg.notion_token, cfg.database_id()
-        )
-    except Exception as exc:
-        logger.error("Could not resolve the Notion database: %s", exc)
-        write_failure_report("batch", f"notion: {exc}")
-        return 1
-
-    # Update existing preprint pages to accepted venue
-    logger.info("=== Batch mode: updating venue to '%s' ===", venue)
-    preprint_pages = query_preprint_pages(db_id, cfg.notion_token)
-    venue_updated_count = 0
-
-    dedup_store = DedupStore(database_id=db_id)
-    for page in preprint_pages:
-        page_id = page["id"]
-        try:
-            update_venue(page_id, venue, cfg.notion_token)
-            venue_updated_count += 1
-        except Exception as exc:
-            logger.error("Failed to update page %s: %s", page_id, exc)
-
-    # Collect new papers (limited to top_n)
-    logger.info("=== Batch mode: collecting new papers (top_n=%d) ===", cfg.top_n)
-    arxiv_papers = (
-        collect_arxiv_papers(
-            categories=cfg.arxiv.categories,
-            keywords=cfg.keywords,
-            days_back=cfg.days_back,
-        )
-        if cfg.arxiv.enabled
-        else []
-    )
-    openalex_papers = collect_openalex_papers(
-        keywords=cfg.keywords,
-        days_back=cfg.days_back,
-        venue_aliases=cfg.venue_aliases,
-        excluded_venues=cfg.excluded_venues,
-    )
-    all_papers = arxiv_papers + openalex_papers
-    unique_papers = deduplicate_collected(all_papers)
-    candidates = filter_by_keywords(unique_papers, cfg.keywords)
-    new_candidates = [p for p in candidates if not dedup_store.is_seen(p)]
-
-    created_papers: List[Paper] = []
-    if new_candidates:
-        llm_key = cfg.anthropic_api_key if cfg.llm.provider == "anthropic" else cfg.openai_api_key
-        if llm_key:
-            provider = create_provider(cfg)
-            try:
-                top_papers = rank_papers(new_candidates, cfg, provider)
-                top_papers = top_papers[: cfg.top_n]
-                generate_notes(top_papers, cfg, provider)
-                for paper in top_papers:
-                    paper.venue = venue
-                    paper.venue_status = "accepted"
-                    try:
-                        page_id = create_page(paper, db_id, cfg.notion_token, db_props)
-                        paper.notion_page_id = page_id
-                        dedup_store.mark_seen(paper)
-                        created_papers.append(paper)
-                    except Exception as exc:
-                        logger.error("Failed to create page: %s", exc)
-            except RuntimeError as exc:
-                logger.warning("Batch ranking anomaly: %s", exc)
-        else:
-            logger.warning("No LLM key set — skipping new paper additions in batch mode")
-
-    dedup_store.persist()
-
+    exit_code, error = _weekly_exit_code(outcomes)
+    created = [p for o in outcomes for p in o.created]
     write_report(
-        papers_created=created_papers,
-        venue_updated=venue_updated_count,
+        papers_created=created,
+        venue_updated=0,
         duplicates_created=0,
-        candidates_found=len(candidates),
-        papers_ranked=len(new_candidates),
-        mode="batch",
+        candidates_found=sum(o.candidates for o in outcomes),
+        papers_ranked=sum(o.fresh for o in outcomes),
+        mode="backfill",
+        error=error,
+        members=[o.as_report_row() for o in outcomes],
+        overlap=_overlap(outcomes),
     )
-
-    logger.info(
-        "=== Batch done: %d venue updated, %d new pages created ===",
-        venue_updated_count,
-        len(created_papers),
-    )
-    return 0
+    logger.info("=== Backfill done: %d page(s) across %d member(s) ===",
+                len(created), len(outcomes))
+    return exit_code
 
 
 # ── Init mode ──────────────────────────────────────────────────────────────────
 
 def run_init(config_path: str = "config.yaml") -> int:
-    """Create the Notion database under the configured parent page."""
+    """Create the whole Notion structure: news database and every member space.
+
+    Idempotent, and worth running before the first scheduled digest — it turns
+    "Monday's run created nothing and I do not know why" into an error you read
+    immediately, with nothing collected and nothing spent. Needs no LLM key.
+    """
     try:
         cfg = load_config(config_path)
     except Exception as exc:
-        logger.error("Failed to load config: %s", exc)
+        logger.error("Failed to load config from %s: %s", config_path, exc)
         return 1
 
     if problem := preflight(cfg, needs_llm=False):
@@ -632,16 +599,37 @@ def run_init(config_path: str = "config.yaml") -> int:
         return 1
 
     try:
-        db_id, _ = ensure_database(
-            cfg.parent_page_id(), cfg.notion_token, cfg.database_id()
+        members = load_members(
+            cfg.members_dir,
+            max_members=cfg.limits.max_members,
+            max_top_n=cfg.limits.max_top_n_per_member,
         )
-    except Exception as exc:
-        logger.error("Notion is not reachable or not configured: %s", exc)
+    except MemberConfigError as exc:
+        logger.error("Cannot start: %s", exc)
         return 1
 
-    logger.info("Notion database ready: %s", db_id)
-    logger.info(
-        "Pin it by adding this line to config.yaml:\n  notion_database_id: \"%s\"",
-        db_id,
-    )
+    try:
+        if not page_exists(cfg.parent_page_id(), cfg.notion_token):
+            logger.error(
+                "Parent page %s is not visible to this integration. Open it in "
+                "Notion and share it: '···' → 'Connections' → your integration.",
+                cfg.parent_page_id(),
+            )
+            return 1
+
+        if cfg.news.enabled:
+            news_db_id, _ = ensure_news_database(cfg.parent_page_id(),
+                                                 cfg.notion_token)
+            logger.info("News database ready: %s", news_db_id)
+
+        for member in members:
+            space = ensure_member_space(cfg.parent_page_id(), member.member_id,
+                                        member.name, cfg.notion_token)
+            logger.info("%s → page %s, database %s", member.name,
+                        space.page_id, space.database_id)
+    except Exception as exc:
+        logger.error("Notion setup failed: %s", exc)
+        return 1
+
+    logger.info("Notion structure ready for %d member(s)", len(members))
     return 0
