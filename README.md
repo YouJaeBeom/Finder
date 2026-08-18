@@ -30,16 +30,20 @@
 
 논문은 **Semantic Scholar 한 곳**에서만 가져옵니다. API 키가 필요 없고, venue와 초록과 식별자를 한 번의 요청으로 함께 줍니다.
 
-| 소스 | 무엇을 가져오나 | 0.5 기준 |
+| 소스 | 무엇을 가져오나 | `min_score: 0.1` 기준 |
 |---|---|---|
-| 학회 | [venues.csv](paper_digest/data/venues.csv)의 상위 학회 프로시딩 | 86곳 통과 → **81곳 조회** |
-| 저널 | 같은 표의 저널 (TPAMI, TOIS, TACL, TKDE, JASIST, Political Communication …) | 26곳 |
+| 학회 | [venues.csv](paper_digest/data/venues.csv)의 학회 프로시딩 | 246곳 통과 → **228곳 조회** |
+| 저널 | 같은 표의 저널 (TPAMI, TOIS, TACL, TKDE, JASIST, Political Communication …) | **28곳** |
 
 **품질 장치는 이 화이트리스트 하나입니다.** 목록에 있는 곳의 논문만 들어옵니다. 주제 필터로 대신하려던 시도는 실패했습니다 — 자세한 건 아래 "왜 OpenAlex와 arXiv를 걷어냈나".
 
 venue 목록은 **랩 소유**입니다. 멤버가 개인화할 수 없습니다 — 수집이 공용 1회라 구조적으로 불가능합니다. 그래서 화이트리스트에 없는 분야는 **누구에게도** 영영 들어오지 않습니다. 새 멤버의 후보 수가 0에 가까우면 키워드 문제가 아니라 `venues.csv` 문제입니다.
 
-점수를 통과한 86곳 중 81곳만 실제로 조회합니다. Semantic Scholar 에 논문이 한 편도 없는 venue는 요청만 쓰고 0건을 돌려주므로 [venues.py](paper_digest/venues.py)가 제외합니다.
+점수를 통과한 246곳 중 228곳만 실제로 조회합니다. Semantic Scholar 에 논문이 한 편도 없는 venue는 요청만 쓰고 0건을 돌려주므로 [venues.py](paper_digest/venues.py)가 제외합니다.
+
+**`min_score`가 0.5가 아니라 0.1인 이유.** 점수는 한국 CS 종합 순위를 정규화한 값이라 NLP·IR·계산사회과학 학회를 낮게 잡습니다. 0.5 컷에서는 ICWSM(0.20) · NAACL(0.20) · EACL(0.30) · COLING(0.30) · RecSys(0.25) · CoNLL(0.20)이 **전부** 잘려나갔습니다. 편향·정보접근을 다루는 랩에서 이건 커버리지 구멍입니다. 넓힌 대신 정밀도는 전적으로 멤버별 키워드가 책임집니다.
+
+FAccT · AIES · ECIR은 순위표에 아예 없어서 손으로 추가했습니다 (점수도 손으로 매김). `query`/`name`/`papers`는 전부 라이브 API로 실측한 값입니다 — `name`이 S2가 돌려주는 문자열과 다르면 약칭 변환이 깨지고, `papers`가 0이면 그 행은 조용히 수집에서 빠집니다. **TMLR은 추가할 수 없었습니다**: Semantic Scholar에 어떤 명칭으로도 venue가 존재하지 않습니다(OpenReview 전용).
 
 > 학회 논문은 프로시딩이 나올 때 한꺼번에 들어옵니다. 조용한 주가 대부분이고, 어느 주에 갑자기 한 학회가 통째로 들어오는 게 정상입니다. 저널이 그 빈 주를 채웁니다.
 

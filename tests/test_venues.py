@@ -7,7 +7,12 @@ from __future__ import annotations
 
 import pytest
 
-from paper_digest.venues import load_venues, normalize_venue, select_venues
+from paper_digest.venues import (
+    load_venues,
+    normalize_venue,
+    select_venues,
+    venue_aliases_from_list,
+)
 
 
 class TestKnownVenues:
@@ -152,3 +157,83 @@ class TestVenueKinds:
         """Silently returning nothing would look like a quiet week forever."""
         with pytest.raises(ValueError, match="preprint"):
             select_venues(kind="preprint")
+
+
+class TestLabCriticalVenues:
+    """The venues this lab's topic cannot do without.
+
+    The scores in venues.csv are a normalized Korean CS ranking, which weights
+    systems and theory heavily and rates NLP, IR and computational social science
+    venues low. At the old 0.5 cut that quietly removed ICWSM, NAACL, EACL,
+    COLING, RecSys and CoNLL — and FAccT, AIES and ECIR were never in the ranking
+    at all, so they had to be added by hand.
+
+    The allowlist *is* the coverage: a venue missing here is a venue no member
+    can ever receive a paper from. So this pins the ones that matter, against a
+    future regeneration of the table from the ranking silently dropping them.
+    """
+
+    # Every one of these is measured against the live API, not guessed.
+    REQUIRED = [
+        "FAccT", "AIES", "ECIR",          # hand-added: fairness / ethics / IR
+        "ICWSM", "NAACL", "EACL", "COLING", "CoNLL", "RecSys",  # below 0.5
+        "ACL", "EMNLP", "SIGIR", "CIKM", "WSDM", "WWW",          # already high
+    ]
+
+    def test_each_one_is_in_the_table_and_collectable(self):
+        by_abbr = {v.abbr: v for v in load_venues()}
+        missing = [a for a in self.REQUIRED if a not in by_abbr]
+        assert not missing, f"absent from venues.csv: {missing}"
+
+        uncollectable = [a for a in self.REQUIRED if not by_abbr[a].collectable]
+        assert not uncollectable, (
+            f"present but papers=0, so silently never queried: {uncollectable}"
+        )
+
+    def test_the_shipped_min_score_actually_selects_them(self):
+        """A venue in the table but under the configured cut is still invisible."""
+        from paper_digest.config import load_config
+
+        cfg = load_config("config.yaml")
+        selected = set(select_venues(
+            min_score=cfg.conferences.min_score,
+            include=cfg.conferences.include,
+            exclude=cfg.conferences.exclude,
+            kind="conference",
+        ).values())
+
+        missing = [a for a in self.REQUIRED if a not in selected]
+        assert not missing, (
+            f"conferences.min_score={cfg.conferences.min_score} excludes {missing}"
+        )
+
+    def test_the_hand_added_venues_carry_what_s2_answers_with(self):
+        """`name` has to be the exact string S2 returns, or the label lookup fails.
+
+        normalize_venue maps the full registered name onto the abbreviation. A
+        `name` that does not match byte-for-byte leaves papers filed under the
+        long form — or, for a batch, dropped as "a venue we never asked for".
+        """
+        by_abbr = {v.abbr: v for v in load_venues()}
+        measured = {
+            "FAccT": "Conference on Fairness, Accountability and Transparency",
+            "AIES": "AAAI/ACM Conference on AI, Ethics, and Society",
+            "ECIR": "European Conference on Information Retrieval",
+        }
+        aliases = venue_aliases_from_list()
+        for abbr, name in measured.items():
+            assert by_abbr[abbr].name == name, f"{abbr} name drifted"
+            # The same call the collector makes when it has to recover an
+            # abbreviation from what a batch answered with.
+            assert normalize_venue(name, aliases=aliases) == abbr
+
+    def test_naacl_is_not_labelled_as_findings_only(self):
+        """One S2 venue covers the main conference and Findings alike.
+
+        The row arrived from the ranking as "NAACL Findings", which would have
+        stamped that on every NAACL paper — 2,000+ of them, most from the main
+        conference.
+        """
+        by_abbr = {v.abbr: v for v in load_venues()}
+        assert "NAACL" in by_abbr
+        assert "NAACL Findings" not in by_abbr

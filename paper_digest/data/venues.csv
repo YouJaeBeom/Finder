@@ -51,6 +51,7 @@ USENIX FAST,USENIX Conference on File and Storage Technologies,USENIX Conference
 USENIX Security,USENIX Security Symposium,USENIX Security Symposium,conf/uss,0.95,1121,conference
 ECCV,ECCV,European Conference on Computer Vision (ECCV),conf/eccv,0.90,2468,conference
 EuroSys,EuroSys,European Conference on Computer Systems,conf/eurosys,0.90,339,conference
+FAccT,FAccT,"Conference on Fairness, Accountability and Transparency",conf/facct,0.90,1110,conference
 ICFP,ICFP,ACM SIGPLAN International Conference on Functional Programming,conf/icfp,0.90,0,conference
 NDSS,NDSS,Network and Distributed System Security Symposium,conf/ndss,0.90,647,conference
 RTAS,RTAS,IEEE Real Time Technology and Applications Symposium,conf/rtas,0.90,132,conference
@@ -63,6 +64,7 @@ CONEXT,CONEXT,Conference on Emerging Network Experiment and Technology,conf/cone
 ICDM,ICDM,IEEE International Conference on Data Mining,conf/icdm,0.75,575,conference
 PACT,PACT,International Conference on Parallel Architectures and Compilation Techniques,conf/IEEEpact,0.75,140,conference
 PPoPP,PPoPP,ACM SIGPLAN Symposium on Principles &#38; Practice of Parallel Programming,conf/ppopp,0.75,177,conference
+AIES,AIES,"AAAI/ACM Conference on AI, Ethics, and Society",conf/aies,0.70,1016,conference
 ISSTA,ISSTA,International Symposium on Software Testing and Analysis,conf/issta,0.70,304,conference
 VR,VR,IEEE Conference on Virtual Reality and 3D User Interfaces,conf/vr,0.70,395,conference
 COLT,COLT,Annual Conference Computational Learning Theory,conf/colt,0.65,669,conference
@@ -71,6 +73,7 @@ MICCAI,MICCAI,International Conference on Medical Image Computing and Computer-A
 PODC,PODC,ACM Symposium on Principles of Distributed Computing,conf/podc,0.65,149,conference
 SenSys,SenSys,ACM International Conference on Embedded Networked Sensor Systems,conf/sensys,0.65,298,conference
 WSDM,WSDM,Web Search and Data Mining,conf/wsdm,0.65,637,conference
+ECIR,ECIR,European Conference on Information Retrieval,conf/ecir,0.60,2630,conference
 HPDC,HPDC,International Symposium on High-Performance Parallel Distributed Computing,conf/hpdc,0.60,230,conference
 IJCAI,IJCAI,International Joint Conference on Artificial Intelligence,conf/ijcai,0.60,2995,conference
 MM,MM,ACM International Conference on Multimedia,conf/mm,0.60,3852,conference
@@ -180,7 +183,7 @@ InterSpeech,InterSpeech,Conference of the International Speech Communication Ass
 MFCS,MFCS,International Symposium on Mathematical Foundations of Computer Science,conf/mfcs,0.20,251,conference
 MLSys,MLSys,Conference on Machine Learning and Systems,conf/mlsys,0.20,133,conference
 MSR,MSR,IEEE/ACM International Conference on Mining Software Repositories,conf/msr,0.20,489,conference
-NAACL Findings,North American Chapter of the Association for Computational Linguistics,North American Chapter of the Association for Computational Linguistics,conf/naacl,0.20,2031,conference
+NAACL,North American Chapter of the Association for Computational Linguistics,North American Chapter of the Association for Computational Linguistics,conf/naacl,0.20,2031,conference
 PAM,PAM,International Conference on Passive and Active Measurement,conf/pam,0.20,96,conference
 PERFORMANCE,PERFORMANCE,"International Symposium on Computer Modeling, Measurement and Evaluation",conf/performance,0.20,217,conference
 PETS,PETS,Proceedings on Privacy Enhancing Technologies,journals/popets,0.20,105,conference
@@ -253,31 +256,31 @@ ITS,ITS,International Conference on Augmented Intelligence and Intelligent Tutor
 InfoVis,InfoVis,IEEE Information Visualization Conference,conf/infovis,0.05,0,conference
 SAC,SAC,ACM Symposium on Applied Computing,conf/sac,0.05,1091,conference
 TCC,TCC,Theory of Cryptography Conference,conf/tcc,0.05,79,conference
-TPAMI,IEEE Transactions on Pattern Analysis and Machine Intelligence,IEEE Transactions on Pattern Analysis and Machine Intelligence,,1.00,742,journal
-TOIS,ACM Transactions on Information Systems,ACM Transactions on Information Systems,,1.00,58,journal
 TACL,Transactions of the Association for Computational Linguistics,Transactions of the Association for Computational Linguistics,,1.00,35,journal
-TKDE,IEEE Transactions on Knowledge and Data Engineering,IEEE Transactions on Knowledge and Data Engineering,,0.90,509,journal
+TOIS,ACM Transactions on Information Systems,ACM Transactions on Information Systems,,1.00,58,journal
+TPAMI,IEEE Transactions on Pattern Analysis and Machine Intelligence,IEEE Transactions on Pattern Analysis and Machine Intelligence,,1.00,742,journal
 CL,Computational Linguistics,Computational Linguistics,,0.90,27,journal
 JMLR,Journal of Machine Learning Research,Journal of Machine Learning Research,,0.90,8,journal
-JAIR,Journal of Artificial Intelligence Research,Journal of Artificial Intelligence Research,,0.80,94,journal
+TKDE,IEEE Transactions on Knowledge and Data Engineering,IEEE Transactions on Knowledge and Data Engineering,,0.90,509,journal
 AIJ,Artificial Intelligence,Artificial Intelligence,,0.80,131,journal
+JAIR,Journal of Artificial Intelligence Research,Journal of Artificial Intelligence Research,,0.80,94,journal
 JASIST,Journal of the Association for Information Science and Technology,Journal of the Association for Information Science and Technology,,0.80,57,journal
 TOCHI,ACM Transactions on Computer-Human Interaction,ACM Transactions on Computer-Human Interaction,,0.80,17,journal
 CSUR,ACM Computing Surveys,ACM Computing Surveys,,0.70,232,journal
-TKDD,ACM Transactions on Knowledge Discovery from Data,ACM Transactions on Knowledge Discovery from Data,,0.70,123,journal
-TWEB,ACM Transactions on the Web,ACM Transactions on the Web,,0.70,58,journal
 IPM,Information Processing & Management,Information Processing & Management,,0.70,256,journal
 NatMI,Nature Machine Intelligence,Nature Machine Intelligence,,0.70,158,journal
+TKDD,ACM Transactions on Knowledge Discovery from Data,ACM Transactions on Knowledge Discovery from Data,,0.70,123,journal
+TWEB,ACM Transactions on the Web,ACM Transactions on the Web,,0.70,58,journal
 CACM,Communications of the ACM,Communications of the ACM,,0.60,245,journal
+DMKD,Data Mining and Knowledge Discovery,Data Mining and Knowledge Discovery,,0.60,95,journal
+NMS,New Media & Society,New Media & Society,,0.60,49,journal
+NatHB,Nature Human Behaviour,Nature Human Behaviour,,0.60,247,journal
+PolComm,Political Communication,Political Communication,,0.60,65,journal
 TIST,ACM Transactions on Intelligent Systems and Technology,ACM Transactions on Intelligent Systems and Technology,,0.60,135,journal
 TORS,ACM Transactions on Recommender Systems,ACM Transactions on Recommender Systems,,0.60,49,journal
-DMKD,Data Mining and Knowledge Discovery,Data Mining and Knowledge Discovery,,0.60,95,journal
-NatHB,Nature Human Behaviour,Nature Human Behaviour,,0.60,247,journal
-NMS,New Media & Society,New Media & Society,,0.60,49,journal
-PolComm,Political Communication,Political Communication,,0.60,65,journal
-SSCR,Social Science Computer Review,Social Science Computer Review,,0.50,84,journal
 EPJDS,EPJ Data Science,EPJ Data Science,,0.50,92,journal
-POQ,Public Opinion Quarterly,Public Opinion Quarterly,,0.50,39,journal
 IJHCS,International Journal of Human-Computer Studies,International Journal of Human-Computer Studies,,0.50,33,journal
+POQ,Public Opinion Quarterly,Public Opinion Quarterly,,0.50,39,journal
+SSCR,Social Science Computer Review,Social Science Computer Review,,0.50,84,journal
 DigJourn,Digital Journalism,Digital Journalism,,0.40,86,journal
 JDIQ,Journal of Data and Information Quality,Journal of Data and Information Quality,,0.40,3,journal

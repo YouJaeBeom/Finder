@@ -80,11 +80,19 @@ limits:
 conferences:
   enabled: true
 
-  # 0.5 = 대략 "우수" 이상. 점수를 통과하는 86곳 가운데 Semantic Scholar 에 논문이
-  # 있는 81곳을 실제로 조회합니다 (나머지는 요청만 쓰고 0건이라 목록에서 빠집니다).
-  # 1.00 = 모든 기관이 최우수로 꼽은 곳(ACL, SIGIR,
-  # KDD, WWW, CHI, AAAI, ICML, NeurIPS, SIGMOD ...). 좁히려면 0.7~1.0 으로.
-  min_score: 0.5
+  # 0.1 = venues.csv 의 사실상 전부. 점수를 통과하는 246곳 가운데 Semantic Scholar 에
+  # 논문이 있는 228곳을 실제로 조회합니다 (나머지는 요청만 쓰고 0건이라 빠집니다).
+  #
+  # 0.5(84곳)가 아니라 0.1로 둔 이유: 0.5 컷이 이 랩의 핵심 학회를 그대로 잘라냈습니다.
+  # ICWSM(0.20) · EACL(0.30) · COLING(0.30) · RecSys(0.25) · NAACL(0.20) · CoNLL(0.20)이
+  # 전부 아래에 있었습니다. 점수는 한국 CS 종합 순위를 정규화한 값이라 NLP·IR·계산사회
+  # 과학 쪽 학회를 낮게 잡습니다 — 이 랩 기준의 "상위"와 다릅니다.
+  #
+  # 대신 정밀도는 전적으로 멤버별 키워드가 책임집니다. 넓힌 만큼 후보가 늘고, 후보가
+  # 늘면 채점 비용이 늡니다 (멤버당 상한은 max_papers_to_rank).
+  # 1.00 = 모든 기관이 최우수로 꼽은 곳(ACL, SIGIR, KDD, WWW, CHI, AAAI, ICML,
+  # NeurIPS, SIGMOD ...). 다시 좁히려면 0.5~1.0 으로.
+  min_score: 0.1
 
   # 점수와 무관하게 반드시 포함/제외할 학회 (약자)
   include: []
@@ -97,10 +105,12 @@ conferences:
 journals:
   enabled: true
 
-  # 0.5 = 26곳 (TPAMI, TOIS, TACL, TKDE, CL, JMLR, JAIR, AIJ, JASIST, TOCHI,
-  # CSUR, TKDD, TWEB, IPM, NatMI, CACM, TIST, TORS, DMKD, NatHB, NMS,
-  # Political Communication, SSCR, EPJ Data Science, POQ, IJHCS)
-  min_score: 0.5
+  # 0.1 = 28곳. 저널 점수는 손으로 매긴 것이라 컷을 내려도 거의 변하지 않습니다
+  # (0.5 에서 26곳 → 0.1 에서 28곳, Digital Journalism 과 JDIQ 가 추가됩니다).
+  # TPAMI, TOIS, TACL, TKDE, CL, JMLR, JAIR, AIJ, JASIST, TOCHI, CSUR, TKDD,
+  # TWEB, IPM, NatMI, CACM, TIST, TORS, DMKD, NatHB, NMS, Political
+  # Communication, SSCR, EPJ Data Science, POQ, IJHCS
+  min_score: 0.1
 
   include: []
   exclude: []
