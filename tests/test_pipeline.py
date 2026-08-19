@@ -489,3 +489,53 @@ class TestSingleMemberRun:
         assert run_weekly(lab["config"], only="nobody") == 1
         report = json.loads(Path("run-report.json").read_text())
         assert "nobody" in report["error"]
+
+
+class TestMainPageLayout:
+    """Where things land on the workspace page, and why the order is fixed.
+
+    The Notion API appends new children to the end of a page and offers no way
+    to reorder them afterwards. Creation order *is* the layout, so it belongs in
+    the pipeline rather than in whoever sets the workspace up by hand.
+    """
+
+    def _root_children(self, lab):
+        parent = next(iter(lab["notion"].pages))
+        return [(b["type"], b.get(b["type"], {}).get("title"))
+                for b in lab["notion"].children[parent]]
+
+    def test_member_pages_come_before_the_news_table(self, lab, sample_news):
+        run_weekly_mocked_with_news(lab, sample_news)
+
+        kinds = [t for t, _ in self._root_children(lab)]
+        assert "child_database" in kinds, "the news table has to exist"
+        first_db = kinds.index("child_database")
+        pages = [i for i, t in enumerate(kinds) if t == "child_page"]
+
+        assert pages, "member pages have to exist"
+        assert max(pages) < first_db, (
+            f"news must sit below every member link, got {self._root_children(lab)}"
+        )
+
+    def test_members_keep_the_order_their_files_are_read_in(self, lab):
+        """A roster that reshuffles itself every week is unreadable."""
+        run_weekly_mocked(lab)
+        titles = [t for kind, t in self._root_children(lab) if kind == "child_page"]
+        # members/ is read sorted by member_id: ir, pol, web
+        assert titles == ["샘플-검색RAG", "유재범", "샘플-웹데이터"]
+
+    def test_a_second_run_does_not_duplicate_the_layout(self, lab, sample_news):
+        run_weekly_mocked_with_news(lab, sample_news)
+        first = self._root_children(lab)
+        run_weekly_mocked_with_news(lab, sample_news)
+        assert self._root_children(lab) == first
+
+    def test_the_papers_table_is_the_only_thing_on_a_member_page(self, lab):
+        """Opening a member page should show their papers, not a link to them."""
+        run_weekly_mocked(lab)
+        fake = lab["notion"]
+        page_id = fake.page_named("유재범")
+
+        kids = fake.children[page_id]
+        assert [b["type"] for b in kids] == ["child_database"]
+        assert fake.databases[kids[0]["id"]]["is_inline"] is True

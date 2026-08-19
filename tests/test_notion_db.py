@@ -29,7 +29,7 @@ from paper_digest.notion_writer import (
     ensure_news_database,
 )
 from tests.conftest import PARENT_PAGE_ID, make_paper
-from tests.notion_fake import FakeNotion
+from tests.notion_fake import FakeNotion, FakeResponse
 
 TOKEN = "tok"
 ROOT = PARENT_PAGE_ID
@@ -216,3 +216,69 @@ class TestCreatePage:
 
         create_page(paper, space.database_id, TOKEN, space.properties)
         assert "Collected" not in notion.rows[space.database_id][0]["properties"]
+
+
+class TestInlineLayout:
+    """Databases have to render as a table inside the page they live on.
+
+    A full-page database shows up as a single link, so a member opening their
+    own page sees "📚 논문" and has to click again to reach anything. The digest
+    is meant to be glanceable, and that click is the difference.
+    """
+
+    def test_a_new_database_is_created_inline(self, fake_notion):
+        db_id, _ = ensure_news_database("root-page", "tok")
+        assert fake_notion.databases[db_id]["is_inline"] is True
+
+    def test_a_members_paper_database_is_created_inline(self, fake_notion):
+        space = ensure_member_space("root-page", "jaebeom", "유재범", "tok")
+        assert fake_notion.databases[space.database_id]["is_inline"] is True
+
+    def test_a_full_page_database_is_converted_on_the_next_run(self, fake_notion):
+        """Workspaces built before this was the default repair themselves.
+
+        The toggle belongs to whoever owns the block, so a member cannot fix
+        their own page. Converting on resolve means an existing workspace
+        converges on the current layout with no migration step.
+        """
+        db_id, _ = ensure_news_database("root-page", "tok")
+        fake_notion.databases[db_id]["is_inline"] = False
+
+        again, _ = ensure_news_database("root-page", "tok")
+
+        assert again == db_id, "it must convert the database, not make a new one"
+        assert fake_notion.databases[db_id]["is_inline"] is True
+
+    def test_an_already_inline_database_is_not_patched_again(self, fake_notion):
+        """Every run resolves every database; a needless PATCH each time is waste.
+
+        Notion allows about three requests a second across the whole integration,
+        and that budget is shared by every member's page writes.
+        """
+        db_id, _ = ensure_news_database("root-page", "tok")
+        before = sum(1 for verb, path in fake_notion.calls
+                     if verb == "PATCH" and path == f"/databases/{db_id}")
+
+        ensure_news_database("root-page", "tok")
+
+        after = sum(1 for verb, path in fake_notion.calls
+                    if verb == "PATCH" and path == f"/databases/{db_id}")
+        assert after == before
+
+    def test_a_failed_conversion_does_not_stop_the_run(self, fake_notion, monkeypatch):
+        """Layout is cosmetic; it must never cost a run the pages it was writing."""
+        db_id, _ = ensure_news_database("root-page", "tok")
+        fake_notion.databases[db_id]["is_inline"] = False
+
+        real_patch = fake_notion._patch
+
+        def refuse(url, **kw):
+            if url.endswith(f"/databases/{db_id}") and (kw.get("json") or {}).get("is_inline"):
+                return FakeResponse(400, {"message": "nope"})
+            return real_patch(url, **kw)
+
+        monkeypatch.setattr("paper_digest.notion_api.requests.patch", refuse)
+
+        again, props = ensure_news_database("root-page", "tok")
+        assert again == db_id
+        assert props, "the schema still has to come back"

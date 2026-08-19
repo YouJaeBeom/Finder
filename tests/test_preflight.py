@@ -157,3 +157,49 @@ class TestFailureReport:
         assert report["status"] == "failed"
         assert report["error"] == "NOTION_TOKEN is not set."
         assert report["pages_created"] == 0
+
+
+class TestKeyBelongsToProvider:
+    """A key pasted into the wrong variable, caught before anything is spent.
+
+    The LLM key is not used until the first ranking call, which happens after
+    collection and after the news pages are written. A 401 there reads like a
+    flaky vendor rather than a typo in a secret, and the run has already cost
+    time and Notion writes by then.
+    """
+
+    def test_an_anthropic_key_under_openai_is_refused(self):
+        cfg = _cfg(llm=LLMConfig(provider="openai"),
+                   openai_api_key="sk-ant-api03-xxxx")
+        problem = preflight(cfg)
+        assert problem is not None
+        assert "OPENAI_API_KEY" in problem
+        assert "sk-ant-" in problem
+
+    def test_an_openai_key_under_anthropic_is_refused(self):
+        cfg = _cfg(llm=LLMConfig(provider="anthropic"),
+                   anthropic_api_key="sk-proj-xxxx")
+        problem = preflight(cfg)
+        assert problem is not None
+        assert "ANTHROPIC_API_KEY" in problem
+
+    def test_a_matching_key_passes(self):
+        cfg = _cfg(llm=LLMConfig(provider="openai"),
+                   openai_api_key="sk-proj-xxxx")
+        assert preflight(cfg) is None
+
+    def test_an_unfamiliar_prefix_is_left_alone(self):
+        """Neither vendor promises these prefixes forever.
+
+        Guessing wrong here would block a run over a key that works, which is
+        worse than the late 401 this check exists to prevent.
+        """
+        cfg = _cfg(llm=LLMConfig(provider="openai"),
+                   openai_api_key="some-new-format-2027")
+        assert preflight(cfg) is None
+
+    def test_init_does_not_care_about_the_llm_key(self):
+        """init only talks to Notion, so a bad LLM key must not block setup."""
+        cfg = _cfg(llm=LLMConfig(provider="openai"),
+                   openai_api_key="sk-ant-wrong")
+        assert preflight(cfg, needs_llm=False) is None

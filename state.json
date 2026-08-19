@@ -1,5 +1,4 @@
 {
-  "news_database_id": "3c01256e-0561-81c5-8b14-d38fefa8864d",
   "members": {
     "jaebeom": {
       "page_id": "3c01256e-0561-8184-8ab5-d41e2f09a557",
@@ -13,5 +12,6 @@
       "page_id": "3c01256e-0561-81aa-83c4-c9efb2e6aa52",
       "database_id": "3c01256e-0561-811f-98e5-e99aedfacc02"
     }
-  }
+  },
+  "news_database_id": "3c11256e-0561-8121-8c83-ec0f562988a3"
 }

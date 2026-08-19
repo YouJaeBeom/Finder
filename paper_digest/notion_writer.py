@@ -195,6 +195,10 @@ def _create_database(
         "parent": {"type": "page_id", "page_id": parent_page_id},
         "title": [{"type": "text", "text": {"content": title}}],
         "icon": {"type": "emoji", "emoji": emoji},
+        # Inline, so opening the page shows the table itself. A full-page
+        # database renders as a single link, which puts one more click between
+        # a member and their papers — the digest is meant to be glanceable.
+        "is_inline": True,
         "properties": schema,
     }
     resp = request("post", "/databases", token, what="database creation",
@@ -218,6 +222,28 @@ def _create_subpage(parent_page_id: str, token: str, title: str, emoji: str) -> 
     return resp.json()["id"]
 
 
+def _ensure_inline(db_id: str, token: str, database: Optional[dict]) -> None:
+    """Make an existing database render inline, if it does not already.
+
+    Databases created before this was the default are full-page, and there is no
+    way to fix that from the member's side — the toggle belongs to whoever owns
+    the block. Repairing it on resolve means an existing workspace converges on
+    the current layout without a migration step.
+
+    A failure here is logged, not raised: the layout is cosmetic and must never
+    cost a run the pages it was about to write.
+    """
+    if database is not None and database.get("is_inline"):
+        return
+    try:
+        resp = request("patch", f"/databases/{db_id}", token,
+                       what="inline conversion", json_body={"is_inline": True})
+        check(resp, "inline conversion")
+        logger.info("Converted database %s to an inline table", db_id)
+    except Exception as exc:
+        logger.warning("Could not make database %s inline: %s", db_id, exc)
+
+
 def _resolve_database(
     parent_page_id: str,
     token: str,
@@ -229,6 +255,7 @@ def _resolve_database(
     """Cache → lookup by title → create. See the module docstring."""
     if cached_id:
         if database := _fetch_database(cached_id, token):
+            _ensure_inline(cached_id, token, database)
             return cached_id, _sync_schema(
                 cached_id, token, set(database.get("properties", {})), schema
             )
@@ -239,6 +266,7 @@ def _resolve_database(
 
     if found := _find_child(parent_page_id, token, "child_database", title):
         logger.info("Reusing %r under %s: %s", title, parent_page_id, found)
+        _ensure_inline(found, token, _fetch_database(found, token))
         return found, _sync_schema(found, token,
                                    read_properties(found, token), schema)
 

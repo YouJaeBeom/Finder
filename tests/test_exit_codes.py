@@ -5,12 +5,21 @@ failure email that surfaces a silently degraded run. Three branches must never b
 confused —
 
   • zero keyword candidates          -> quiet week, exit 0 (no false alarm)
-  • candidates > 0 but none ranked   -> anomaly, exit 1 (alert)
+  • candidates scored, none relevant -> quiet week, exit 0 (see below)
+  • candidates but no abstracts      -> anomaly, exit 1 (alert)
+  • every paper scored exactly 0.0   -> anomaly, exit 1 (alert)
   • one member fails, others served  -> exit 1, but the others still get pages
 
-The middle case is the one that cost the most to learn. The removed OpenAlex
+The third case is the one that cost the most to learn. The removed OpenAlex
 source returned candidates whose abstracts had gone behind a paid plan; every run
 produced zero pages and every run reported success.
+
+The second case used to be an anomaly too, and that was wrong. It made sense
+when the window was seven days and everything in it was new, but a 30-day window
+with per-member deduplication leaves one or two leftovers most weeks, and one of
+them scoring a 3 is not an incident. What still alerts is the shape a *failure*
+takes: no abstracts to judge, or every score coming back exactly 0.0, which is
+what _parse_scores returns when it cannot read the response at all.
 """
 from __future__ import annotations
 
@@ -91,14 +100,27 @@ def test_candidates_but_none_rankable_exits_one(config_path):
     assert _run(config_path, _papers(8, with_abstract=False)) == 1
 
 
-def test_ranking_below_the_cutoff_exits_one(config_path):
-    """Rankable candidates that every score puts below the threshold."""
+def test_ranking_below_the_cutoff_exits_zero(config_path):
+    """The model read them and rated them low — an answer, not a fault."""
     from paper_digest.pipeline import run_weekly
 
     provider = MagicMock()
     provider.complete.return_value = (
-        '[{"id": "0", "score": 1}, {"id": "1", "score": 0}]'
+        '[{"id": "0", "score": 1}, {"id": "1", "score": 4}]'
     )
+    with patch("paper_digest.pipeline.collect_venue_papers",
+               side_effect=venue_collector(
+                   conference=_papers(2, with_abstract=True))), \
+         patch("paper_digest.pipeline.create_provider", return_value=provider):
+        assert run_weekly(config_path) == 0
+
+
+def test_an_unreadable_ranking_response_exits_one(config_path):
+    """Every score comes back 0.0 — ranking did not happen, and that must alert."""
+    from paper_digest.pipeline import run_weekly
+
+    provider = MagicMock()
+    provider.complete.return_value = "the model said something else entirely"
     with patch("paper_digest.pipeline.collect_venue_papers",
                side_effect=venue_collector(
                    conference=_papers(2, with_abstract=True))), \

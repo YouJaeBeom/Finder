@@ -96,14 +96,44 @@ class TestRankPapers:
         if len(result) >= 2:
             assert result[0].relevance_score >= result[1].relevance_score
 
-    def test_raises_on_ranking_anomaly_when_candidates_exist(self):
-        papers = [make_paper(arxiv_id="1", abstract="LLM paper")]
-        # All scores below _MIN_SCORE=5
-        provider = self._make_mock_provider('[{"id": "0", "score": 1}]')
-        cfg = self._make_config()
+    def test_scores_below_the_cutoff_are_a_quiet_week_not_a_fault(self):
+        """The model read them and rated them low. That is an answer, not a fault.
 
-        with pytest.raises(RuntimeError, match="Ranking anomaly"):
-            rank_papers(papers, cfg, provider)
+        With a 30-day window and per-member deduplication, an ordinary week
+        leaves one or two leftover candidates. One of them scoring a 3 must not
+        turn the Actions run red — an alert that fires on ordinary weeks is an
+        alert people learn to ignore.
+        """
+        papers = [make_paper(arxiv_id=str(i), abstract="LLM paper")
+                  for i in range(3)]
+        provider = self._make_mock_provider(
+            '[{"id": "0", "score": 1}, {"id": "1", "score": 3}, '
+            '{"id": "2", "score": 2}]'
+        )
+
+        assert rank_papers(papers, self._make_config(), provider) == []
+
+    def test_an_all_zero_result_is_still_an_anomaly(self):
+        """_parse_scores answers [0.0] * count for every failure it hits.
+
+        Bad JSON, no array, an unexpected shape — all of them look like this, so
+        an all-zero result means ranking did not happen rather than that the
+        model judged nothing relevant.
+        """
+        papers = [make_paper(arxiv_id=str(i), abstract="LLM paper")
+                  for i in range(2)]
+        provider = self._make_mock_provider("not json at all")
+
+        with pytest.raises(RuntimeError, match="scored 0.0"):
+            rank_papers(papers, self._make_config(), provider)
+
+    def test_a_genuine_all_zero_judgement_also_alerts(self):
+        """Indistinguishable from a parse failure, and rare enough to be worth a look."""
+        papers = [make_paper(arxiv_id="1", abstract="LLM paper")]
+        provider = self._make_mock_provider('[{"id": "0", "score": 0}]')
+
+        with pytest.raises(RuntimeError, match="scored 0.0"):
+            rank_papers(papers, self._make_config(), provider)
 
     def test_empty_list_returns_empty(self):
         provider = self._make_mock_provider("[]")

@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import yaml
 
@@ -187,6 +187,34 @@ class Config:
             if self.llm.provider == "anthropic"
             else self.openai_api_key
         )
+
+    def llm_key_looks_wrong(self) -> Optional[str]:
+        """Why the configured key cannot belong to the configured provider.
+
+        The two vendors stamp their keys with distinct prefixes, so a key pasted
+        into the wrong variable is recognisable on sight. Worth checking because
+        of *when* the alternative surfaces: the key is not used until the first
+        ranking call, which is after collection has run and after the pages of
+        the previous stage exist. A 401 there reads as a flaky API rather than
+        as a typo in a secret.
+
+        Only mismatches this is sure about are reported — an unrecognised prefix
+        stays silent, since neither vendor promises these forever.
+        """
+        key = self.llm_api_key()
+        if self.llm.provider == "openai" and key.startswith("sk-ant-"):
+            return (
+                "OPENAI_API_KEY holds an Anthropic key (it starts with "
+                "'sk-ant-'), so OpenAI will reject it. Either put an OpenAI key "
+                "there, or set llm.provider to 'anthropic' in config.yaml."
+            )
+        if self.llm.provider == "anthropic" and key.startswith("sk-proj-"):
+            return (
+                "ANTHROPIC_API_KEY holds an OpenAI key (it starts with "
+                "'sk-proj-'), so Anthropic will reject it. Either put an "
+                "Anthropic key there, or set llm.provider to 'openai'."
+            )
+        return None
 
     def llm_key_env_var(self) -> str:
         """The environment variable name the configured provider reads."""

@@ -135,6 +135,7 @@ class FakeNotion:
             return FakeResponse(200, {
                 "id": db_id,
                 "properties": {name: {} for name in db["properties"]},
+                "is_inline": db.get("is_inline", False),
                 "in_trash": db_id in self.trashed,
             })
 
@@ -152,6 +153,7 @@ class FakeNotion:
             self.databases[db_id] = {
                 "parent": parent,
                 "title": title,
+                "is_inline": bool(body.get("is_inline", False)),
                 "properties": set(body.get("properties", {})),
             }
             self.children[parent].append({
@@ -214,6 +216,8 @@ class FakeNotion:
             if db_id not in self.databases:
                 return FakeResponse(404, {"message": "Could not find database"})
             self.databases[db_id]["properties"] |= set(body.get("properties", {}))
+            if "is_inline" in body:
+                self.databases[db_id]["is_inline"] = bool(body["is_inline"])
             return FakeResponse(200, {"id": db_id})
 
         return FakeResponse(404, {"message": f"unhandled PATCH {path}"})

@@ -102,6 +102,9 @@ def preflight(cfg: Config, needs_llm: bool = True) -> Optional[str]:
             f"'{cfg.llm.provider}'). In GitHub Actions this is a repository secret."
         )
 
+    if needs_llm and (wrong := cfg.llm_key_looks_wrong()):
+        return wrong
+
     raw_parent = cfg.notion_parent_page_id
     if not raw_parent or raw_parent in PLACEHOLDERS:
         return (
@@ -314,16 +317,23 @@ def _serve_member(
         return outcome
 
     if not top:
-        # Candidates cleared the keyword filter and produced no pages. Reported
-        # as an error, not as a quiet week: a quiet week has *zero* candidates,
-        # while this pattern is what a collapse in abstract coverage looks like —
-        # the failure that let the old OpenAlex source return nothing for weeks
-        # while every run reported success.
-        outcome.error = (
-            f"{len(fresh)} new candidates but none were rankable — every one "
-            "arrived without an abstract"
-        )
-        logger.error("%s: %s", member.name, outcome.error)
+        # Two ways to get here, and only one of them is a fault.
+        if not any(p.abstract for p in fresh):
+            # A collapse in abstract coverage: candidates cleared the keyword
+            # filter and not one could be judged. This is the failure that let
+            # the old OpenAlex source return nothing for weeks while every run
+            # reported success, so it must not pass silently.
+            outcome.error = (
+                f"{len(fresh)} new candidates but none were rankable — every "
+                "one arrived without an abstract"
+            )
+            logger.error("%s: %s", member.name, outcome.error)
+            return outcome
+        # Otherwise the model read them and did not rate any of them highly
+        # enough, which is an ordinary outcome for a week with one or two
+        # leftover candidates. See rank_papers for why this is not an alert.
+        logger.info("%s: nothing cleared the relevance cutoff this week",
+                    member.name)
         return outcome
 
     generate_notes(top, member_cfg, provider)
@@ -384,6 +394,51 @@ def _weekly_exit_code(outcomes: Sequence[MemberOutcome]) -> Tuple[int, Optional[
 
 # ── Weekly mode ────────────────────────────────────────────────────────────────
 
+def _ensure_notion_structure(
+    cfg: Config,
+    members: Sequence[Member],
+) -> Tuple[Optional[str], Optional[Set[str]]]:
+    """Build the workspace layout and return the news database, if enabled.
+
+    Member pages are created **before** the news database on purpose. The Notion
+    API appends new children to the end of a page and offers no way to reorder
+    them afterwards, so creation order *is* the layout: making the people first
+    leaves the news table sitting underneath their links, which is where a
+    reader wants it — the roster is the navigation, the news is the feed.
+
+    Runs before collection and before any LLM call. An unshared page is the most
+    common setup mistake and should cost two seconds, not a full collection run
+    and a ranking bill.
+    """
+    if not page_exists(cfg.parent_page_id(), cfg.notion_token):
+        raise RuntimeError(
+            f"parent page {cfg.parent_page_id()} is not visible to this "
+            "integration — open the page in Notion and share it via "
+            "'···' → 'Connections'"
+        )
+
+    for member in members:
+        # One member's Notion trouble must not cost everyone else their digest,
+        # so it is only logged here. The member loop calls this again and records
+        # the failure against that member alone — this pass exists for layout
+        # order, not to decide who gets served.
+        try:
+            space = ensure_member_space(
+                cfg.parent_page_id(), member.member_id, member.name,
+                cfg.notion_token,
+            )
+        except Exception as exc:
+            logger.warning("Could not prepare %s's space yet: %s",
+                           member.name, exc)
+            continue
+        logger.info("%s → page %s, database %s", member.name,
+                    space.page_id, space.database_id)
+
+    if not cfg.news.enabled:
+        return None, None
+    return ensure_news_database(cfg.parent_page_id(), cfg.notion_token)
+
+
 def run_weekly(config_path: str = "config.yaml", only: Optional[str] = None) -> int:
     """Collect once, write news once, then serve every enabled member in turn.
 
@@ -400,19 +455,8 @@ def run_weekly(config_path: str = "config.yaml", only: Optional[str] = None) -> 
     # ── Notion first ──────────────────────────────────────────────────────────
     # Before collection and before any LLM call: a wrong token or an unshared
     # page is the most common setup mistake and should cost two seconds.
-    news_db_id: Optional[str] = None
-    news_props: Optional[Set[str]] = None
     try:
-        if not page_exists(cfg.parent_page_id(), cfg.notion_token):
-            raise RuntimeError(
-                f"parent page {cfg.parent_page_id()} is not visible to this "
-                "integration — open the page in Notion and share it via "
-                "'···' → 'Connections'"
-            )
-        if cfg.news.enabled:
-            news_db_id, news_props = ensure_news_database(
-                cfg.parent_page_id(), cfg.notion_token
-            )
+        news_db_id, news_props = _ensure_notion_structure(cfg, members)
     except Exception as exc:
         logger.error("Notion is not reachable or not configured: %s", exc)
         write_failure_report("weekly", f"notion: {exc}")
@@ -609,24 +653,9 @@ def run_init(config_path: str = "config.yaml") -> int:
         return 1
 
     try:
-        if not page_exists(cfg.parent_page_id(), cfg.notion_token):
-            logger.error(
-                "Parent page %s is not visible to this integration. Open it in "
-                "Notion and share it: '···' → 'Connections' → your integration.",
-                cfg.parent_page_id(),
-            )
-            return 1
-
-        if cfg.news.enabled:
-            news_db_id, _ = ensure_news_database(cfg.parent_page_id(),
-                                                 cfg.notion_token)
+        news_db_id, _ = _ensure_notion_structure(cfg, members)
+        if news_db_id:
             logger.info("News database ready: %s", news_db_id)
-
-        for member in members:
-            space = ensure_member_space(cfg.parent_page_id(), member.member_id,
-                                        member.name, cfg.notion_token)
-            logger.info("%s → page %s, database %s", member.name,
-                        space.page_id, space.database_id)
     except Exception as exc:
         logger.error("Notion setup failed: %s", exc)
         return 1

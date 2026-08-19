@@ -150,9 +150,35 @@ def rank_papers(
     qualified.sort(key=lambda p: p.relevance_score, reverse=True)
 
     if not qualified and rankable:
-        raise RuntimeError(
-            "Ranking anomaly: keyword candidates exist but LLM ranked 0 papers "
-            f"above the minimum score of {_MIN_SCORE}."
+        # Two very different things look alike here, and only one is a fault.
+        #
+        # _parse_scores answers with [0.0] * count for *every* failure — bad
+        # JSON, no array, an unexpected shape — so an all-zero result is the
+        # signature of ranking not having happened at all. A working model
+        # handed papers it finds irrelevant answers with a spread of small
+        # non-zero numbers instead.
+        #
+        # Treating the spread as a fault used to be defensible, when the weekly
+        # window was seven days and everything in it was new. With a 30-day
+        # window and per-member deduplication the ordinary week leaves one or
+        # two leftover candidates, and one of those scoring a 3 is not an
+        # incident — it is Tuesday. Alerting on it teaches people to ignore the
+        # alert, which costs more than the case it was meant to catch.
+        #
+        # The collapse this originally guarded against — candidates arriving
+        # with no abstract at all — never reaches this branch: those papers are
+        # dropped by _is_rankable, and the caller reports that separately.
+        if all(p.relevance_score == 0.0 for p in rankable):
+            raise RuntimeError(
+                f"Ranking anomaly: all {len(rankable)} papers came back scored "
+                "0.0, which is what a failed parse or a degraded API looks like "
+                "— not a judgement the model actually made."
+            )
+        logger.info(
+            "Ranking: %d scored, none reached the cutoff of %d (best was %.1f) "
+            "— a quiet week, not a fault",
+            len(rankable), _MIN_SCORE,
+            max(p.relevance_score for p in rankable),
         )
 
     top = qualified[: cfg.top_n]
