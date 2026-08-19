@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "paper-digest"
 version = "1.0.0"
-description = "Monthly arXiv/OpenAlex → Notion research digest"
+description = "Monthly Semantic Scholar → Notion research digest for a lab"
 requires-python = ">=3.10"
 dependencies = [
     "anthropic>=0.34.0",
@@ -19,11 +19,41 @@ dev = [
     "pytest>=8.0.0",
     "pytest-mock>=3.14.0",
     "responses>=0.25.0",
+    "pytest-cov>=4.1.0",
+    # Pinned, not floated. Ruff's default rule set widens between releases, so
+    # an unpinned linter turns "someone published a release" into "CI fails on a
+    # commit that touched none of the flagged code" — which is what happened on
+    # 2026-08-19, when 0.16 reported 324 findings in files the commit never
+    # opened. Raise this deliberately, with the fixes in the same commit.
+    "ruff==0.16.3",
 ]
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["paper_digest*"]
+
+[tool.ruff]
+# Declared rather than inherited. Without this the rule set is whatever the
+# installed ruff happens to default to, which is a moving target.
+target-version = "py310"          # matches requires-python
+
+[tool.ruff.lint]
+# Real defects, not style opinions: pyflakes plus the pycodestyle errors that
+# indicate something is actually wrong.
+select = ["E4", "E7", "E9", "F"]
+
+# Deliberately *not* enabled, so the reasoning is recorded rather than
+# rediscovered:
+#
+#   BLE001  broad `except Exception`. This codebase catches broadly on purpose
+#           and says why at each site — one member's Notion failure must not end
+#           everyone else's run, a flaky feed must not fail a run whose papers
+#           landed, and a cosmetic layout fix must not cost the pages it was
+#           about to write. Enabling it would mean 30-odd noqa comments arguing
+#           with the linter.
+#   UP035   `typing.List` → `list`, and friends. Worth doing, but as its own
+#   UP045   commit: it rewrites annotations across every module and would bury
+#           any real change it travelled with.
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

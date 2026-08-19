@@ -29,8 +29,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install -e .
-          pip install pytest pytest-cov ruff
+          # The dev extra pins the linter. Installing ruff unpinned here meant a
+          # ruff release could fail a commit that touched none of the code it
+          # flagged — 0.16 widened the default rule set and reported 324
+          # findings against an unrelated change.
+          pip install -e ".[dev]"
 
       - name: Lint
         run: ruff check paper_digest tests
