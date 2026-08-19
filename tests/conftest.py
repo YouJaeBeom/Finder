@@ -136,14 +136,20 @@ news:
 """
 
 
+# Distinguishes "the caller said nothing" from "the caller wants the key gone".
+# keywords=None has to mean the second, since omitting it is now the normal case.
+_KEEP = object()
+
+
 def write_member(
     directory,
     member_id: str,
     name: str = None,
     top_n=10,          # None writes no top_n key at all, i.e. no limit
-    keywords=None,
+    keywords=_KEEP,    # None writes no keywords key, i.e. score everything
     profile: str = None,
     enabled: bool = True,
+    min_relevance=None,
 ) -> Path:
     """Write one member YAML and return its path."""
     directory = Path(directory)
@@ -152,10 +158,15 @@ def write_member(
         "name": name or member_id,
         "enabled": enabled,
         "research_profile": profile or DEFAULT_PROFILE,
-        "keywords": list(DEFAULT_KEYWORDS if keywords is None else keywords),
     }
+    if keywords is _KEEP:
+        payload["keywords"] = list(DEFAULT_KEYWORDS)
+    elif keywords is not None:
+        payload["keywords"] = list(keywords)
     if top_n is not None:
         payload["top_n"] = top_n
+    if min_relevance is not None:
+        payload["min_relevance"] = min_relevance
     path = directory / f"{member_id}.yaml"
     path.write_text(yaml.safe_dump(payload, allow_unicode=True), encoding="utf-8")
     return path

@@ -6,7 +6,7 @@ nothing to personalise, and one shared pass costs a tenth of ten.
 
 That sharing is also what makes the profile question awkward, and it is worth
 being explicit about: a paper's note is written against the member who received
-it, but news belongs to nobody. ``lab_profile`` in config.yaml is what fills that
+it, but news belongs to nobody. The members' own profiles, joined, fill that
 slot; see :func:`news_profile`.
 
 Unlike the paper stage this never raises and never changes the run's exit code. A
@@ -38,12 +38,12 @@ def news_profile(cfg: Config, members: Sequence[Member]) -> str:
 
     News has no member to belong to, so it has no ``research_profile`` — and the
     briefing's "why this is worth knowing" section is empty air without one.
-    ``lab_profile`` in config.yaml is the intended source; joining the members'
-    own profiles is the fallback, so leaving the key unset degrades the prompt
-    rather than silently writing notes against an empty string.
+
+    Built by joining the members' own profiles rather than from a single lab
+    paragraph. Members here work on genuinely different things, so one shared
+    description would have to be vague enough to cover all of them, which is
+    the same as saying nothing.
     """
-    if cfg.lab_profile.strip():
-        return cfg.lab_profile
     return "\n\n".join(f"[{m.name}] {m.research_profile.strip()}"
                        for m in members if m.research_profile.strip())
 

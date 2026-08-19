@@ -607,3 +607,44 @@ class TestMonthlyCadence:
 
         assert any("dropped" in r.message or "max_notes_per_run" in r.message
                    for r in caplog.records), caplog.text
+
+
+class TestEveryPaperIsScored:
+    """No keyword gate: what is collected is what gets judged.
+
+    The gate was measured against a live month and it threw away papers the
+    relevance model then scored 8 and 9 — seven to forty a member, with no way
+    to know which. Widening the rules did not fix it, because string matching is
+    a lossy stand-in for "is this about my research".
+    """
+
+    def test_a_member_without_keywords_sees_the_whole_pool(self, lab):
+        write_member(lab["tmp"] / "members", "pol", name="유재범", top_n=None,
+                     keywords=None)
+        _, report = run_monthly_mocked(lab)
+        rows = {r["member_id"]: r for r in report["members"]}
+
+        # Not just this member's four papers — every paper in the pool reaches
+        # the ranker, and relevance alone decides what is written.
+        assert rows["pol"]["candidates"] == len(pool_papers())
+
+    def test_hand_written_keywords_still_narrow_it(self, lab):
+        """The escape hatch for someone whose ranking bill actually matters."""
+        write_member(lab["tmp"] / "members", "pol", name="유재범", top_n=None,
+                     keywords=KEYWORDS["pol"])
+        _, report = run_monthly_mocked(lab)
+        rows = {r["member_id"]: r for r in report["members"]}
+
+        assert rows["pol"]["candidates"] == 4
+        assert rows["pol"]["candidates"] < len(pool_papers())
+
+    def test_two_members_are_scored_independently(self, lab):
+        """Sharing a candidate set must not merge what they receive."""
+        for member_id, name in (("pol", "유재범"), ("ir", "샘플-검색RAG")):
+            write_member(lab["tmp"] / "members", member_id, name=name,
+                         top_n=None, keywords=None)
+        _, report = run_monthly_mocked(lab)
+        rows = {r["member_id"]: r for r in report["members"]}
+
+        assert rows["pol"]["candidates"] == rows["ir"]["candidates"]
+        assert rows["pol"]["created"] > 0 and rows["ir"]["created"] > 0

@@ -1,14 +1,14 @@
 # 연구축 1 — LLM의 정치적 편향과 맥락적 견고성
 #
-# 파일명(jaebeom)이 멤버 ID입니다. Notion 에는 나타나지 않고, 채점 캐시 파일
-# 이름과 `--member jaebeom` 에만 쓰입니다. Notion 하위 페이지 제목은 name 입니다.
-name: "유재범"
-enabled: true
+# 파일명(jaebeom)이 멤버 ID입니다. Notion 에는 나타나지 않고, 캐시 파일 이름과
+# `--member jaebeom` 에만 쓰입니다. Notion 하위 페이지 제목은 name 입니다.
+#
+# 멤버가 쓸 것은 셋입니다:
+#   name              Notion 하위 페이지 제목
+#   research_profile  자연어 연구 소개. 관련도 채점과 노트 작성에 쓰입니다
+#   keywords          느슨한 1차 필터. 여기 걸린 것만 채점으로 넘어갑니다
 
-# top_n 을 적지 않으면 상한이 없습니다 — 관련도 컷오프를 넘은 논문이 전부
-# 들어옵니다. 상한을 두면 21번째 논문이 조용히 사라지고 그 사실은 아무도 모릅니다.
-# 무엇이 쓸 가치가 있는지는 개수가 아니라 컷오프가 정합니다.
-# (정말 제한하려면 `top_n: 20` 처럼 적으세요. lab 상한은 limits.max_top_n_per_member)
+name: "유재범"
 
 research_profile: |
   LLM의 정치적 편향과 맥락적 견고성을 연구합니다. 모델이 정치적으로 어느 쪽에
@@ -24,58 +24,39 @@ research_profile: |
   커널, 서빙), 비전 전용 연구, 순수 이론 최적화, 편향을 다루지 않는 일반적인
   프롬프트 엔지니어링 기법.
 
-# 목록의 항목끼리는 OR 입니다. 대소문자와 하이픈은 무시하고
-# ("retrieval-augmented" = "retrieval augmented"), 제목과 초록을 함께 봅니다.
-# 짧은 약어는 단어 앞에서만 맞습니다 (RAG 가 stoRAGe 에 안 걸림).
+# ── 느슨한 1차 필터 ───────────────────────────────────────────────────────────
+# 여기 걸린 논문만 관련도 채점으로 넘어갑니다. 정밀할 필요 없습니다 — 관련 없는
+# 것은 뒤에서 5점 미만으로 떨어지고, 여기서 놓친 것은 아무도 다시 보지 않습니다.
+# 그래서 애매하면 넣는 쪽이 맞습니다.
 #
-#   - "구절"                        이 구절이 있으면 매치
-#   - all: [A, B]                   A 와 B 가 모두 있어야 매치
-#   - any: [A, B]                   A 나 B 중 하나라도 있으면 매치
-#   - all: [[A, B], [C, D]]         (A 나 B) 그리고 (C 나 D)   ← 중첩 = "이 중 하나"
-#     not: [E]                      단, E 가 있으면 제외
-
-_model: &model
-  ["LLM", "large language model", "language model", "foundation model",
-   "generative model", "chatbot", "conversational agent", "GPT", "instruction-tuned"]
-_bias: &bias
-  ["bias", "biased", "fairness", "unfair", "skew", "imbalance", "stereotype"]
-_political: &political
-  ["political", "ideological", "partisan", "polarization", "viewpoint"]
-
+# 항목끼리는 OR. 실측(2026-08)으로 이 셋은 풀 1,807편 중 약 400편을 남깁니다.
 keywords:
+  # 이 분야 고유 표현 — 단독으로도 충분히 좁습니다
   - "political bias"
   - "ideological bias"
-  - "partisan bias"
-  - "political stance"
-  - "political ideology"
-  - "political leaning"
+  - "partisan"
   - "political orientation"
-  - "political compass"
+  - "political stance"
+  - "stereotype"
   - "sycophancy"
-  - "sycophantic"
+  - "jailbreak"
+  - "persona"
+  - "value alignment"
+  - "moral judgment"
+  - "public opinion"
 
-  - any: ["prompt sensitivity", "prompt robustness", "prompt perturbation",
-          "prompt variation", "prompt brittleness", "prompt template"]
+  # 모델 이야기 × 편향·공정성·평가 이야기
+  - all:
+      - ["LLM", "large language model", "language model", "foundation model",
+         "chatbot", "GPT", "instruction tuned", "aligned model"]
+      - ["bias", "biased", "fairness", "unfair", "discrimination", "harm",
+         "toxicity", "safety", "alignment", "robustness", "consistency",
+         "sensitivity", "evaluation", "benchmark", "audit", "red team"]
 
-  - all:                                   # 페르소나 프롬프팅
-      - ["persona", "role-play", "roleplay", "persona prompting"]
-      - *model
-
-  - all:                                   # 응답 일관성 · 견고성
-      - ["robustness", "consistency", "inconsistency", "instability",
-         "sensitivity"]
-      - *model
-      # 무엇에 대한 견고성인지 못박습니다 — 그냥 "robust LLM" 은 너무 넓습니다.
-      - [*political, *bias, ["prompt", "persona", "opinion", "stance",
-                             "demographic", "cultural"]]
-
-  - all:                                   # 편향 "측정" 은 어순이 제각각이라 단어로 분리
-      - *bias
-      - ["measurement", "measuring", "measure", "quantify", "quantifying",
-         "benchmark", "probe", "elicit"]
-      - [*model, *political]
-
-  - all:                                   # 다국어 · 교차문화 편향 평가
-      - ["multilingual", "cross-lingual", "cross-cultural", "multi-lingual"]
-      # 편향·정치 축을 요구합니다. 다국어 평가 일반은 관심사가 아닙니다.
-      - [*bias, *political, ["stereotyp", "culture", "value"]]
+  # 정치·사회 맥락 × 계산적 방법
+  - all:
+      - ["political", "politics", "ideology", "ideological", "election",
+         "democracy", "polarization", "polarisation", "misinformation",
+         "disinformation", "news"]
+      - ["model", "LLM", "annotation", "dataset", "corpus", "classifier",
+         "measurement", "survey", "experiment", "audit"]

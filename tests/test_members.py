@@ -225,3 +225,45 @@ class TestNoPerPersonLimit:
         write_member(tmp_path / "m", "a", top_n=bad)
         with pytest.raises(MemberConfigError, match="top_n"):
             load_members(str(tmp_path / "m"))
+
+
+class TestRelevanceCutoff:
+    """A member can raise their own bar without moving anyone else's.
+
+    The lab default of 5 means "arguably related", and whether that is right
+    depends on the field. A member whose keywords cover a whole conference track
+    cleared it with 120 papers in one month while a narrower member got 26 —
+    same cutoff, very different reading loads.
+    """
+
+    def test_the_lab_default_applies_when_unset(self, tmp_path):
+        write_member(tmp_path / "m", "a")
+        assert load_members(str(tmp_path / "m"))[0].min_relevance is None
+
+    def test_a_member_can_raise_it(self, tmp_path):
+        write_member(tmp_path / "m", "a", min_relevance=8)
+        assert load_members(str(tmp_path / "m"))[0].min_relevance == 8
+
+    @pytest.mark.parametrize("bad", [-1, 11, "high", 5.5, True])
+    def test_a_value_off_the_scale_is_refused(self, tmp_path, bad):
+        write_member(tmp_path / "m", "a", min_relevance=bad)
+        with pytest.raises(MemberConfigError, match="min_relevance"):
+            load_members(str(tmp_path / "m"))
+
+    def test_it_reaches_the_config_the_ranker_reads(self, tmp_path):
+        from paper_digest.config import Config
+        from paper_digest.members import effective_config
+
+        write_member(tmp_path / "m", "a", min_relevance=7)
+        member = load_members(str(tmp_path / "m"))[0]
+
+        assert effective_config(Config(min_relevance=5), member).min_relevance == 7
+
+    def test_an_unset_member_does_not_override_the_lab(self, tmp_path):
+        from paper_digest.config import Config
+        from paper_digest.members import effective_config
+
+        write_member(tmp_path / "m", "a")
+        member = load_members(str(tmp_path / "m"))[0]
+
+        assert effective_config(Config(min_relevance=6), member).min_relevance == 6

@@ -7,6 +7,13 @@ follows.
 Uses feedparser rather than hand-rolled XML parsing: real-world feeds mix RSS
 2.0, Atom and RDF with inconsistent date formats, and normalising that by hand
 is a reliable source of silent misses.
+
+The bytes are fetched with ``requests`` and handed to feedparser, rather than
+letting it fetch for itself. Two reasons, both found the hard way: feedparser
+downloads through urllib, which uses the interpreter's own CA store and fails
+outright on a machine where that was never populated — every feed came back
+"no usable entries" while curl fetched all three fine. And feedparser announces
+itself with its own User-Agent, which some publishers refuse.
 """
 from __future__ import annotations
 
@@ -18,10 +25,19 @@ from typing import List, Optional
 from urllib.parse import urlparse
 
 import feedparser
+import requests
 
 from ..models import Paper, PaperIdentifiers, normalize_title
 
 logger = logging.getLogger(__name__)
+
+TIMEOUT = 20
+# Plain feedparser identification is refused by some publishers; a browser-ish
+# string is what their feeds are actually served to.
+_USER_AGENT = (
+    "Mozilla/5.0 (compatible; paper-digest/1.0; "
+    "+https://github.com/YouJaeBeom/Finder)"
+)
 
 _TAG_RE = re.compile(r"<[^>]+>")
 _SUMMARY_MAX_CHARS = 1500
@@ -67,10 +83,13 @@ def collect_rss_entries(feed_urls: List[str], days_back: int = 7) -> List[Paper]
 
     for feed_url in feed_urls:
         try:
-            parsed = feedparser.parse(feed_url)
+            resp = requests.get(feed_url, timeout=TIMEOUT,
+                                headers={"User-Agent": _USER_AGENT})
+            resp.raise_for_status()
+            parsed = feedparser.parse(resp.content)
         except Exception as exc:
             # One bad feed must not take down the whole run.
-            logger.warning("RSS: failed to parse %s: %s", feed_url, exc)
+            logger.warning("RSS: failed to fetch %s: %s", feed_url, exc)
             continue
 
         if getattr(parsed, "bozo", False) and not getattr(parsed, "entries", []):

@@ -289,7 +289,22 @@ def _serve_member(
     scored = DedupStore(path=member.scored_cache_path(),
                         database_id=space.database_id)
 
-    candidates = select_for_keywords(pool, member.keywords)
+    # The member's own first pass, deliberately loose — the same move as
+    # searching a database by keyword before reading anything.
+    #
+    # How loose matters, and it was measured. A precise rule set (generated from
+    # the profile, or written by hand for precision) threw away papers the
+    # relevance model then scored 8 and 9: "Evaluation Validity in Information
+    # Retrieval" dropped for a member who studies exactly that, because the
+    # abstract says neither "bias" nor "diversity". A rule set built to catch a
+    # *field* rather than a topic keeps those and still cuts roughly three
+    # quarters of the pool, which is the whole point — the ranking model reads
+    # what survives, and rejecting an off-topic paper there costs a fraction of
+    # a cent while a paper dropped here is never seen by anything again.
+    #
+    # No keywords means no first pass: everything collected gets scored.
+    candidates = (select_for_keywords(pool, member.keywords)
+                  if member.keywords else list(pool))
     fresh = [p for p in candidates
              if not index.contains(p) and not scored.is_seen(p)]
 
@@ -475,11 +490,11 @@ def run_monthly(config_path: str = "config.yaml", only: Optional[str] = None) ->
         write_failure_report("monthly", f"notion: {exc}")
         return 1
 
+    provider = create_provider(cfg)
+
     # ── Collection, once for everyone ─────────────────────────────────────────
     logger.info("=== Collection (shared by %d member(s)) ===", len(members))
     pool = _build_pool(cfg)
-
-    provider = create_provider(cfg)
 
     # ── News, once for everyone ───────────────────────────────────────────────
     created_news = run_news(cfg, provider, news_db_id, news_props, members)
@@ -491,11 +506,18 @@ def run_monthly(config_path: str = "config.yaml", only: Optional[str] = None) ->
     remaining = max(cfg.limits.max_notes_per_run - len(created_news), 0)
 
     outcomes: List[MemberOutcome] = []
-    for member in members:
+    for served, member in enumerate(members):
         logger.info("=== Member: %s (%s) ===", member.name, member.member_id)
+        # An equal share of what is left, recomputed each turn so a quiet member
+        # hands their unused share to the rest. Handing the whole remainder to
+        # whoever goes first would let one person's busy month empty the budget
+        # before the last member is reached — and members are served in a fixed
+        # order, so the same person would lose out every time.
+        left_to_serve = len(members) - served
+        share = remaining // left_to_serve if left_to_serve else remaining
         try:
             outcome = _serve_member(cfg, member, pool, provider,
-                                    note_budget=remaining)
+                                    note_budget=share)
             remaining -= len(outcome.created)
             outcomes.append(outcome)
         except Exception as exc:
@@ -544,7 +566,8 @@ def run_monthly(config_path: str = "config.yaml", only: Optional[str] = None) ->
 BACKFILL_SOURCES = ("conferences", "journals", "both")
 
 
-def _log_rank_estimate(candidates: int, limit: int, members: int) -> None:
+def _log_rank_estimate(cfg: Config, candidates: int, limit: int,
+                       members: int) -> None:
     """Say what this run is about to cost, before it costs it.
 
     Rough by construction — token counts are estimated from measured prompt sizes
@@ -552,8 +575,12 @@ def _log_rank_estimate(candidates: int, limit: int, members: int) -> None:
     out from a bill.
     """
     batches = (candidates + 19) // 20
-    rank_usd = batches * (4179 / 1e6 * 1.0 + 380 / 1e6 * 5.0)   # haiku 4.5
-    note_usd = limit * (960 / 1e6 * 3.0 + 800 / 1e6 * 15.0)     # sonnet 5
+    # Token counts are measured from real prompts; the prices come from config
+    # so this cannot drift into quoting a model the run no longer uses.
+    price_in = cfg.llm.input_usd_per_mtok / 1e6
+    price_out = cfg.llm.output_usd_per_mtok / 1e6
+    rank_usd = batches * (4179 * price_in + 380 * price_out)
+    note_usd = limit * (960 * price_in + 800 * price_out)
     logger.info(
         "Backfill will rank up to %d papers per member in %d batches and write "
         "up to %d notes each — roughly $%.2f + $%.2f per member, $%.2f for all "
@@ -619,7 +646,7 @@ def run_backfill(
         write_report([], 0, 0, 0, 0, mode="backfill")
         return 0
 
-    _log_rank_estimate(len(pool), limit, len(members))
+    _log_rank_estimate(cfg, len(pool), limit, len(members))
 
     provider = create_provider(cfg)
 

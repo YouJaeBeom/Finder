@@ -25,7 +25,7 @@ from paper_digest.ranking import _is_rankable
 NEWS_DB = "news-db"
 
 
-def _run_news_with(cfg, provider, already_written=()):
+def _run_news_with(cfg, provider, already_written=(), members=()):
     """Call the news stage with a stand-in for what the news database holds.
 
     The stage asks Notion what it already has rather than trusting a file — see
@@ -35,7 +35,7 @@ def _run_news_with(cfg, provider, already_written=()):
     for item in already_written:
         index.add(item)
     with patch("paper_digest.news_stage.written_index", return_value=index):
-        return run_news(cfg, provider, NEWS_DB, None)
+        return run_news(cfg, provider, NEWS_DB, None, members)
 
 
 def _news_item(
@@ -278,15 +278,13 @@ class TestNewsProfile:
         return Member(member_id=member_id, name=name, research_profile=profile,
                       keywords=["AI"], top_n=5)
 
-    def test_the_lab_profile_is_used_when_set(self):
-        from paper_digest.config import Config
-        from paper_digest.news_stage import news_profile
+    def test_every_member_is_represented(self):
+        """Members here work on different things, so all of them have to appear.
 
-        cfg = Config(lab_profile="랩 전체의 관심사")
-        assert news_profile(cfg, []) == "랩 전체의 관심사"
-
-    def test_member_profiles_are_the_fallback(self):
-        """An unset key degrades the prompt rather than emptying it."""
+        A single shared paragraph used to fill this slot. It had to be vague
+        enough to cover everyone, which for a lab whose members genuinely differ
+        is the same as saying nothing.
+        """
         from paper_digest.config import Config
         from paper_digest.news_stage import news_profile
 
@@ -297,28 +295,27 @@ class TestNewsProfile:
         assert "[가] 정치적 편향 측정" in profile
         assert "[나] 검색 다양성" in profile
 
-    def test_the_lab_profile_beats_the_fallback(self):
+    def test_a_member_without_a_profile_is_skipped(self):
         from paper_digest.config import Config
         from paper_digest.news_stage import news_profile
 
-        profile = news_profile(Config(lab_profile="공용 맥락"),
-                                [self._member("a", "가", "개인 프로필")])
-        assert profile == "공용 맥락"
-        assert "개인 프로필" not in profile
+        profile = news_profile(Config(), [
+            self._member("a", "가", "정치적 편향 측정"),
+            self._member("b", "나", "   "),
+        ])
+        assert "[나]" not in profile
 
-    def test_a_whitespace_only_lab_profile_falls_back(self):
+    def test_no_members_yields_an_empty_profile(self):
         from paper_digest.config import Config
         from paper_digest.news_stage import news_profile
 
-        profile = news_profile(Config(lab_profile="   \n  "),
-                                [self._member("a", "가", "개인 프로필")])
-        assert "개인 프로필" in profile
+        assert news_profile(Config(), []) == ""
 
     def test_the_note_prompt_actually_receives_it(self):
         """The regression was upstream of the prompt, so assert on the prompt."""
         from paper_digest.config import Config, NewsConfig
 
-        cfg = Config(lab_profile="랩 공용 맥락 문단", notion_token="t",
+        cfg = Config(notion_token="t",
                      news=NewsConfig(enabled=True, top_n=2, keywords=["LLM"]))
         stories = [_news_item("New LLM benchmark released", "https://e.com/1")]
 
@@ -339,7 +336,9 @@ class TestNewsProfile:
             patch("paper_digest.news_stage.collect_rss_entries", return_value=[]),
             patch("paper_digest.news_stage.create_page", return_value="p1"),
         ):
-            written = _run_news_with(cfg, provider)
+            written = _run_news_with(cfg, provider, members=[
+                self._member("a", "가", "정치적 편향 측정"),
+            ])
 
         assert len(written) == 1
-        assert prompts and "랩 공용 맥락 문단" in prompts[0]
+        assert prompts and "정치적 편향 측정" in prompts[0]

@@ -56,6 +56,25 @@ class LLMConfig:
     ranking_model: str = "claude-haiku-4-5"
     notes_model: str = "claude-opus-5"
 
+    # How many model calls may be in flight at once.
+    #
+    # Note generation is the run's whole wall-clock: one note takes ~25 seconds
+    # and they used to go one after another, so a member with 58 papers spent 25
+    # minutes and ten members would not have finished inside the workflow's
+    # timeout. The work is embarrassingly parallel — each note is an independent
+    # call about one paper — so the only real limit is the account's rate limit.
+    #
+    # 1 restores the old serial behaviour, which is what a small or throttled
+    # account should use.
+    concurrency: int = 8
+
+    # USD per million tokens, used only to state a run's cost before spending it.
+    # Kept in config rather than hardcoded because the estimate silently became
+    # fiction the first time the models changed — it was still quoting Haiku and
+    # Sonnet prices while the run used something else entirely.
+    input_usd_per_mtok: float = 2.0
+    output_usd_per_mtok: float = 12.0
+
 
 @dataclass
 class NewsConfig:
@@ -145,7 +164,6 @@ class Config:
     # be written against — and the note's "why this matters" section is useless
     # without one. Left empty, the news stage falls back to joining the members'
     # own profiles, so an unset key degrades rather than breaking.
-    lab_profile: str = ""
 
     # Extra "full name fragment" -> acronym mappings for the Venue column, on
     # top of the built-in table in paper_digest/venues.py.
@@ -156,6 +174,16 @@ class Config:
 
     # Cost controls
     max_papers_to_rank: int = 1500
+
+    # Relevance out of 10 a paper must reach to be written up. The lab default;
+    # a member may raise or lower it in their own file.
+    #
+    # 5 means "arguably related". Whether that is the right line depends on the
+    # field: a member whose keywords cover a whole conference track can clear it
+    # with 120 papers in a month, which stops being a digest, while a narrower
+    # member gets 26. The number is here rather than in the code so that is an
+    # adjustment instead of a patch.
+    min_relevance: int = 5
     top_n: Optional[int] = None   # injected per member; None = no limit
     limits: LimitsConfig = field(default_factory=LimitsConfig)
 
@@ -235,6 +263,9 @@ def load_config(path: str = "config.yaml") -> Config:
         provider=llm_data.get("provider", "anthropic"),
         ranking_model=llm_data.get("ranking_model", "claude-haiku-4-5"),
         notes_model=llm_data.get("notes_model", "claude-opus-5"),
+        concurrency=max(1, int(llm_data.get("concurrency", 8))),
+        input_usd_per_mtok=float(llm_data.get("input_usd_per_mtok", 2.0)),
+        output_usd_per_mtok=float(llm_data.get("output_usd_per_mtok", 12.0)),
     )
 
     news_data = data.get("news", {}) or {}
@@ -273,10 +304,10 @@ def load_config(path: str = "config.yaml") -> Config:
         # normalized on access via parent_page_id() / database_id().
         notion_parent_page_id=data.get("notion_parent_page_id", "") or "",
         members_dir=data.get("members_dir", "members") or "members",
-        lab_profile=data.get("lab_profile", "") or "",
         venue_aliases=data.get("venue_aliases", {}) or {},
         days_back=data.get("days_back", 7),
         max_papers_to_rank=data.get("max_papers_to_rank", 1500),
+        min_relevance=int(data.get("min_relevance", 5)),
         limits=limits_cfg,
         llm=llm_cfg,
         news=news_cfg,

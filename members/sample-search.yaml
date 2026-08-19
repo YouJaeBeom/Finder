@@ -2,13 +2,13 @@
 #
 # 샘플 멤버입니다. 실제 인원을 붙일 때 name 과 research_profile 을 바꾸고
 # 파일명도 그 사람 ID 로 바꾸세요 (파일명 변경 = 새 Notion 페이지 생성).
-name: "샘플-검색RAG"
-enabled: true
+#
+# 멤버가 쓸 것은 셋입니다:
+#   name              Notion 하위 페이지 제목
+#   research_profile  자연어 연구 소개. 관련도 채점과 노트 작성에 쓰입니다
+#   keywords          느슨한 1차 필터. 여기 걸린 것만 채점으로 넘어갑니다
 
-# top_n 을 적지 않으면 상한이 없습니다 — 관련도 컷오프를 넘은 논문이 전부
-# 들어옵니다. 상한을 두면 21번째 논문이 조용히 사라지고 그 사실은 아무도 모릅니다.
-# 무엇이 쓸 가치가 있는지는 개수가 아니라 컷오프가 정합니다.
-# (정말 제한하려면 `top_n: 20` 처럼 적으세요. lab 상한은 limits.max_top_n_per_member)
+name: "샘플-검색RAG"
 
 research_profile: |
   검색과 검색증강생성(RAG)에서 공정하고 다양한 정보 접근을 연구합니다. 검색
@@ -24,33 +24,33 @@ research_profile: |
   (인덱싱 속도, 임베딩 압축, ANN 알고리즘), 추천 정확도만 올리는 모델 구조 개선,
   비전·음성 검색 전용 연구.
 
-_model: &model
-  ["LLM", "large language model", "language model", "foundation model",
-   "generative model", "chatbot", "conversational agent", "GPT", "instruction-tuned"]
-_bias: &bias
-  ["bias", "biased", "fairness", "unfair", "skew", "imbalance", "stereotype"]
-
+# ── 느슨한 1차 필터 ───────────────────────────────────────────────────────────
+# 여기 걸린 논문만 관련도 채점으로 넘어갑니다. 정밀할 필요 없습니다 — 관련 없는
+# 것은 뒤에서 5점 미만으로 떨어지고, 여기서 놓친 것은 아무도 다시 보지 않습니다.
+#
+# 이 분야는 주제어를 편향·다양성으로 좁히면 안 됩니다. 실측에서
+# "Evaluation Validity in Information Retrieval"(9점) 같은 논문이 그렇게 잘렸습니다.
+# 검색·랭킹·추천 이야기면 일단 들여보내고 관련도 채점에 맡깁니다.
 keywords:
-  - "retrieval-augmented generation"
   - "information retrieval"
+  - "retrieval augmented generation"
+  - "conversational search"
+  - "generative search"
+  - "query"
+  - "search engine"
+  - "test collection"
+  - "relevance judgment"
+  - "click model"
+  - "information seeking"
+  - "information access"
   - "filter bubble"
   - "echo chamber"
-  - "generative search"
-  - "conversational search"
-  - "information diversity"
-  - "viewpoint diversity"
   - "selective exposure"
 
-  - any: ["search personalization", "personalized search", "personalized ranking",
-          "search result diversification", "result diversification"]
+  - any: ["retrieval", "retriever", "ranking", "ranker", "re-ranking",
+          "recommender", "recommendation", "RAG", "dense retrieval"]
 
-  - all:                                   # 검색·랭킹·RAG 의 편향과 다양성
-      - ["retrieval", "retriever", "search", "ranking", "ranker", "RAG",
-         "recommender", "recommendation"]
-      - [*bias, ["diversity", "diversification", "exposure", "polarization",
-                 "viewpoint", "perspective", "credibility"]]
-
-  - all:                                   # AI 매개 정보 접근
-      - ["information access", "information exposure", "information seeking",
-         "news consumption", "information ecosystem"]
-      - [*model, ["algorithmic", "search", "recommender", "AI"]]
+  - all:
+      - ["search", "browsing", "user study", "eye tracking", "SERP"]
+      - ["user", "behavior", "behaviour", "interaction", "personalization",
+         "personalisation", "exposure", "diversity", "evaluation", "quality"]

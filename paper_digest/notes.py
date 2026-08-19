@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Optional
 
 from .config import Config
@@ -201,11 +202,41 @@ def generate_notes(
     malformed response used to propagate out and abort the run, throwing away
     every note already generated and every page not yet written — so failures
     are contained per item and the run continues with a placeholder note.
+
+    Notes are written concurrently (``llm.concurrency``). This is where a run
+    spends nearly all of its wall-clock: each note is ~25 seconds and there is
+    one per paper, so serially a member with 58 papers took 25 minutes and a
+    full lab could not finish inside the workflow's timeout. Each call is
+    independent — one paper, one note, no shared state beyond the paper it
+    mutates — so the only real limit is the account's rate limit.
     """
-    for i, paper in enumerate(papers, 1):
-        logger.info("Generating note %d/%d: %s", i, len(papers), paper.title[:60])
+    if not papers:
+        return
+
+    total = len(papers)
+    done = 0
+
+    def write_one(paper: Paper) -> None:
         try:
             paper.research_note = generate_note(paper, cfg, provider)
         except Exception as exc:
             logger.error("Note generation failed for '%s': %s", paper.title[:60], exc)
             paper.research_note = _fallback_note(paper, "노트 생성 실패")
+
+    workers = max(1, min(cfg.llm.concurrency, total))
+    if workers == 1:
+        for paper in papers:
+            logger.info("Generating note %d/%d: %s", done + 1, total,
+                        paper.title[:60])
+            write_one(paper)
+            done += 1
+        return
+
+    logger.info("Generating %d notes, %d at a time", total, workers)
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = {pool.submit(write_one, p): p for p in papers}
+        for future in as_completed(futures):
+            future.result()  # write_one swallows its own errors
+            done += 1
+            if done % 10 == 0 or done == total:
+                logger.info("  notes %d/%d", done, total)

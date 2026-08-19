@@ -1,11 +1,13 @@
 """Tests for Korean research note generation and structure."""
 from __future__ import annotations
 
+import time
+
 import json
 from unittest.mock import MagicMock
 
 
-from paper_digest.notes import _parse_note, generate_note
+from paper_digest.notes import _parse_note, generate_note, generate_notes
 from paper_digest.models import ResearchNote
 from tests.conftest import make_paper
 
@@ -113,3 +115,84 @@ class TestGenerateNote:
         note = generate_note(paper, cfg, provider)
         # Fallback note still has all 4 sections filled
         assert note.sections_filled_count() == 4
+
+
+class TestConcurrentNoteGeneration:
+    """Notes are written side by side. Each has to land on its own paper.
+
+    This is where a run spends nearly all its time — one call per paper at ~25
+    seconds — so serial generation put a full lab past the workflow timeout.
+    """
+
+    def _cfg(self, concurrency):
+        cfg = MagicMock()
+        cfg.research_profile = "LLM bias research"
+        cfg.llm.notes_model = "m"
+        cfg.llm.concurrency = concurrency
+        return cfg
+
+    def _note_for(self, title):
+        return json.dumps({
+            "one_line_summary": f"summary of {title}",
+            "key_contributions": ["a", "b", "c"],
+            "method": "method",
+            "relevance_to_profile": "relevance",
+        })
+
+    def test_each_note_lands_on_the_paper_it_describes(self):
+        papers = [make_paper(arxiv_id=str(i), title=f"Paper {i}",
+                             abstract=f"Abstract {i}") for i in range(24)]
+
+        def reply(prompt, model, max_tokens=512, system=None):
+            title = prompt.split("제목: ")[1].split("\n")[0].strip()
+            time.sleep(0.01 * (int(title.split()[-1]) % 3))  # out of order
+            return self._note_for(title)
+
+        provider = MagicMock()
+        provider.complete.side_effect = reply
+
+        generate_notes(papers, self._cfg(concurrency=6), provider)
+
+        for paper in papers:
+            assert paper.research_note is not None
+            assert paper.title in paper.research_note.one_line_summary, (
+                f"{paper.title!r} got a note about something else"
+            )
+
+    def test_one_failure_does_not_cost_the_others(self):
+        papers = [make_paper(arxiv_id=str(i), title=f"Paper {i}",
+                             abstract=f"Abstract {i}") for i in range(12)]
+
+        def reply(prompt, model, max_tokens=512, system=None):
+            title = prompt.split("제목: ")[1].split("\n")[0].strip()
+            if title == "Paper 5":
+                raise RuntimeError("refused")
+            return self._note_for(title)
+
+        provider = MagicMock()
+        provider.complete.side_effect = reply
+
+        generate_notes(papers, self._cfg(concurrency=4), provider)
+
+        assert all(p.research_note is not None for p in papers)
+        failed = [p for p in papers if p.title == "Paper 5"][0]
+        assert "실패" in failed.research_note.one_line_summary
+        others = [p for p in papers if p.title != "Paper 5"]
+        assert all(p.title in p.research_note.one_line_summary for p in others)
+
+    def test_every_paper_is_asked_for_exactly_once(self):
+        papers = [make_paper(arxiv_id=str(i), title=f"Paper {i}",
+                             abstract=f"Abstract {i}") for i in range(30)]
+        provider = MagicMock()
+        provider.complete.side_effect = lambda prompt, **kw: self._note_for(
+            prompt.split("제목: ")[1].split("\n")[0].strip()
+        )
+
+        generate_notes(papers, self._cfg(concurrency=8), provider)
+
+        assert provider.complete.call_count == 30
+
+    def test_an_empty_list_does_no_work(self):
+        provider = MagicMock()
+        generate_notes([], self._cfg(concurrency=8), provider)
+        provider.complete.assert_not_called()

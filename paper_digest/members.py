@@ -61,8 +61,9 @@ class Member:
     member_id: str
     name: str
     research_profile: str
-    keywords: List[Any]
+    keywords: List[Any]     # loose first pass; empty = score everything
     top_n: Optional[int]   # None = every paper that clears the relevance cutoff
+    min_relevance: Optional[int] = None   # None = the lab default
     enabled: bool = True
     source_path: str = ""
 
@@ -107,9 +108,23 @@ def _read_one(path: Path, problems: List[str]) -> Member | None:
             "'내 연구와의 연결점' note are both written against it"
         )
 
-    keywords = raw.get("keywords") or []
-    if not isinstance(keywords, list) or not keywords:
-        problems.append(f"{path}: 'keywords' must be a non-empty list")
+    # The member's loose first pass. Optional — left out, every collected paper
+    # is scored against their profile, which costs about four times as much.
+    #
+    # "Loose" is the operative word and it is not a style preference: rules
+    # written for precision were measured dropping papers the relevance model
+    # scored 8 and 9. Rules that catch the member's *field* keep those and still
+    # remove three quarters of the pool.
+    keywords = raw.get("keywords")
+    keywords_ok = True
+    if keywords is None:
+        keywords = []
+    elif not isinstance(keywords, list) or not keywords:
+        problems.append(
+            f"{path}: 'keywords' must be a non-empty list when present — leave "
+            "the key out entirely to score every collected paper"
+        )
+        keywords_ok = False
         keywords = []
     else:
         # compile_rules drops malformed entries with a warning rather than
@@ -121,11 +136,22 @@ def _read_one(path: Path, problems: List[str]) -> Member | None:
                 f"{path}: {len(keywords) - usable} of {len(keywords)} keyword "
                 "entries are malformed and would be ignored — see the warnings above"
             )
+            keywords_ok = False
 
     # Absent means unlimited. A cap is the wrong default here: the point of the
     # digest is not to miss things, and the relevance cutoff already decides what
     # is worth writing up. Ranking by relevance and then keeping the best twenty
     # silently discards the twenty-first, which nobody ever finds out about.
+    cutoff = raw.get("min_relevance")
+    if cutoff is not None and not (isinstance(cutoff, int)
+                                   and not isinstance(cutoff, bool)
+                                   and 0 <= cutoff <= 10):
+        problems.append(
+            f"{path}: 'min_relevance' must be a whole number from 0 to 10, "
+            f"got {cutoff!r}"
+        )
+        cutoff = None
+
     top_n = raw.get("top_n")
     top_n_ok = top_n is None or (
         isinstance(top_n, int) and not isinstance(top_n, bool) and top_n >= 1
@@ -141,7 +167,7 @@ def _read_one(path: Path, problems: List[str]) -> Member | None:
         problems.append(f"{path}: 'enabled' must be true or false, got {enabled!r}")
         enabled = False
 
-    if not (name and profile and keywords and top_n_ok):
+    if not (name and profile and keywords_ok and top_n_ok):
         return None
 
     return Member(
@@ -150,6 +176,7 @@ def _read_one(path: Path, problems: List[str]) -> Member | None:
         research_profile=profile,
         keywords=keywords,
         top_n=top_n,
+        min_relevance=cutoff,
         enabled=enabled,
         source_path=str(path),
     )
@@ -242,9 +269,11 @@ def effective_config(cfg: "Config", member: Member) -> "Config":
     """
     from dataclasses import replace
 
-    return replace(
-        cfg,
+    overrides = dict(
         research_profile=member.research_profile,
         keywords=member.keywords,
         top_n=member.top_n,
     )
+    if member.min_relevance is not None:
+        overrides["min_relevance"] = member.min_relevance
+    return replace(cfg, **overrides)

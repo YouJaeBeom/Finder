@@ -125,8 +125,12 @@ def _members_command(action: str, config_path: str) -> int:
     unlimited = 0
     for member in members:
         cap = "no limit" if member.top_n is None else str(member.top_n)
+        # Everything collected is scored for this member unless they narrowed
+        # it themselves, so say which of the two it is.
+        scope = (f"{len(member.keywords)} keyword rules" if member.keywords
+                 else "every collected paper")
         print(f"{member.member_id:16} {member.name:14} top_n={cap:<9} "
-              f"keywords={len(member.keywords):<4} {member.source_path}")
+              f"scores={scope:<22} {member.source_path}")
         if member.top_n is None:
             unlimited += 1
         else:

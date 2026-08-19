@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
 from .config import Config
@@ -17,7 +18,8 @@ from .models import Paper
 logger = logging.getLogger(__name__)
 
 _BATCH_SIZE = 20  # papers per LLM ranking call
-_MIN_SCORE = 5  # papers below this threshold are not included in top-N
+# Fallback for callers holding a config that predates the setting.
+_MIN_SCORE = 5
 
 _RANKING_SYSTEM = (
     "You are a research relevance ranker. "
@@ -103,7 +105,7 @@ def rank_papers(
     """Rank papers by relevance to the research profile and return top-N.
 
     Papers with no abstract are excluded before ranking (see _is_rankable).
-    If candidates > 0 but all score below *_MIN_SCORE*, the function raises
+    If candidates > 0 but all score exactly 0.0, the function raises
     RuntimeError to signal a ranking anomaly (pipeline should exit 1).
     """
     rankable = [p for p in papers if _is_rankable(p)]
@@ -112,41 +114,62 @@ def rank_papers(
         logger.info("No rankable papers (an abstract is required)")
         return []
 
-    # Truncate to max_papers_to_rank
+    # Truncate to max_papers_to_rank. Papers are dropped in collection order,
+    # which is arbitrary — so this is a warning, not a note. With no keyword
+    # gate ahead of it this cap is the only thing that can silently shorten a
+    # member's month.
     if len(rankable) > cfg.max_papers_to_rank:
-        logger.info(
-            "Truncating from %d to %d papers for ranking",
-            len(rankable),
-            cfg.max_papers_to_rank,
+        logger.warning(
+            "%d papers to rank exceeds max_papers_to_rank (%d) — dropping %d in "
+            "collection order, which is arbitrary. Raise the cap if this recurs.",
+            len(rankable), cfg.max_papers_to_rank,
+            len(rankable) - cfg.max_papers_to_rank,
         )
         rankable = rankable[: cfg.max_papers_to_rank]
 
-    # Rank in batches
-    for i in range(0, len(rankable), _BATCH_SIZE):
-        batch = rankable[i : i + _BATCH_SIZE]
-        papers_block = _build_papers_block(batch)
+    # Rank in batches, several at a time. Each batch is one call about its own
+    # twenty papers and nothing else, so the only thing that has to survive
+    # concurrency is that a batch's scores land on *that* batch — which they do,
+    # because the papers are scored inside the same closure that fetched them
+    # rather than by position in a shared list.
+    batches = [rankable[i : i + _BATCH_SIZE]
+               for i in range(0, len(rankable), _BATCH_SIZE)]
+
+    def score_batch(batch: List[Paper]) -> None:
         prompt = _RANKING_PROMPT_TEMPLATE.format(
             profile=cfg.research_profile,
-            papers_block=papers_block,
+            papers_block=_build_papers_block(batch),
         )
-
-        try:
-            raw = provider.complete(
-                prompt=prompt,
-                model=cfg.llm.ranking_model,
-                max_tokens=512,
-                system=_RANKING_SYSTEM,
-            )
-        except Exception as exc:
-            logger.error("LLM ranking failed for batch %d: %s", i // _BATCH_SIZE, exc)
-            raise
-
-        scores = _parse_scores(raw, len(batch))
-        for paper, score in zip(batch, scores):
+        raw = provider.complete(
+            prompt=prompt,
+            model=cfg.llm.ranking_model,
+            max_tokens=512,
+            system=_RANKING_SYSTEM,
+        )
+        for paper, score in zip(batch, _parse_scores(raw, len(batch))):
             paper.relevance_score = score
 
+    workers = max(1, min(cfg.llm.concurrency, len(batches)))
+    if workers == 1:
+        for n, batch in enumerate(batches):
+            try:
+                score_batch(batch)
+            except Exception as exc:
+                logger.error("LLM ranking failed for batch %d: %s", n, exc)
+                raise
+    else:
+        logger.info("Ranking %d papers in %d batches, %d at a time",
+                    len(rankable), len(batches), workers)
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = [pool.submit(score_batch, b) for b in batches]
+            for future in futures:
+                # Raised here rather than swallowed: an unscored batch is 20
+                # papers silently sitting at 0.0, which reads as "irrelevant".
+                future.result()
+
     # Filter and sort
-    qualified = [p for p in rankable if p.relevance_score >= _MIN_SCORE]
+    cutoff = getattr(cfg, "min_relevance", _MIN_SCORE)
+    qualified = [p for p in rankable if p.relevance_score >= cutoff]
     qualified.sort(key=lambda p: p.relevance_score, reverse=True)
 
     if not qualified and rankable:
@@ -176,8 +199,8 @@ def rank_papers(
             )
         logger.info(
             "Ranking: %d scored, none reached the cutoff of %d (best was %.1f) "
-            "— a quiet week, not a fault",
-            len(rankable), _MIN_SCORE,
+            "— a quiet month, not a fault",
+            len(rankable), cutoff,
             max(p.relevance_score for p in rankable),
         )
 

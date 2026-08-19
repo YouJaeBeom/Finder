@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import time
 from unittest.mock import MagicMock
 
 import pytest
@@ -54,12 +55,17 @@ class TestRankPapers:
         provider.complete.return_value = scores_response
         return provider
 
-    def _make_config(self, top_n: int = 10):
+    def _make_config(self, top_n: int = 10, concurrency: int = 1):
         cfg = MagicMock()
         cfg.research_profile = "LLM alignment research"
         cfg.max_papers_to_rank = 1500
         cfg.top_n = top_n
         cfg.llm.ranking_model = "claude-haiku-4-5"
+        # Serial by default so a test asserting on call order or on a
+        # side_effect sequence stays deterministic. Concurrency has its own
+        # tests below.
+        cfg.llm.concurrency = concurrency
+        cfg.min_relevance = 5
         return cfg
 
     def test_returns_top_n_papers(self, sample_papers):
@@ -159,3 +165,99 @@ class TestRankPapers:
         rank_papers(papers, cfg, provider)
         # Should have processed at most 30 papers (2 batches of 20 and 10)
         assert call_count <= 2
+
+
+class TestConcurrentRanking:
+    """Batches run side by side. The scores still have to land on their own papers.
+
+    Ranking a full pool is ~100 calls a member and note generation is one call
+    per paper at ~25 seconds each, so serial execution was the whole wall-clock
+    of a run. The risk in fixing that is silent: a score attached to the wrong
+    paper produces a plausible digest that is simply wrong.
+    """
+
+    def _cfg(self, concurrency):
+        cfg = MagicMock()
+        cfg.research_profile = "LLM alignment research"
+        cfg.max_papers_to_rank = 5000
+        cfg.top_n = None
+        cfg.llm.ranking_model = "m"
+        cfg.llm.concurrency = concurrency
+        cfg.min_relevance = 5
+        return cfg
+
+    def _papers(self, n):
+        return [make_paper(arxiv_id=str(i), title=f"Paper {i}",
+                           abstract=f"Abstract {i}") for i in range(n)]
+
+    def test_every_paper_keeps_the_score_its_own_batch_returned(self):
+        """The batch a paper was sent in is the batch whose reply scores it.
+
+        Answers are returned out of order on purpose: a real thread pool has no
+        reason to finish in submission order, and code that assumed it would
+        should fail here rather than in a digest nobody re-checks.
+        """
+        papers = self._papers(100)  # five batches of twenty
+
+        def reply(prompt, model, max_tokens=512, system=None):
+            # Score each paper by the number in its own title, so a mismatch is
+            # arithmetic rather than a judgement call.
+            ids = [int(line.split("Paper ")[1].split("\n")[0])
+                   for line in prompt.split("Title: ")[1:]]
+            time.sleep(0.02 * (ids[0] % 3))  # finish out of order
+            return json.dumps([{"id": str(i), "score": (n % 10)}
+                               for i, n in enumerate(ids)])
+
+        provider = MagicMock()
+        provider.complete.side_effect = reply
+
+        rank_papers(papers, self._cfg(concurrency=5), provider)
+
+        for i, paper in enumerate(papers):
+            assert paper.relevance_score == i % 10, (
+                f"Paper {i} got {paper.relevance_score}, expected {i % 10}"
+            )
+
+    def test_all_batches_are_sent_exactly_once(self):
+        papers = self._papers(100)
+        provider = MagicMock()
+        provider.complete.return_value = json.dumps(
+            [{"id": str(i), "score": 7} for i in range(20)]
+        )
+
+        rank_papers(papers, self._cfg(concurrency=5), provider)
+
+        assert provider.complete.call_count == 5
+        assert all(p.relevance_score == 7 for p in papers)
+
+    def test_a_failing_batch_stops_the_run(self):
+        """Twenty papers left at 0.0 read as "irrelevant", which is a lie."""
+        papers = self._papers(60)
+        provider = MagicMock()
+        provider.complete.side_effect = RuntimeError("upstream is down")
+
+        with pytest.raises(RuntimeError, match="upstream is down"):
+            rank_papers(papers, self._cfg(concurrency=4), provider)
+
+    def test_concurrency_of_one_is_the_old_serial_path(self):
+        papers = self._papers(40)
+        provider = MagicMock()
+        provider.complete.return_value = json.dumps(
+            [{"id": str(i), "score": 6} for i in range(20)]
+        )
+
+        rank_papers(papers, self._cfg(concurrency=1), provider)
+
+        assert provider.complete.call_count == 2
+        assert all(p.relevance_score == 6 for p in papers)
+
+    def test_more_workers_than_batches_is_harmless(self):
+        papers = self._papers(10)  # one batch
+        provider = MagicMock()
+        provider.complete.return_value = json.dumps(
+            [{"id": str(i), "score": 8} for i in range(10)]
+        )
+
+        rank_papers(papers, self._cfg(concurrency=32), provider)
+
+        assert provider.complete.call_count == 1
