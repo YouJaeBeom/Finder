@@ -16,7 +16,7 @@ def _add_config_arg(parser: argparse.ArgumentParser) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="paper_digest",
-        description="Weekly peer-reviewed research digest → Notion, per lab member",
+        description="Monthly peer-reviewed research digest → Notion, per lab member",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -24,9 +24,9 @@ def main() -> None:
     run_p = sub.add_parser("run", help="Run the collection pipeline")
     run_p.add_argument(
         "--mode",
-        choices=["weekly", "backfill"],
+        choices=["monthly", "backfill"],
         required=True,
-        help="weekly: the scheduled digest. backfill: one-off catch-up",
+        help="monthly: the scheduled digest. backfill: one-off catch-up",
     )
     run_p.add_argument(
         "--member",
@@ -75,10 +75,10 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.command == "run":
-        from .pipeline import run_backfill, run_weekly
+        from .pipeline import run_backfill, run_monthly
 
-        if args.mode == "weekly":
-            sys.exit(run_weekly(args.config, only=args.member))
+        if args.mode == "monthly":
+            sys.exit(run_monthly(args.config, only=args.member))
         sys.exit(run_backfill(args.config, args.days, args.limit, args.sources,
                               only=args.member))
 
@@ -122,13 +122,24 @@ def _members_command(action: str, config_path: str) -> int:
         return 0
 
     total = 0
+    unlimited = 0
     for member in members:
-        print(f"{member.member_id:16} {member.name:14} top_n={member.top_n:<4} "
+        cap = "no limit" if member.top_n is None else str(member.top_n)
+        print(f"{member.member_id:16} {member.name:14} top_n={cap:<9} "
               f"keywords={len(member.keywords):<4} {member.source_path}")
-        total += member.top_n
+        if member.top_n is None:
+            unlimited += 1
+        else:
+            total += member.top_n
     news = cfg.news.top_n if cfg.news.enabled else 0
-    print(f"\n{len(members)} member(s). Up to {total} paper notes + {news} news "
-          f"notes per run (lab limit {cfg.limits.max_notes_per_run}).")
+    limit = cfg.limits.max_notes_per_run
+    if unlimited:
+        print(f"\n{len(members)} member(s), {unlimited} with no per-person limit. "
+              f"Everything above the relevance cutoff is written, up to the lab "
+              f"ceiling of {limit} notes per run ({news} of them news).")
+    else:
+        print(f"\n{len(members)} member(s). Up to {total} paper notes + {news} news "
+              f"notes per run (lab limit {limit}).")
     return 0
 
 

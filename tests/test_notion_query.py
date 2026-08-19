@@ -3,7 +3,7 @@
 Written after the 2026-08-15 incident, where a backfill's ``git push`` lost to a
 race and the local dedup state was discarded — 84 minutes of collection and a
 ranking bill gone, and the file left claiming 21 papers against a database holding
-far more. With ten members writing weekly that race stops being an accident.
+far more. With ten members writing monthly that race stops being an accident.
 
 So "has this member already received this paper?" is answered by asking their
 database. Losing local state now costs a lookup, never a duplicate page.

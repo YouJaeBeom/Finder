@@ -1,6 +1,6 @@
 """One-off backfill over a long window.
 
-The weekly run asks "what appeared since last week" — right forever after, but it
+The monthly run asks "what appeared since last week" — right forever after, but it
 leaves the prior year unread. Backfill ranks that year in one pass per member and
 keeps the best N by relevance.
 
@@ -102,7 +102,7 @@ class TestBackfill:
         assert len(pages) == 3
 
     def test_every_ranked_paper_is_cached_not_just_the_written_ones(self, one_member):
-        """Otherwise the next weekly run re-ranks thousands it already paid for."""
+        """Otherwise the next monthly run re-ranks thousands it already paid for."""
         _run(one_member, _papers(12), limit=3)
 
         cache = Path("state/scored/pol.json")
@@ -134,7 +134,7 @@ class TestBackfill:
 
         assert code == 0
         assert seen == {"conference": 180, "journal": 180}, (
-            "the backfill window has to reach the collectors — the weekly "
+            "the backfill window has to reach the collectors — the monthly "
             "days_back is not what a backfill asked for"
         )
 
@@ -178,7 +178,7 @@ class TestMemberScoping:
 class TestSourceSelection:
     """Conferences are the case that needs backfilling: proceedings drop once a
     year, so a digest set up in August has missed the spring. Journals publish
-    steadily and the weekly run picks them up on its own."""
+    steadily and the monthly run picks them up on its own."""
 
     def _labels_for(self, config_path, sources):
         collect = MagicMock(side_effect=venue_collector())

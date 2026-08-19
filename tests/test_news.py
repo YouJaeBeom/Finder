@@ -1,6 +1,6 @@
 """IT news collection, ranking, note shape and the news pipeline stage.
 
-These tests call the news stage directly rather than going through run_weekly,
+These tests call the news stage directly rather than going through run_monthly,
 and never read run-report.json — the pipeline writes that file CWD-relative, so
 report-based assertions are order-sensitive across tests.
 """

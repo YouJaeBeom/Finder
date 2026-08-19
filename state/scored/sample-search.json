@@ -1692,6 +1692,816 @@
       "content_type": "paper",
       "notion_page_id": null,
       "title": "Hierarchical Dual Debiasing in LLM-based Recommendation"
+    },
+    {
+      "arxiv_id": "2608.13588",
+      "doi": "10.18653/v1/2026.acl-long.1559",
+      "normalized_title": "itercomp reasoningaware adaptive prompt compression for multihop question answering",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "IterCOMP: Reasoning-aware Adaptive Prompt Compression for Multi-hop Question Answering"
+    },
+    {
+      "arxiv_id": "2606.23881",
+      "doi": "10.18653/v1/2026.findings-acl.563",
+      "normalized_title": "ground then rank revisiting knowledgebased vqa with trainingfree entity identification",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Ground Then Rank: Revisiting Knowledge-Based VQA with Training-Free Entity Identification"
+    },
+    {
+      "arxiv_id": "2606.27287",
+      "doi": "10.18653/v1/2026.findings-acl.142",
+      "normalized_title": "prompt injection in automated résumé screening with large language models single and multiinjection settings",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Prompt Injection in Automated Résumé Screening with Large Language Models: Single and Multi-Injection Settings"
+    },
+    {
+      "arxiv_id": "2607.02262",
+      "doi": "10.18653/v1/2026.acl-long.1780",
+      "normalized_title": "checkrlm effective knowledgethought coherence checking in retrievalaugmented reasoning",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8196-a3ec-d3d93c47d132",
+      "title": "CheckRLM: Effective Knowledge-Thought Coherence Checking in Retrieval-Augmented Reasoning"
+    },
+    {
+      "arxiv_id": "2606.27705",
+      "doi": "10.18653/v1/2026.findings-acl.1059",
+      "normalized_title": "mitigating position bias in transformers via layerspecific positional embedding scaling",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Mitigating Position Bias in Transformers via Layer-Specific Positional Embedding Scaling"
+    },
+    {
+      "arxiv_id": "2606.27559",
+      "doi": "10.1145/3805712.3808619",
+      "normalized_title": "a sensitivityaware test collection for search among personal information",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81ac-8c4e-c501adab2d89",
+      "title": "A Sensitivity-Aware Test Collection for Search Among Personal Information"
+    },
+    {
+      "arxiv_id": "2607.06765",
+      "doi": "10.1145/3805712.3809624",
+      "normalized_title": "when and how to ask dynamic preference elicitation strategies for conversational recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8160-84b1-c1d36da8cd45",
+      "title": "When and How to Ask: Dynamic Preference Elicitation Strategies for Conversational Recommendation"
+    },
+    {
+      "arxiv_id": "2607.10096",
+      "doi": "10.1145/3805712.3808474",
+      "normalized_title": "scaling and stabilizing largescale embeddingbased retrieval",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Scaling and Stabilizing Large-Scale Embedding-Based Retrieval"
+    },
+    {
+      "arxiv_id": "2607.12578",
+      "doi": "10.1145/3805712.3808419",
+      "normalized_title": "cheaper is better a discountaware network for conversion rate prediction in ecommerce recommendation system",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Cheaper is Better: A Discount-Aware Network for Conversion Rate Prediction in E-commerce Recommendation System"
+    },
+    {
+      "arxiv_id": "2607.08540",
+      "doi": "10.1145/3805712.3809939",
+      "normalized_title": "improving adhoc search effectiveness for conversational information retrieval via model merging",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Improving Ad-hoc Search Effectiveness for Conversational Information Retrieval via Model Merging"
+    },
+    {
+      "arxiv_id": "2607.03615",
+      "doi": "10.1145/3805712.3808556",
+      "normalized_title": "the powerless noise how experimental settings shape the reported power of noise",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-816b-89de-e2f3101c5527",
+      "title": "The Powerless Noise: How Experimental Settings Shape the Reported Power of Noise"
+    },
+    {
+      "arxiv_id": "2606.22213",
+      "doi": "10.1145/3805689.3812381",
+      "normalized_title": "resume screening fast and slow biased ai recommendations influence on human decision making",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Resume Screening, Fast and Slow: (Biased) AI Recommendations' Influence on Human Decision Making"
+    },
+    {
+      "arxiv_id": "2607.20009",
+      "doi": "10.1007/978-3-032-21321-1_35",
+      "normalized_title": "talentclef at clef2026 skill and job title intelligence for human capital management",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "TalentCLEF at CLEF2026: Skill and Job Title Intelligence for Human Capital Management"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3806645.3807814",
+      "normalized_title": "omnia efficient rag serving through speculative scheduling",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Omnia: Efficient RAG Serving through Speculative Scheduling"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812403",
+      "normalized_title": "validating and refining measurements for generative ai evaluation via stakeholder engagement",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81ea-945b-edd02e20abb0",
+      "title": "Validating and Refining Measurements for Generative AI Evaluation Via Stakeholder Engagement"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812390",
+      "normalized_title": "bnim in participatory ai design centering minoritized lived experiences in healthcare",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "BNIM in Participatory AI Design: Centering Minoritized Lived Experiences in Healthcare"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812364",
+      "normalized_title": "fairness beyond popularity auditing and mitigating betweenness centrality disparities in link recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81a7-af8c-c4f9a90382a6",
+      "title": "Fairness Beyond Popularity: Auditing and Mitigating Betweenness Centrality Disparities in Link Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3806645.3816161",
+      "normalized_title": "quantum lcs in practice circuits optimizations and evaluation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Quantum LCS in Practice: Circuits, Optimizations, and Evaluation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812315",
+      "normalized_title": "dr gpt will see you now but should it exploring the benefits and harms of large language models for health advice using crowdsourced clinical cases",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Dr. GPT Will See You Now, but Should It? Exploring the Benefits and Harms of Large Language Models for Health Advice using Crowdsourced Clinical Cases"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806758",
+      "normalized_title": "accountability gaps in the fake follower market",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Accountability Gaps in the Fake Follower Market"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812286",
+      "normalized_title": "does it lead to prejudice or discrimination an assessment of stereotypes in llm decisionmaking",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Does It Lead to Prejudice or Discrimination? An Assessment of Stereotypes in LLM Decision-Making"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812418",
+      "normalized_title": "do attachment styles shape chatgpt usage",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Do Attachment Styles Shape ChatGPT Usage?"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806438",
+      "normalized_title": "your llm has a passport investigating brand origin geographic bias in ecommerce rankings",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81c2-b764-fc416188eaf6",
+      "title": "Your LLM Has a Passport: Investigating Brand Origin Geographic Bias in E-Commerce Rankings"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812207",
+      "normalized_title": "exposure to news and political content on tiktok a case study around the 2024 us election",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81eb-8a1e-e2640c15f2ab",
+      "title": "Exposure to news and political content on TikTok: A Case Study Around the 2024 US Election"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812257",
+      "normalized_title": "a genderdiverse perspective of bias in large language models",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-817e-9f67-d24cddfee2a6",
+      "title": "A Gender-Diverse Perspective of Bias in Large Language Models"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812246",
+      "normalized_title": "who are the humans in hcai systematic review of demographic reporting practices in ai research with recommendations for transparency and accountability",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Who are the Humans in HCAI? Systematic Review of Demographic Reporting Practices in AI Research with Recommendations for Transparency and Accountability"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806512",
+      "normalized_title": "risks and opportunities in humanmachine teaming in operationalizing machine learning target variables",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Risks and Opportunities in Human-Machine Teaming in Operationalizing Machine Learning Target Variables"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812280",
+      "normalized_title": "algorithm auditing policies rest on flawed assumptions about public sector systems",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Algorithm Auditing Policies Rest on Flawed Assumptions About Public Sector Systems"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3806645.3818792",
+      "normalized_title": "challenges in scaling rtree spatial search on processinginmemory",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Challenges in Scaling R-tree Spatial Search on Processing-In-Memory"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812474",
+      "normalized_title": "ethicsinpractice in ux design an empirical study of an aibased conversational support tool",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Ethics-in-practice in UX Design: an Empirical Study of an AI-Based Conversational Support Tool"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812325",
+      "normalized_title": "operationalizing governance for youthfacing llm wellbeing support a communitybased participatory study",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Operationalizing Governance for Youth-Facing LLM Well-being Support: A Community-Based Participatory Study"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812305",
+      "normalized_title": "investigating chatgpt usage in high schools student perspectives on policy and practice",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Investigating ChatGPT Usage in High Schools: Student Perspectives on Policy and Practice"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3806645.3807592",
+      "normalized_title": "carbs compiler autotuning via randomized biased search",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "CARBS: Compiler Autotuning via Randomized Biased Search"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812316",
+      "normalized_title": "estimating the sample size required to minimize model uncertainty across different risk profiles",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Estimating the Sample Size Required to Minimize Model Uncertainty Across Different Risk Profiles"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/DSN69566.2026.00025",
+      "normalized_title": "vullens enhancing software vulnerability detection against evasion attacks",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "VulLens: Enhancing Software Vulnerability Detection against Evasion Attacks"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/DSN69566.2026.00078",
+      "normalized_title": "ripeii retrieval inplace poisoning evaluation with indirect injections",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8127-bbe9-d9d165725d42",
+      "title": "RIPE-II: Retrieval In-Place Poisoning Evaluation with Indirect Injections"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3797905.3800522",
+      "normalized_title": "clone a collaborative multidevice system for retrievalaugmented generation over cxl",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Clone: A Collaborative Multi-device System for Retrieval-Augmented Generation over CXL"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3816782.3819230",
+      "normalized_title": "composable coresets for fair diversity maximization",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81a8-b6d0-cbd95da807f8",
+      "title": "Composable Coresets for Fair Diversity Maximization"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3797905.3807855",
+      "normalized_title": "gaaf fast and scalable graphbased vector similarity search with anymatch label filtering",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "GAAF: Fast and Scalable Graph-based Vector Similarity Search with Any-Match Label Filtering"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3797905.3800509",
+      "normalized_title": "xhd fast hausdorff distance computation with ray tracing",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "X-HD: Fast Hausdorff Distance Computation with Ray Tracing"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805061",
+      "normalized_title": "llm policy induction for heuristic search control a tracedriven alns framework",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "LLM Policy Induction for Heuristic Search Control: A Trace-Driven ALNS Framework"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805165",
+      "normalized_title": "investigating memetic scheduling strategies for distributed neuroevolution",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Investigating Memetic Scheduling Strategies for Distributed Neuroevolution"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3822498",
+      "normalized_title": "neutrality simplicity and search lessons from genetic programming",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Neutrality, Simplicity and Search: Lessons from Genetic Programming"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805193",
+      "normalized_title": "adaptive gridbased multiobjective evolutionary optimization for coordinated truckdrone routing with backhauls",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Adaptive Grid-Based Multi-Objective Evolutionary Optimization for Coordinated Truck–Drone Routing with Backhauls"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805088",
+      "normalized_title": "to balance competitive games using a multiobjective coevolutionary approach",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "To Balance Competitive Games Using a Multi-objective Coevolutionary Approach"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805082",
+      "normalized_title": "effect of mirrored orthogonal sampling for cmaes on multimodal problems",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Effect of Mirrored Orthogonal Sampling for CMA-ES on Multimodal Problems"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805104",
+      "normalized_title": "investigating robustness in visionlanguage models via adversarial prompt illumination",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Investigating Robustness in Vision-Language Models via Adversarial Prompt Illumination"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805075",
+      "normalized_title": "an adaptive offspring generation wrapper for constrained multimodal multiobjective evolutionary algorithms",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "An Adaptive Offspring Generation Wrapper for Constrained Multimodal Multiobjective Evolutionary Algorithms"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805111",
+      "normalized_title": "a boundaryaware multiobjective genetic programming classifier with stackingbased integration",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "A Boundary-Aware Multi-Objective Genetic Programming Classifier with Stacking-Based Integration"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805199",
+      "normalized_title": "from prompts to pareto fronts using code lms as semantic genetic operators for compiler bug discovery",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "From Prompts to Pareto Fronts: Using Code LMs as Semantic Genetic Operators for Compiler Bug Discovery"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805162",
+      "normalized_title": "dropoutinspired strategies for enhanced exploration in evolutionary algorithms",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Dropout-Inspired Strategies For Enhanced Exploration In Evolutionary Algorithms"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805096",
+      "normalized_title": "stabilitydriven cpg design for more effective qualitydiversity in evolutionary robotics",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Stability-Driven CPG Design for More Effective Quality-Diversity in Evolutionary Robotics"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805099",
+      "normalized_title": "mode manifold operator decoding embeddings for neural neighborhood search for vehicle routing problems",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "MODE: Manifold Operator Decoding Embeddings for Neural Neighborhood Search for Vehicle Routing Problems"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805185",
+      "normalized_title": "vehicle routing problem with resourceconstrained pickup and delivery a heuristicinformed brkga with patternbased analysis",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Vehicle Routing Problem with Resource-Constrained Pickup and Delivery: A Heuristic-Informed BRKGA with Pattern-Based Analysis"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805105",
+      "normalized_title": "dominanceboundarybased reference point generation for indicatorbased multiobjective optimization",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Dominance-Boundary-Based Reference Point Generation for Indicator-Based Multiobjective Optimization"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3819373",
+      "normalized_title": "probing the intrinsic effectiveness of large language models for medical classifications",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Probing the Intrinsic Effectiveness of Large Language Models for Medical Classifications"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3819436",
+      "normalized_title": "exploring the evolutionary landscape of aigenerated viral sequences a case study on hiv1",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Exploring the Evolutionary Landscape of AI-Generated Viral Sequences: a Case Study on HIV-1"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3816798",
+      "normalized_title": "multiobjective evolutionary optimization for the discovery of structurally diverse and active compounds",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Multi-Objective Evolutionary Optimization for the Discovery of Structurally Diverse and Active Compounds"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3819375",
+      "normalized_title": "ltricd a rankingaware framework for automatic icd coding",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "LTR-ICD: A Ranking-Aware Framework for Automatic ICD Coding"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3819374",
+      "normalized_title": "stochastic retrieval for fairnessaccuracy tradeoffs in clinical rag",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81dc-a293-ede81ef3cc3b",
+      "title": "Stochastic Retrieval for Fairness–Accuracy Trade-offs in Clinical RAG"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3817441",
+      "normalized_title": "supportai a multimodal ai platform for clinical decision support",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SupportAI: A Multimodal AI Platform for Clinical Decision Support"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3819460",
+      "normalized_title": "understanding channel complementarity for multiplex cell segmentation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Understanding Channel Complementarity for Multiplex Cell Segmentation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3819571",
+      "normalized_title": "genomesl genomicllm fused mechanism explanation framework for synthetic lethality",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "GenoME-SL: Genomic-LLM Fused Mechanism Explanation Framework for Synthetic Lethality"
+    },
+    {
+      "arxiv_id": "2606.31719",
+      "doi": "10.48550/arXiv.2606.31719",
+      "normalized_title": "seeing is not sharing some visionlanguage models overestimate common ground in asymmetric dialogue",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Seeing Is Not Sharing: Some Vision-Language Models Overestimate Common Ground in Asymmetric Dialogue"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3827583",
+      "normalized_title": "introduction to the special issue on query performance prediction",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Introduction to the Special Issue on Query Performance Prediction"
+    },
+    {
+      "arxiv_id": "2607.26074",
+      "doi": "10.1145/3831686",
+      "normalized_title": "reproducibility in recommender systems a survey",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Reproducibility in Recommender Systems: A Survey"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/TKDE.2026.3681944",
+      "normalized_title": "tigim a twostage inductive gnn with multitask learning for influential node identification in complex networks",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "TIG-IM: A Two-Stage Inductive GNN With Multi-Task Learning for Influential Node Identification in Complex Networks"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1038/s41562-026-02480-x",
+      "normalized_title": "secondhand smoke exposure and human health an umbrella review",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Secondhand smoke exposure and human health: an umbrella review."
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/TKDE.2026.3686613",
+      "normalized_title": "safa sequential recommendation with adaptive sparse attention and frequencyaware encoding",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SAFA: Sequential Recommendation With Adaptive Sparse Attention and Frequency-Aware Encoding"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/TKDE.2026.3682862",
+      "normalized_title": "llmops in action a framework for designing deploying and governing advanced chatbots",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-810a-aaa7-fc33a27083f4",
+      "title": "LLMOps in Action: A Framework for Designing, Deploying, and Governing Advanced Chatbots"
+    },
+    {
+      "arxiv_id": "2606.24623",
+      "doi": "10.1016/j.ipm.2026.105001",
+      "normalized_title": "privacypreserving rag via multiagent semantic rewriting achieving confidentiality without compromising contextual fidelity",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81bd-bdf5-f0610ed8acfc",
+      "title": "Privacy-preserving RAG via multi-agent semantic rewriting: Achieving confidentiality without compromising contextual fidelity"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/TKDE.2026.3689542",
+      "normalized_title": "cogrmh cognitionbased recalling multiview history for event forecasting in temporal knowledge graph",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Cog-RMH: Cognition-Based Recalling Multiview History for Event Forecasting in Temporal Knowledge Graph"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.15407/jai2026.02.087",
+      "normalized_title": "using llm agents to generate migration sql queries in cloud computing platforms",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Using LLM Agents to Generate Migration SQL Queries in Cloud Computing Platforms"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3827609",
+      "normalized_title": "decomposition think and action alleviating hallucinations of large language models with reasoningevidence interactive augmented graph",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81d6-9fa0-c664d345708f",
+      "title": "Decomposition, Think, and Action: Alleviating Hallucinations of Large Language Models with Reasoning–Evidence Interactive Augmented Graph"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3829332",
+      "normalized_title": "how anonymous are search engine queries quantifying the risk to privacy in search engine query logs and protecting exposure of personally identifiable information in them",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-815c-b12c-d95cce80d0e8",
+      "title": "How Anonymous are Search Engine Queries? Quantifying the Risk to Privacy in Search Engine Query Logs and Protecting Exposure of Personally Identifiable Information in Them"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1007/s10618-026-01238-3",
+      "normalized_title": "a clustering framework for skewed features with low true cluster separation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "A clustering framework for skewed features with low true cluster separation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/TKDE.2026.3683437",
+      "normalized_title": "intragroup individual item fairnessaware recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81b3-a438-d0f599892dac",
+      "title": "Intra-Group Individual Item Fairness-Aware Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.15407/jai2026.02.024",
+      "normalized_title": "enhancing soft skills in specialty 293 international law through digital tools a theoretical and practical perspective",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Enhancing Soft Skills in Specialty 293 “International Law” through Digital Tools: a Theoretical and Practical Perspective"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3828550",
+      "normalized_title": "conformalk distributionfree topk missrisk control for recommendation with overlappinggroup and twostage guarantees",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-811a-80e5-d5fb202bcb45",
+      "title": "Conformal@K: Distribution-Free Top-K Miss-Risk Control for Recommendation with Overlapping-Group and Two-Stage Guarantees"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1002/asi.70101",
+      "normalized_title": "incremental refinement of relevance rankings balancing relevance depth and scope",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8196-ace3-c1195d3b57c9",
+      "title": "Incremental refinement of relevance rankings: Balancing relevance depth and scope"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3827615",
+      "normalized_title": "heterogeneous graph transfer learning for diversityenhanced crossdomain sequential recommendation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Heterogeneous Graph Transfer Learning for Diversity-enhanced Cross-Domain Sequential Recommendation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3827608",
+      "normalized_title": "tmmsrec timeintervalaware multimodal sequential recommender",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "TMMSRec: Time-interval-aware Multi-Modal Sequential Recommender"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3827605",
+      "normalized_title": "adaptive query performance prediction for retrievalaugmented generation bridging retrieval quality and generation relevance",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8186-8b5d-c3c6ce781053",
+      "title": "Adaptive Query Performance Prediction for Retrieval-Augmented Generation: Bridging Retrieval Quality and Generation Relevance"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1002/asi.70103",
+      "normalized_title": "information behavior in early childhood a scoping review an annual review of information science and technology arist paper",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Information behavior in early childhood: A scoping review. An Annual Review of Information Science and Technology (ARIST) paper"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3821405",
+      "normalized_title": "a deep dive into fairness bias threats and privacy in recommender systems insights and future research",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8136-a044-c7585995ab8e",
+      "title": "A Deep Dive into Fairness, Bias, Threats, and Privacy in Recommender Systems: Insights and Future Research"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.15407/jai2026.02.036",
+      "normalized_title": "ukrainian rag system with morphological normalization and fact verification",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81ca-96d5-fbb34d9391d4",
+      "title": "Ukrainian RAG System with Morphological Normalization and Fact Verification"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3828551",
+      "normalized_title": "conversational recommender systems using generative models gencrs a literature review",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81aa-a619-f252e28e5fda",
+      "title": "Conversational Recommender Systems Using Generative Models (Gen-CRS): A Literature Review"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1038/s41562-026-02489-2",
+      "normalized_title": "the growing concentration of national influence in global science",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "The growing concentration of national influence in global science."
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3827614",
+      "normalized_title": "m3dsrec memoryenhanced multimodal sequential recommendation with multiple distillation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "M3DSRec: Memory-Enhanced Multimodal Sequential Recommendation with Multiple Distillation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3828182",
+      "normalized_title": "rethinking homogeneity in interactive recommendation dynamic finegrained control for mitigating filter bubbles",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-816d-90b4-f4d9b3321563",
+      "title": "Rethinking Homogeneity in Interactive Recommendation: Dynamic Fine-Grained Control for Mitigating Filter Bubbles"
     }
   ]
 }

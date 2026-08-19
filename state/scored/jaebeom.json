@@ -486,6 +486,447 @@
       "content_type": "paper",
       "notion_page_id": null,
       "title": "RosePO: Customized Preference Alignment in LLM-Based Recommendation"
+    },
+    {
+      "arxiv_id": "2607.00423",
+      "doi": "10.18653/v1/2026.acl-long.1320",
+      "normalized_title": "selective testtime debiasing for clip via reward gating",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Selective Test-Time Debiasing for CLIP via Reward Gating"
+    },
+    {
+      "arxiv_id": "2606.21939",
+      "doi": "10.18653/v1/2026.acl-long.830",
+      "normalized_title": "beyond value benchmarks measuring valuestructure alignment in large language models via symmetric qsorts",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81ee-8230-e4977af0701d",
+      "title": "Beyond Value Benchmarks: Measuring Value-Structure Alignment in Large Language Models via Symmetric Q-Sorts"
+    },
+    {
+      "arxiv_id": "2606.28544",
+      "doi": "10.18653/v1/2026.acl-long.1930",
+      "normalized_title": "who plays which role when communication role dynamics for peer recognition and team performance prediction",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Who Plays Which Role When? Communication Role Dynamics for Peer Recognition and Team Performance Prediction"
+    },
+    {
+      "arxiv_id": "2607.07907",
+      "doi": "10.18653/v1/2026.findings-acl.1379",
+      "normalized_title": "multimodal unlearning across vision language video and audio survey of methods datasets and benchmarks",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Multimodal Unlearning Across Vision, Language, Video, and Audio: Survey of Methods, Datasets, and Benchmarks"
+    },
+    {
+      "arxiv_id": "2608.13581",
+      "doi": "10.18653/v1/2026.findings-acl.1087",
+      "normalized_title": "from prediction to intervention personalized meallevel glucose regulation via an llm agent",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "From Prediction to Intervention: Personalized Meal-Level Glucose Regulation via an LLM Agent"
+    },
+    {
+      "arxiv_id": "2606.27705",
+      "doi": "10.18653/v1/2026.findings-acl.1059",
+      "normalized_title": "mitigating position bias in transformers via layerspecific positional embedding scaling",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Mitigating Position Bias in Transformers via Layer-Specific Positional Embedding Scaling"
+    },
+    {
+      "arxiv_id": "2606.27559",
+      "doi": "10.1145/3805712.3808619",
+      "normalized_title": "a sensitivityaware test collection for search among personal information",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "A Sensitivity-Aware Test Collection for Search Among Personal Information"
+    },
+    {
+      "arxiv_id": "2607.21624",
+      "doi": "10.1145/3745756.3809214",
+      "normalized_title": "fblayout optimizing memory layout for efficient llm finetuning on mobile gpus",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "FBLayout: Optimizing Memory Layout for Efficient LLM Finetuning on Mobile GPUs"
+    },
+    {
+      "arxiv_id": "2607.03615",
+      "doi": "10.1145/3805712.3808556",
+      "normalized_title": "the powerless noise how experimental settings shape the reported power of noise",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "The Powerless Noise: How Experimental Settings Shape the Reported Power of Noise"
+    },
+    {
+      "arxiv_id": "2607.07895",
+      "doi": "10.18653/v1/2025.emnlp-main.1221",
+      "normalized_title": "scalable and culturally specific stereotype dataset construction via humanllm collaboration",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8131-bcc3-d3f0e1a40130",
+      "title": "Scalable and Culturally Specific Stereotype Dataset Construction via Human-LLM Collaboration"
+    },
+    {
+      "arxiv_id": "2606.24022",
+      "doi": "10.1145/3805689.3812208",
+      "normalized_title": "do language models pass the bechdel test auditing gender biases in llmgenerated screenplays",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8181-8d16-e77b965a7ab7",
+      "title": "Do Language Models Pass the Bechdel Test? Auditing Gender Biases in LLM-Generated Screenplays"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806459",
+      "normalized_title": "automated bias blind spots examining stereotype associations in vlmasajudge paradigms",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81a4-ad5f-c80e22a1954c",
+      "title": "Automated bias blind spots: Examining stereotype associations in VLM-as-a-judge paradigms"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806451",
+      "normalized_title": "auditing llm responses in a complex policy landscape abortion law in the united states",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8188-b3e5-f9b5bd5a4520",
+      "title": "Auditing LLM Responses in a Complex Policy Landscape: Abortion Law in the United States"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806520",
+      "normalized_title": "this model needs to chill an experimental scoring scale for participatory perceptions of gender bias and harm in large language modelgenerated text",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8153-a62f-e821c15825c4",
+      "title": "“This Model Needs to Chill”: an Experimental Scoring Scale for Participatory Perceptions of Gender Bias and Harm in Large Language Model-Generated Text"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806751",
+      "normalized_title": "how probing for problems and bias affects perceptions of ai chatbot trustworthiness",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8100-bd40-c36abe21f387",
+      "title": "How Probing for Problems and Bias Affects Perceptions of AI Chatbot Trustworthiness"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806456",
+      "normalized_title": "beyond the response examining reasoning and execution fidelity in large language models for mental health",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8127-b425-c73a266aea5e",
+      "title": "Beyond the Response: Examining Reasoning and Execution Fidelity in Large Language Models for Mental Health"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806453",
+      "normalized_title": "learning alignment principles grounded in human reasons and values",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8111-98f8-ebf842a4a47e",
+      "title": "Learning Alignment Principles Grounded in Human Reasons and Values"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806487",
+      "normalized_title": "fairhirebench a crossgenerational intersectional bias benchmark for large language models in automated hiring",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81a1-8481-cd06f24a20f8",
+      "title": "FairHireBench: A Cross-Generational Intersectional Bias Benchmark for Large Language Models in Automated Hiring"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806484",
+      "normalized_title": "language disparities in moderation workforce allocation by social media platforms",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Language Disparities in Moderation Workforce Allocation by Social Media Platforms"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806438",
+      "normalized_title": "your llm has a passport investigating brand origin geographic bias in ecommerce rankings",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81f8-ba44-f07cef842ef4",
+      "title": "Your LLM Has a Passport: Investigating Brand Origin Geographic Bias in E-Commerce Rankings"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806522",
+      "normalized_title": "when vocabulary comprehension fails clinical reasoning evaluating therapy bots safety risks for generation alpha",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "When Vocabulary Comprehension Fails Clinical Reasoning: Evaluating Therapy Bots' Safety Risks for Generation Alpha"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812343",
+      "normalized_title": "heart attacks healthcare evaluation of adversarial robustness",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "HEART Attacks: Healthcare Evaluation of Adversarial RobusTness"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812212",
+      "normalized_title": "the context dependency of demographic bias in llm annotation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8186-8c27-c75aba5fbb3e",
+      "title": "The Context Dependency of Demographic Bias in LLM Annotation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812263",
+      "normalized_title": "a methodology to assess polarization on social media",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "A Methodology to Assess Polarization on Social Media"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806721",
+      "normalized_title": "llm evaluation as sociotechnical practice experiences from a researchpractice partnership in community health",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8110-a36b-fa19805b6139",
+      "title": "LLM Evaluation as Sociotechnical Practice: Experiences from a Research-Practice Partnership in Community Health"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806471",
+      "normalized_title": "auditing the space between languages character representation in bilingual young adult literature",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8114-96c2-e0d50433819d",
+      "title": "Auditing the Space Between Languages: Character Representation in Bilingual Young Adult Literature"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3806757",
+      "normalized_title": "legitimate resurrecting biased ontologies on the path to superintelligence",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8157-a10f-cf1bbba8b2a6",
+      "title": "Legitimate: Resurrecting Biased Ontologies On the Path to Superintelligence"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812325",
+      "normalized_title": "operationalizing governance for youthfacing llm wellbeing support a communitybased participatory study",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Operationalizing Governance for Youth-Facing LLM Well-being Support: A Community-Based Participatory Study"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/DSN69566.2026.00025",
+      "normalized_title": "vullens enhancing software vulnerability detection against evasion attacks",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "VulLens: Enhancing Software Vulnerability Detection against Evasion Attacks"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805104",
+      "normalized_title": "investigating robustness in visionlanguage models via adversarial prompt illumination",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Investigating Robustness in Vision-Language Models via Adversarial Prompt Illumination"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3795095.3805199",
+      "normalized_title": "from prompts to pareto fronts using code lms as semantic genetic operators for compiler bug discovery",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "From Prompts to Pareto Fronts: Using Code LMs as Semantic Genetic Operators for Compiler Bug Discovery"
+    },
+    {
+      "arxiv_id": "2606.30815",
+      "doi": "10.18653/v1/2026.conll-main.24",
+      "normalized_title": "when transformers learn impossible languages what do they learn",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "When transformers learn \"impossible\" languages, what do they learn?"
+    },
+    {
+      "arxiv_id": "2608.11259",
+      "doi": "10.1007/978-3-032-29755-6_14",
+      "normalized_title": "methodologies for improving the quality of ai tutoring in k12 education",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Methodologies for Improving the Quality of AI Tutoring in K-12 Education"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3819451",
+      "normalized_title": "variational generative modeling for forecasting protein diffusion from molecular dynamics",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Variational Generative Modeling for Forecasting Protein Diffusion from Molecular Dynamics"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3819436",
+      "normalized_title": "exploring the evolutionary landscape of aigenerated viral sequences a case study on hiv1",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Exploring the Evolutionary Landscape of AI-Generated Viral Sequences: a Case Study on HIV-1"
+    },
+    {
+      "arxiv_id": "2607.03303",
+      "doi": "10.1007/978-3-032-29763-1_37",
+      "normalized_title": "reflective dialogue or prompt refinement effects of tutor scaffolding on students independent llm use for programming",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Reflective Dialogue or Prompt Refinement? Effects of Tutor Scaffolding on Students' Independent LLM Use for Programming"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3819376",
+      "normalized_title": "graphxtract adaptive graphbased sentence selection for resourceefficient lay summarization with large language models",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "GraphXtract: Adaptive Graph-Based Sentence Selection for Resource-Efficient Lay Summarization with Large Language Models"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3820003",
+      "normalized_title": "a hybrid framework integrating redcap and llms for the optimization of surgical workflows and evidencebased clinical governance",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "A Hybrid Framework Integrating REDCap and LLMs for the Optimization of Surgical Workflows and Evidence-Based Clinical Governance"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3817441",
+      "normalized_title": "supportai a multimodal ai platform for clinical decision support",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SupportAI: A Multimodal AI Platform for Clinical Decision Support"
+    },
+    {
+      "arxiv_id": "2607.05742",
+      "doi": null,
+      "normalized_title": "personajudge simulating individual human preference judgments with evaluatorspecific demonstration data",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-815f-b1e2-f155f642d9d5",
+      "title": "PERSONAJUDGE: Simulating Individual Human Preference Judgments with Evaluator-Specific Demonstration Data"
+    },
+    {
+      "arxiv_id": "2607.01557",
+      "doi": null,
+      "normalized_title": "dips dialogue policy selection for highstakes persuasion agents",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "DiPS: Dialogue Policy Selection for High-Stakes Persuasion Agents"
+    },
+    {
+      "arxiv_id": "2606.31307",
+      "doi": "10.48550/arXiv.2606.31307",
+      "normalized_title": "when the database fails prompting llm dialogue agents for safe recovery in taskoriented dialogue",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "When the Database Fails: Prompting LLM Dialogue Agents for Safe Recovery in Task-Oriented Dialogue"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1017/S0305000926100749",
+      "normalized_title": "examining the robustness and generalizability of the shape bias a metaanalysis",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Examining the robustness and generalizability of the shape bias: a meta-analysis"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/TPAMI.2026.3673339",
+      "normalized_title": "prompt is all you need prompting foundation models for largescale selfsupervised semantic segmentation",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Prompt is All You Need: Prompting Foundation Models for Large-Scale Self-Supervised Semantic Segmentation"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3829332",
+      "normalized_title": "how anonymous are search engine queries quantifying the risk to privacy in search engine query logs and protecting exposure of personally identifiable information in them",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "How Anonymous are Search Engine Queries? Quantifying the Risk to Privacy in Search Engine Query Logs and Protecting Exposure of Personally Identifiable Information in Them"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3828667",
+      "normalized_title": "a survey and computational atlas of personality models",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "A Survey and Computational Atlas of Personality Models"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3831687",
+      "normalized_title": "planner policies are bias learners a comprehensive analysis of preference bias in llmbased dialogue planner policies",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8152-b5e5-f1dcca51bcdc",
+      "title": "Planner Policies are Bias Learners: A Comprehensive Analysis of Preference Bias in LLM-based Dialogue Planner Policies"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3828660",
+      "normalized_title": "a comprehensive survey of deep learning for entity resolution",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "A Comprehensive Survey of Deep Learning for Entity Resolution"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3828551",
+      "normalized_title": "conversational recommender systems using generative models gencrs a literature review",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Conversational Recommender Systems Using Generative Models (Gen-CRS): A Literature Review"
     }
   ]
 }

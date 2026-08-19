@@ -192,7 +192,7 @@ def filter_by_keywords(papers: List[Paper], keywords: Sequence[Any]) -> List[Pap
     empty list as "keep everything" and skips this call entirely — that choice
     belongs to the caller, not here.
     """
-    # Compiled once, not once per paper: a weekly run filters ~1500 of them.
+    # Compiled once, not once per paper: a monthly run filters ~1500 of them.
     rules = compile_rules(keywords)
 
     result: List[Paper] = []

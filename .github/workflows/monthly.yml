@@ -1,9 +1,11 @@
-name: Weekly paper digest
+name: Monthly paper digest
 
-# Monday 08:00 KST (Sunday 23:00 UTC). GitHub cron is UTC-only.
+# The 1st of each month at 00:00 UTC — 09:00 KST, still the 1st in Korea.
+# 23:00 UTC would be 08:00 KST on the *2nd*, and cron cannot say "the last day
+# of the previous month", so the run starts an hour later instead of a day late.
 on:
   schedule:
-    - cron: "0 23 * * 0"
+    - cron: "0 0 1 * *"
   workflow_dispatch:
     inputs:
       member:
@@ -24,8 +26,16 @@ jobs:
     runs-on: ubuntu-latest
     # Members are served sequentially in one job — Notion's rate limit is per
     # integration token, so parallel jobs would share one budget while each
-    # behaved as though it owned the whole thing. Budget ~3 minutes a member.
-    timeout-minutes: 90
+    # behaved as though it owned the whole thing.
+    #
+    # Measured 2026-08 with no per-member cap: 46 notes in 20 minutes, about 26
+    # seconds a note. At limits.max_members (15) that projects to ~100 minutes,
+    # so 90 would have killed a full lab mid-run. 180 leaves real headroom.
+    #
+    # A timeout is survivable by design: the truth layer is each member's Notion
+    # database, so a killed run loses only the scoring cache it never committed,
+    # and the next run re-ranks rather than duplicating.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
 
@@ -44,7 +54,7 @@ jobs:
       - name: Validate members
         run: python -m paper_digest members list
 
-      - name: Run weekly digest
+      - name: Run monthly digest
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -52,9 +62,9 @@ jobs:
           MEMBER: ${{ inputs.member }}
         run: |
           if [ -n "$MEMBER" ]; then
-            python -m paper_digest run --mode weekly --member "$MEMBER"
+            python -m paper_digest run --mode monthly --member "$MEMBER"
           else
-            python -m paper_digest run --mode weekly
+            python -m paper_digest run --mode monthly
           fi
 
       # Surface what happened on the run page itself. Without this the only
@@ -73,7 +83,7 @@ jobs:
               raise SystemExit(0)
 
           data = json.loads(report.read_text(encoding="utf-8"))
-          lines = ["## Weekly digest", "",
+          lines = ["## Monthly digest", "",
                    f"- pages created: **{data.get('pages_created', 0)}**",
                    f"- candidates: {data.get('candidates_found', 0)}", ""]
 
@@ -134,7 +144,7 @@ jobs:
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: update digest state after weekly run [skip ci]"
+          git commit -m "chore: update digest state after monthly run [skip ci]"
 
           # Anything pushed while the run was working leaves this checkout
           # behind, and the push is rejected as non-fast-forward. Rebase onto it

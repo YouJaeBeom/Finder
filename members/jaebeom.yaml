@@ -5,9 +5,10 @@
 name: "유재범"
 enabled: true
 
-# 첫 라이브 실행이라 일부러 낮게 잡았습니다. 결과를 보고 20 내외로 올리세요.
-# (lab 상한은 config.yaml 의 limits.max_top_n_per_member)
-top_n: 5
+# top_n 을 적지 않으면 상한이 없습니다 — 관련도 컷오프를 넘은 논문이 전부
+# 들어옵니다. 상한을 두면 21번째 논문이 조용히 사라지고 그 사실은 아무도 모릅니다.
+# 무엇이 쓸 가치가 있는지는 개수가 아니라 컷오프가 정합니다.
+# (정말 제한하려면 `top_n: 20` 처럼 적으세요. lab 상한은 limits.max_top_n_per_member)
 
 research_profile: |
   LLM의 정치적 편향과 맥락적 견고성을 연구합니다. 모델이 정치적으로 어느 쪽에

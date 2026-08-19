@@ -14,7 +14,7 @@ Selection is therefore mechanical:
 The round-robin matters. A busy feed like TechCrunch publishes ~20 items a day
 and would otherwise take every slot in the digest, burying the Hacker News
 stories the score filter already vouched for. Taking turns across sources keeps
-the weekly digest mixed.
+the monthly digest mixed.
 """
 from __future__ import annotations
 

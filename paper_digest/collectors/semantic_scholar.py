@@ -9,7 +9,7 @@ Two earlier sources were removed rather than kept:
 * **OpenAlex.** Its conference records were unusable to begin with (ACL papers
   carry ``source: null``, and the conference sources that exist are per-year
   fragments). Then in 2026 it moved ``from_created_date`` and
-  ``from_updated_date`` behind a paid plan, which is what a weekly digest needs
+  ``from_updated_date`` behind a paid plan, which is what a monthly digest needs
   — "indexed since last week", not "published since last week". What remains
   free is a publication-date window over a topic filter so loose that the top
   venue by volume was a predatory electromagnetics journal publishing NLP

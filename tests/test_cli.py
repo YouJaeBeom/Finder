@@ -79,19 +79,19 @@ class TestMembersCommands:
 
 
 class TestRunDispatch:
-    def test_weekly_passes_the_config_and_no_member(self):
-        with patch("paper_digest.pipeline.run_weekly", return_value=0) as run:
-            assert _run("run", "--mode", "weekly", "--config", "c.yaml") == 0
+    def test_monthly_passes_the_config_and_no_member(self):
+        with patch("paper_digest.pipeline.run_monthly", return_value=0) as run:
+            assert _run("run", "--mode", "monthly", "--config", "c.yaml") == 0
         run.assert_called_once_with("c.yaml", only=None)
 
-    def test_weekly_forwards_the_member_filter(self):
-        with patch("paper_digest.pipeline.run_weekly", return_value=0) as run:
-            _run("run", "--mode", "weekly", "--member", "jaebeom")
+    def test_monthly_forwards_the_member_filter(self):
+        with patch("paper_digest.pipeline.run_monthly", return_value=0) as run:
+            _run("run", "--mode", "monthly", "--member", "jaebeom")
         run.assert_called_once_with("config.yaml", only="jaebeom")
 
     def test_the_pipelines_exit_code_is_the_processs_exit_code(self):
-        with patch("paper_digest.pipeline.run_weekly", return_value=1):
-            assert _run("run", "--mode", "weekly") == 1
+        with patch("paper_digest.pipeline.run_monthly", return_value=1):
+            assert _run("run", "--mode", "monthly") == 1
 
     def test_backfill_forwards_every_option(self):
         with patch("paper_digest.pipeline.run_backfill", return_value=0) as run:
@@ -106,7 +106,11 @@ class TestRunDispatch:
         run.assert_called_once_with("config.yaml", 365, 200, "both", only=None)
 
     def test_an_unknown_mode_is_refused_by_the_parser(self):
-        assert _run("run", "--mode", "monthly") == 2
+        assert _run("run", "--mode", "daily") == 2
+
+    def test_the_old_weekly_mode_is_gone(self):
+        """The cadence moved to monthly; a stale cron must fail loudly, not quietly."""
+        assert _run("run", "--mode", "weekly") == 2
 
     def test_an_unknown_backfill_source_is_refused_by_the_parser(self):
         """Rejected here rather than collecting nothing and reporting success."""

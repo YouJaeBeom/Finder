@@ -158,7 +158,7 @@ def rank_papers(
         # handed papers it finds irrelevant answers with a spread of small
         # non-zero numbers instead.
         #
-        # Treating the spread as a fault used to be defensible, when the weekly
+        # Treating the spread as a fault used to be defensible, when the monthly
         # window was seven days and everything in it was new. With a 30-day
         # window and per-member deduplication the ordinary week leaves one or
         # two leftover candidates, and one of those scoring a 3 is not an
@@ -181,7 +181,9 @@ def rank_papers(
             max(p.relevance_score for p in rankable),
         )
 
-    top = qualified[: cfg.top_n]
+    # cfg.top_n is None when the member set no limit — keep everything that
+    # cleared the cutoff. The cutoff, not a count, is what bounds this.
+    top = qualified if cfg.top_n is None else qualified[: cfg.top_n]
     logger.info(
         "Ranking: %d qualified, returning top %d",
         len(qualified),

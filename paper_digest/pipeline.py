@@ -128,7 +128,7 @@ def check_budget(cfg: Config, members: Sequence[Member]) -> Optional[str]:
     that no per-member limit can provide: fifteen people each legitimately at
     their own maximum is still a bill nobody approved.
     """
-    planned = sum(m.top_n for m in members)
+    planned = sum(m.top_n for m in members if m.top_n is not None)
     if cfg.news.enabled:
         planned += cfg.news.top_n
 
@@ -265,6 +265,7 @@ def _serve_member(
     provider: LLMProvider,
     top_n: Optional[int] = None,
     rank_all: bool = False,
+    note_budget: Optional[int] = None,
 ) -> MemberOutcome:
     """Filter, rank, annotate and write one member's papers into their database.
 
@@ -336,6 +337,18 @@ def _serve_member(
                     member.name)
         return outcome
 
+    if note_budget is not None and len(top) > note_budget:
+        # Never silently: a cap that trims the tail without saying so reads as
+        # "there was nothing else", which is the failure this whole change was
+        # meant to avoid.
+        logger.warning(
+            "%s: %d papers cleared the cutoff but only %d fit inside "
+            "limits.max_notes_per_run — %d dropped. Raise the limit if this "
+            "keeps happening.",
+            member.name, len(top), note_budget, len(top) - note_budget,
+        )
+        top = top[:note_budget]
+
     generate_notes(top, member_cfg, provider)
 
     for paper in top:
@@ -383,7 +396,7 @@ def _overlap(outcomes: Sequence[MemberOutcome]) -> List[dict]:
     return shared
 
 
-def _weekly_exit_code(outcomes: Sequence[MemberOutcome]) -> Tuple[int, Optional[str]]:
+def _monthly_exit_code(outcomes: Sequence[MemberOutcome]) -> Tuple[int, Optional[str]]:
     """0 when every member was served, 1 with a summary when any failed."""
     failed = [o for o in outcomes if o.error]
     if not failed:
@@ -392,7 +405,7 @@ def _weekly_exit_code(outcomes: Sequence[MemberOutcome]) -> Tuple[int, Optional[
     return 1, f"{len(failed)} of {len(outcomes)} members failed — {summary}"
 
 
-# ── Weekly mode ────────────────────────────────────────────────────────────────
+# ── Monthly mode ────────────────────────────────────────────────────────────────
 
 def _ensure_notion_structure(
     cfg: Config,
@@ -439,7 +452,7 @@ def _ensure_notion_structure(
     return ensure_news_database(cfg.parent_page_id(), cfg.notion_token)
 
 
-def run_weekly(config_path: str = "config.yaml", only: Optional[str] = None) -> int:
+def run_monthly(config_path: str = "config.yaml", only: Optional[str] = None) -> int:
     """Collect once, write news once, then serve every enabled member in turn.
 
     Returns 0 when every member was served (including quiet weeks where nobody
@@ -448,7 +461,7 @@ def run_weekly(config_path: str = "config.yaml", only: Optional[str] = None) -> 
     cfg, members, problem = _load_run_inputs(config_path, only)
     if problem:
         logger.error("Cannot start: %s", problem)
-        write_failure_report("weekly", problem)
+        write_failure_report("monthly", problem)
         return 1
     assert cfg is not None  # _load_run_inputs returns a problem otherwise
 
@@ -459,7 +472,7 @@ def run_weekly(config_path: str = "config.yaml", only: Optional[str] = None) -> 
         news_db_id, news_props = _ensure_notion_structure(cfg, members)
     except Exception as exc:
         logger.error("Notion is not reachable or not configured: %s", exc)
-        write_failure_report("weekly", f"notion: {exc}")
+        write_failure_report("monthly", f"notion: {exc}")
         return 1
 
     # ── Collection, once for everyone ─────────────────────────────────────────
@@ -472,16 +485,31 @@ def run_weekly(config_path: str = "config.yaml", only: Optional[str] = None) -> 
     created_news = run_news(cfg, provider, news_db_id, news_props, members)
 
     # ── Members, in turn ──────────────────────────────────────────────────────
+    # Members may set no per-person limit, so the lab ceiling has to hold here
+    # rather than in the pre-flight estimate: what is left after the news, shared
+    # across everyone, spent in the order members are served.
+    remaining = max(cfg.limits.max_notes_per_run - len(created_news), 0)
+
     outcomes: List[MemberOutcome] = []
     for member in members:
         logger.info("=== Member: %s (%s) ===", member.name, member.member_id)
         try:
-            outcomes.append(_serve_member(cfg, member, pool, provider))
+            outcome = _serve_member(cfg, member, pool, provider,
+                                    note_budget=remaining)
+            remaining -= len(outcome.created)
+            outcomes.append(outcome)
         except Exception as exc:
             logger.error("Member %s could not be served: %s", member.name, exc)
             outcomes.append(MemberOutcome(member=member, error=str(exc)))
 
-    exit_code, error = _weekly_exit_code(outcomes)
+    if remaining <= 0:
+        logger.warning(
+            "The run reached limits.max_notes_per_run (%d). Members served last "
+            "may have received less than they qualified for.",
+            cfg.limits.max_notes_per_run,
+        )
+
+    exit_code, error = _monthly_exit_code(outcomes)
 
     created_papers = [p for o in outcomes for p in o.created]
     report = write_report(
@@ -490,7 +518,7 @@ def run_weekly(config_path: str = "config.yaml", only: Optional[str] = None) -> 
         duplicates_created=sum(o.candidates - o.fresh for o in outcomes),
         candidates_found=sum(o.candidates for o in outcomes),
         papers_ranked=sum(o.fresh for o in outcomes),
-        mode="weekly",
+        mode="monthly",
         error=error,
         members=[o.as_report_row() for o in outcomes],
         overlap=_overlap(outcomes),
@@ -544,13 +572,13 @@ def run_backfill(
 ) -> int:
     """One-off catch-up: rank a long window at once and keep the best *limit*.
 
-    The weekly run asks "what appeared since last week", which is the right
+    The monthly run asks "what appeared since last week", which is the right
     question forever after but leaves the whole prior year unread. This ranks that
     year in one pass per member and writes their top *limit* by relevance.
 
     *sources* narrows what is backfilled. Conferences are the case that needs it:
     proceedings drop once a year, so a digest set up in August has missed
-    everything from the spring, while journals publish steadily and the weekly run
+    everything from the spring, while journals publish steadily and the monthly run
     picks them up on its own.
 
     Use ``--member`` when one person joins an established lab — backfilling
@@ -605,7 +633,7 @@ def run_backfill(
             logger.error("Backfill failed for %s: %s", member.name, exc)
             outcomes.append(MemberOutcome(member=member, error=str(exc)))
 
-    exit_code, error = _weekly_exit_code(outcomes)
+    exit_code, error = _monthly_exit_code(outcomes)
     created = [p for o in outcomes for p in o.created]
     write_report(
         papers_created=created,

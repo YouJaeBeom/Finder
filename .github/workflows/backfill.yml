@@ -1,11 +1,11 @@
 name: Backfill
 
-# Manual only, and meant to be run once. The weekly digest asks "what appeared
+# Manual only, and meant to be run once. The monthly digest asks "what appeared
 # since last week", which leaves everything published before it was set up
 # unread. This ranks a long window in a single pass and keeps the best of it.
 #
 # Every paper it ranks is cached, not just the ones written — so running it twice
-# does nothing the second time, and the weekly run afterwards only considers
+# does nothing the second time, and the monthly run afterwards only considers
 # genuinely new arrivals.
 #
 # Leave "member" blank to backfill everyone. Set it when one person joins an
@@ -39,7 +39,7 @@ on:
 permissions:
   contents: write
 
-# Shares the weekly digest's group: both write the scoring caches under state/,
+# Shares the monthly digest's group: both write the scoring caches under state/,
 # and two runs doing that at once would lose one of them.
 concurrency:
   group: paper-digest
@@ -49,7 +49,7 @@ jobs:
   backfill:
     runs-on: ubuntu-latest
     # Ranking a year is a few hundred sequential model calls and the notes are
-    # a few hundred more, so this runs far longer than a weekly digest.
+    # a few hundred more, so this runs far longer than a monthly digest.
     timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
@@ -110,7 +110,7 @@ jobs:
           if-no-files-found: warn
 
       # The scoring caches are the whole point of the run: they record every
-      # paper considered, so the weekly digest never re-ranks them. Losing them
+      # paper considered, so the monthly digest never re-ranks them. Losing them
       # would mean paying for the ranking again.
       - name: Commit scoring caches
         if: always()

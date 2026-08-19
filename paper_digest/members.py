@@ -24,14 +24,14 @@ deliberately defers until someone actually needs it.
 
 Everything is validated up front and *every* problem is reported at once.
 Finding out about the second member's typo only after fixing the first, on a
-weekly schedule, is how a run gets skipped for a month.
+monthly schedule, is how a run gets skipped for a month.
 """
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Sequence
+from typing import TYPE_CHECKING, Any, List, Optional, Sequence
 
 import yaml
 
@@ -62,7 +62,7 @@ class Member:
     name: str
     research_profile: str
     keywords: List[Any]
-    top_n: int
+    top_n: Optional[int]   # None = every paper that clears the relevance cutoff
     enabled: bool = True
     source_path: str = ""
 
@@ -122,17 +122,26 @@ def _read_one(path: Path, problems: List[str]) -> Member | None:
                 "entries are malformed and would be ignored — see the warnings above"
             )
 
-    top_n = raw.get("top_n", 20)
-    if not isinstance(top_n, int) or isinstance(top_n, bool) or top_n < 1:
-        problems.append(f"{path}: 'top_n' must be a positive integer, got {top_n!r}")
-        top_n = 0
+    # Absent means unlimited. A cap is the wrong default here: the point of the
+    # digest is not to miss things, and the relevance cutoff already decides what
+    # is worth writing up. Ranking by relevance and then keeping the best twenty
+    # silently discards the twenty-first, which nobody ever finds out about.
+    top_n = raw.get("top_n")
+    top_n_ok = top_n is None or (
+        isinstance(top_n, int) and not isinstance(top_n, bool) and top_n >= 1
+    )
+    if not top_n_ok:
+        problems.append(
+            f"{path}: 'top_n' must be a positive integer, or absent for no limit "
+            f"— got {top_n!r}"
+        )
 
     enabled = raw.get("enabled", True)
     if not isinstance(enabled, bool):
         problems.append(f"{path}: 'enabled' must be true or false, got {enabled!r}")
         enabled = False
 
-    if not (name and profile and keywords and top_n):
+    if not (name and profile and keywords and top_n_ok):
         return None
 
     return Member(
@@ -179,7 +188,7 @@ def load_members(
 
     active = [m for m in members if m.enabled]
     for member in active:
-        if member.top_n > max_top_n:
+        if member.top_n is not None and member.top_n > max_top_n:
             problems.append(
                 f"{member.source_path}: top_n {member.top_n} exceeds the lab limit "
                 f"of {max_top_n} (limits.max_top_n_per_member in config.yaml)"

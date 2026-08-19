@@ -180,6 +180,204 @@
       "content_type": "paper",
       "notion_page_id": null,
       "title": "Symbols and Neurons: A Review of Symbolic XAI in Deep Learning"
+    },
+    {
+      "arxiv_id": "2606.28544",
+      "doi": "10.18653/v1/2026.acl-long.1930",
+      "normalized_title": "who plays which role when communication role dynamics for peer recognition and team performance prediction",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Who Plays Which Role When? Communication Role Dynamics for Peer Recognition and Team Performance Prediction"
+    },
+    {
+      "arxiv_id": "2606.29148",
+      "doi": "10.1145/3799902.3811038",
+      "normalized_title": "gpc largescale generative pretraining for transferable motor control",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "GPC: Large-Scale Generative Pretraining for Transferable Motor Control"
+    },
+    {
+      "arxiv_id": "2606.24564",
+      "doi": "10.1145/3799902.3811044",
+      "normalized_title": "patterngsl a structured specification language for templatefree and simulationready 3d garments",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "PatternGSL: A Structured Specification Language for Template-Free and Simulation-Ready 3D Garments"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3745756.3809225",
+      "normalized_title": "aquacode turning transaction platforms into noninvasive liquid quality checker",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "AquaCode: Turning Transaction Platforms into Non-Invasive Liquid Quality Checker"
+    },
+    {
+      "arxiv_id": "2607.07895",
+      "doi": "10.18653/v1/2025.emnlp-main.1221",
+      "normalized_title": "scalable and culturally specific stereotype dataset construction via humanllm collaboration",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8139-94ab-f4e893fc86c1",
+      "title": "Scalable and Culturally Specific Stereotype Dataset Construction via Human-LLM Collaboration"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3745756.3809202",
+      "normalized_title": "tips thermal image based plastics sorting",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "TIPS: Thermal Image based Plastics Sorting"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3806645.3820067",
+      "normalized_title": "robust ensemble log anomaly detection for highperformance parallel and distributed computing systems",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Robust Ensemble Log Anomaly Detection for High-performance Parallel and Distributed Computing Systems"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3806645.3807575",
+      "normalized_title": "sivf gpuresident ivf index for streaming vector analytics",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SIVF: GPU-Resident IVF Index for Streaming Vector Analytics"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3806645.3816737",
+      "normalized_title": "hatmpi hierarchical auto tuning of mpi internode communication on infiniband clusters",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "HAT-MPI: Hierarchical Auto Tuning of MPI Inter-Node Communication on InfiniBand Clusters"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3805689.3812409",
+      "normalized_title": "defining the problem setting the standard platform narratives and interventions for digital wellbeing",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Defining the Problem, Setting the Standard? Platform Narratives and Interventions for Digital Well-Being"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/DSN69566.2026.00037",
+      "normalized_title": "speechshield latencyefficient and robust timbreaware voice protection against speech synthesis deepfake attacks",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "SpeechShield: Latency-Efficient and Robust Timbre-Aware Voice Protection Against Speech Synthesis Deepfake Attacks"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.24929/feb.v16i1.5240",
+      "normalized_title": "pengaruh viral marketing dan brand engagement terhadap purchase intention sepatu aerostreet di tiktok shop",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "PENGARUH VIRAL MARKETING DAN BRAND ENGAGEMENT TERHADAP PURCHASE INTENTION SEPATU AEROSTREET DI TIKTOK SHOP"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3819500",
+      "normalized_title": "largescale synthetic datadriven finetuning seggpt for incontext key point detection in medical imaging",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-8148-b72f-c5f4de24f57a",
+      "title": "Large-Scale Synthetic Data-Driven Fine-Tuning SegGPT for In-Context Key Point Detection in Medical Imaging"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3816789",
+      "normalized_title": "bridging literature mining and reliable enzyme kinetics prediction via multimodal extraction and multitask learning",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Bridging Literature Mining and Reliable Enzyme Kinetics Prediction via Multimodal Extraction and Multi-Task Learning"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3817109",
+      "normalized_title": "towards computational asd prediction via lung airway geometry using vision language models and and attention for interpretability",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Towards Computational ASD Prediction via Lung Airway Geometry using Vision Language Models and and Attention for Interpretability"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1145/3807503.3819478",
+      "normalized_title": "beyond binning resolutionpreserving ms1 pretraining for clinical proteomics classification",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Beyond Binning: Resolution-Preserving MS1 Pretraining for Clinical Proteomics Classification"
+    },
+    {
+      "arxiv_id": "2607.14729",
+      "doi": "10.1007/978-3-031-98420-4_7",
+      "normalized_title": "the misclassification of autistic writing as aigenerated",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81b4-a3ac-ff87b6f4f85e",
+      "title": "The Misclassification of Autistic Writing as AI-Generated"
+    },
+    {
+      "arxiv_id": "2607.00873",
+      "doi": null,
+      "normalized_title": "how ethos and pathos appeals resonate in reader interpretations of social media messages",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "How Ethos and Pathos Appeals Resonate in Reader Interpretations of Social Media Messages"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1109/TKDE.2026.3690971",
+      "normalized_title": "mese mining emotional and semantic evolution from user comments for fake news detection",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-81d7-92b3-d5fbc9db696e",
+      "title": "MESE: Mining Emotional and Semantic Evolution From User Comments for Fake News Detection"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1002/asi.70108",
+      "normalized_title": "the role of editorial boards in shaping scholarly communication a largescale mapping of their composition and structure",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": "3c11256e-0561-818b-86ae-d49ce4e92c2a",
+      "title": "The role of editorial boards in shaping scholarly communication: A large‐scale mapping of their composition and structure"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1140/epjds/s13688-026-00677-8",
+      "normalized_title": "modeling the coevolution of relational events and relational states in social networks",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Modeling the coevolution of relational events and relational states in social networks"
+    },
+    {
+      "arxiv_id": null,
+      "doi": "10.1177/08944393261469403",
+      "normalized_title": "profiling digital hate a multidimensional measurement approach based on the perspective api",
+      "url": null,
+      "content_type": "paper",
+      "notion_page_id": null,
+      "title": "Profiling Digital Hate: A Multidimensional Measurement Approach Based on the Perspective API"
     }
   ]
 }

@@ -31,7 +31,7 @@ from .models import Paper
 logger = logging.getLogger(__name__)
 
 # Per member, so ten members do not fight over one file. Written under state/
-# rather than at the repo root because the weekly workflow commits the whole
+# rather than at the repo root because the monthly workflow commits the whole
 # directory as one unit.
 SCORED_DIR = "state/scored"
 STATE_FILE = f"{SCORED_DIR}/default.json"

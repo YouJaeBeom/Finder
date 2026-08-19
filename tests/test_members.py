@@ -101,7 +101,7 @@ class TestValidation:
             load_members(_dir(tmp_path))
 
     def test_every_problem_is_reported_at_once(self, tmp_path):
-        """Fixing them one weekly run at a time is how a month gets skipped."""
+        """Fixing them one monthly run at a time is how a month gets skipped."""
         (tmp_path / "members").mkdir()
         (tmp_path / "members" / "a.yaml").write_text("top_n: 5\n", encoding="utf-8")
         (tmp_path / "members" / "b.yaml").write_text('name: "나"\n', encoding="utf-8")
@@ -191,3 +191,37 @@ class TestEffectiveConfig:
         # And the lab config is not mutated.
         assert lab.top_n == 99
         assert lab.research_profile == ""
+
+
+class TestNoPerPersonLimit:
+    """A member who sets no top_n receives everything above the relevance cutoff.
+
+    Capping by count and capping by relevance are different promises. A count
+    keeps the best twenty and drops the twenty-first without telling anyone,
+    which is exactly the silent miss the digest exists to prevent — so the
+    cutoff, not a number, is what decides.
+    """
+
+    def test_an_absent_top_n_means_no_limit(self, tmp_path):
+        write_member(tmp_path / "m", "a", top_n=None)
+        assert load_members(str(tmp_path / "m"))[0].top_n is None
+
+    def test_an_explicit_top_n_is_still_honoured(self, tmp_path):
+        write_member(tmp_path / "m", "a", top_n=7)
+        assert load_members(str(tmp_path / "m"))[0].top_n == 7
+
+    def test_an_unlimited_member_is_not_measured_against_the_lab_cap(self, tmp_path):
+        """max_top_n_per_member bounds a number; there is no number to bound."""
+        write_member(tmp_path / "m", "a", top_n=None)
+        assert load_members(str(tmp_path / "m"), max_top_n=3)[0].top_n is None
+
+    def test_an_explicit_top_n_over_the_lab_cap_is_still_refused(self, tmp_path):
+        write_member(tmp_path / "m", "a", top_n=99)
+        with pytest.raises(MemberConfigError, match="exceeds the lab limit"):
+            load_members(str(tmp_path / "m"), max_top_n=30)
+
+    @pytest.mark.parametrize("bad", [0, -1, "many", 3.5, True])
+    def test_a_top_n_that_is_present_but_nonsense_is_refused(self, tmp_path, bad):
+        write_member(tmp_path / "m", "a", top_n=bad)
+        with pytest.raises(MemberConfigError, match="top_n"):
+            load_members(str(tmp_path / "m"))

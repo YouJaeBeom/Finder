@@ -156,7 +156,7 @@ class Config:
 
     # Cost controls
     max_papers_to_rank: int = 1500
-    top_n: int = 20            # injected per member
+    top_n: Optional[int] = None   # injected per member; None = no limit
     limits: LimitsConfig = field(default_factory=LimitsConfig)
 
     # LLM configuration

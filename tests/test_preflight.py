@@ -151,7 +151,7 @@ class TestFailureReport:
         """Otherwise the Actions artifact is empty on exactly the failing runs."""
         monkeypatch.chdir(tmp_path)
 
-        write_failure_report("weekly", "NOTION_TOKEN is not set.")
+        write_failure_report("monthly", "NOTION_TOKEN is not set.")
 
         report = json.loads(Path("run-report.json").read_text(encoding="utf-8"))
         assert report["status"] == "failed"

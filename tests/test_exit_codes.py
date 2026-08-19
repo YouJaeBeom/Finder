@@ -1,4 +1,4 @@
-"""Exit-code contract for the weekly pipeline.
+"""Exit-code contract for the monthly pipeline.
 
 The exit code is load-bearing: GitHub Actions turns a non-zero exit into the
 failure email that surfaces a silently degraded run. Three branches must never be
@@ -65,7 +65,7 @@ def config_path(tmp_path, monkeypatch, fake_notion) -> str:
 
 
 def _run(config_path: str, collected: List[Paper]) -> int:
-    from paper_digest.pipeline import run_weekly
+    from paper_digest.pipeline import run_monthly
 
     provider = MagicMock()
     provider.complete.return_value = "[]"
@@ -73,7 +73,7 @@ def _run(config_path: str, collected: List[Paper]) -> int:
     with patch("paper_digest.pipeline.collect_venue_papers",
                side_effect=venue_collector(conference=collected)), \
          patch("paper_digest.pipeline.create_provider", return_value=provider):
-        return run_weekly(config_path)
+        return run_monthly(config_path)
 
 
 def test_quiet_week_exits_zero(config_path):
@@ -102,7 +102,7 @@ def test_candidates_but_none_rankable_exits_one(config_path):
 
 def test_ranking_below_the_cutoff_exits_zero(config_path):
     """The model read them and rated them low — an answer, not a fault."""
-    from paper_digest.pipeline import run_weekly
+    from paper_digest.pipeline import run_monthly
 
     provider = MagicMock()
     provider.complete.return_value = (
@@ -112,12 +112,12 @@ def test_ranking_below_the_cutoff_exits_zero(config_path):
                side_effect=venue_collector(
                    conference=_papers(2, with_abstract=True))), \
          patch("paper_digest.pipeline.create_provider", return_value=provider):
-        assert run_weekly(config_path) == 0
+        assert run_monthly(config_path) == 0
 
 
 def test_an_unreadable_ranking_response_exits_one(config_path):
     """Every score comes back 0.0 — ranking did not happen, and that must alert."""
-    from paper_digest.pipeline import run_weekly
+    from paper_digest.pipeline import run_monthly
 
     provider = MagicMock()
     provider.complete.return_value = "the model said something else entirely"
@@ -125,15 +125,15 @@ def test_an_unreadable_ranking_response_exits_one(config_path):
                side_effect=venue_collector(
                    conference=_papers(2, with_abstract=True))), \
          patch("paper_digest.pipeline.create_provider", return_value=provider):
-        assert run_weekly(config_path) == 1
+        assert run_monthly(config_path) == 1
 
 
 def test_missing_notion_token_exits_one(config_path, monkeypatch):
     """A missing secret is a configuration failure, not a quiet week."""
     monkeypatch.setenv("NOTION_TOKEN", "")
-    from paper_digest.pipeline import run_weekly
+    from paper_digest.pipeline import run_monthly
 
-    assert run_weekly(config_path) == 1
+    assert run_monthly(config_path) == 1
 
 
 def test_a_broken_member_file_exits_one_before_collecting(tmp_path, monkeypatch,
@@ -148,8 +148,8 @@ def test_a_broken_member_file_exits_one_before_collecting(tmp_path, monkeypatch,
     )
 
     collector = MagicMock(return_value=[])
-    from paper_digest.pipeline import run_weekly
+    from paper_digest.pipeline import run_monthly
 
     with patch("paper_digest.pipeline.collect_venue_papers", collector):
-        assert run_weekly(config_path) == 1
+        assert run_monthly(config_path) == 1
     collector.assert_not_called()

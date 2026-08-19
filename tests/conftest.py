@@ -140,7 +140,7 @@ def write_member(
     directory,
     member_id: str,
     name: str = None,
-    top_n: int = 10,
+    top_n=10,          # None writes no top_n key at all, i.e. no limit
     keywords=None,
     profile: str = None,
     enabled: bool = True,
@@ -151,10 +151,11 @@ def write_member(
     payload = {
         "name": name or member_id,
         "enabled": enabled,
-        "top_n": top_n,
         "research_profile": profile or DEFAULT_PROFILE,
         "keywords": list(DEFAULT_KEYWORDS if keywords is None else keywords),
     }
+    if top_n is not None:
+        payload["top_n"] = top_n
     path = directory / f"{member_id}.yaml"
     path.write_text(yaml.safe_dump(payload, allow_unicode=True), encoding="utf-8")
     return path
