@@ -10,6 +10,7 @@ from __future__ import annotations
 import pytest
 
 from paper_digest.members import Member, MemberConfigError, load_members
+from paper_digest.query import parse
 from tests.conftest import write_member
 
 
@@ -49,25 +50,24 @@ class TestLoading:
     def test_yaml_extension_is_accepted_too(self, tmp_path):
         write_member(_dir(tmp_path), "a")
         (tmp_path / "members" / "b.yml").write_text(
-            'name: b\ntop_n: 5\nresearch_profile: "p"\nkeywords: ["LLM"]\n',
+            'name: b\ntop_n: 5\nresearch_profile: "p"\nquery: "LLM"\n',
             encoding="utf-8",
         )
         assert len(load_members(_dir(tmp_path))) == 2
 
-    def test_anchor_keys_are_not_mistaken_for_settings(self, tmp_path):
-        """YAML anchors have to live as real keys, so unknown keys are allowed."""
+    def test_unknown_keys_are_left_alone(self, tmp_path):
+        """A member's own notes and YAML anchors live as real keys."""
         (tmp_path / "members").mkdir(parents=True)
         (tmp_path / "members" / "a.yaml").write_text(
-            '_model: &model ["LLM", "language model"]\n'
+            '_note: "다음 학기에 키워드 다시 볼 것"\n'
             'name: "가"\n'
             'top_n: 5\n'
             'research_profile: "프로필"\n'
-            "keywords:\n"
-            '  - all: [*model, ["bias"]]\n',
+            'query: "political bias"\n',
             encoding="utf-8",
         )
         member = load_members(_dir(tmp_path))[0]
-        assert len(member.keywords) == 1
+        assert member.query.terms() == ["political bias"]
 
 
 class TestValidation:
@@ -81,16 +81,16 @@ class TestValidation:
             load_members(_dir(tmp_path))
 
     @pytest.mark.parametrize("body,expected", [
-        ('top_n: 5\nresearch_profile: "p"\nkeywords: ["LLM"]\n', "'name' is required"),
-        ('name: "가"\ntop_n: 5\nkeywords: ["LLM"]\n', "'research_profile' is required"),
-        ('name: "가"\ntop_n: 5\nresearch_profile: "p"\nkeywords: []\n',
-         "'keywords' must be a non-empty list"),
-        ('name: "가"\ntop_n: 0\nresearch_profile: "p"\nkeywords: ["LLM"]\n',
+        ('top_n: 5\nresearch_profile: "p"\nquery: "LLM"\n', "'name' is required"),
+        ('name: "가"\ntop_n: 5\nquery: "LLM"\n', "'research_profile' is required"),
+        ('name: "가"\ntop_n: 5\nresearch_profile: "p"\nquery: ""\n',
+         "'query' must be a search query"),
+        ('name: "가"\ntop_n: 0\nresearch_profile: "p"\nquery: "LLM"\n',
          "'top_n' must be a positive integer"),
-        ('name: "가"\ntop_n: "many"\nresearch_profile: "p"\nkeywords: ["LLM"]\n',
+        ('name: "가"\ntop_n: "many"\nresearch_profile: "p"\nquery: "LLM"\n',
          "'top_n' must be a positive integer"),
         ('name: "가"\nenabled: "yes"\ntop_n: 5\nresearch_profile: "p"\n'
-         'keywords: ["LLM"]\n', "'enabled' must be true or false"),
+         'query: "LLM"\n', "'enabled' must be true or false"),
         ("- not a mapping\n", "expected a YAML mapping"),
     ])
     def test_each_missing_or_wrong_field_is_named(self, tmp_path, body, expected):
@@ -113,17 +113,36 @@ class TestValidation:
         assert "a.yaml" in message and "b.yaml" in message
         assert "problem(s)" in message
 
-    def test_a_malformed_keyword_rule_is_a_problem_not_a_silent_drop(self, tmp_path):
-        """compile_rules drops bad entries at runtime — right then, wrong here."""
-        (tmp_path / "members").mkdir()
+    def _write(self, tmp_path, body: str):
+        (tmp_path / "members").mkdir(exist_ok=True)
         (tmp_path / "members" / "a.yaml").write_text(
-            'name: "가"\ntop_n: 5\nresearch_profile: "p"\n'
-            "keywords:\n"
-            '  - "political bias"\n'
-            '  - not: ["survey"]\n',       # exclusions only: matches everything
+            'name: "가"\ntop_n: 5\nresearch_profile: "p"\n' + body,
             encoding="utf-8",
         )
-        with pytest.raises(MemberConfigError, match="malformed"):
+
+    def test_a_query_that_cannot_be_read_is_a_problem_not_a_silent_drop(self, tmp_path):
+        """A query nobody can read must not become a member receiving less."""
+        self._write(tmp_path, 'query: "(LLM OR bias"\n')
+        with pytest.raises(MemberConfigError, match="never closed"):
+            load_members(_dir(tmp_path))
+
+    def test_the_message_shows_where_the_query_broke(self, tmp_path):
+        self._write(tmp_path, 'query: "LLM and bias"\n')
+        with pytest.raises(MemberConfigError) as exc:
+            load_members(_dir(tmp_path))
+        assert "LLM and bias" in str(exc.value), "the line itself has to be shown"
+        assert "^" in str(exc.value), "and the spot in it"
+
+    def test_a_query_that_only_excludes_is_refused(self, tmp_path):
+        """It reads like a filter and admits the entire pool."""
+        self._write(tmp_path, 'query: "NOT survey"\n')
+        with pytest.raises(MemberConfigError, match="only says what to exclude"):
+            load_members(_dir(tmp_path))
+
+    def test_the_old_keywords_key_is_pointed_at_its_replacement(self, tmp_path):
+        """Ignoring it would quietly quadruple that member's bill."""
+        self._write(tmp_path, 'keywords:\n  - "political bias"\n')
+        with pytest.raises(MemberConfigError, match="was replaced by 'query'"):
             load_members(_dir(tmp_path))
 
     def test_two_members_may_not_share_a_display_name(self, tmp_path):
@@ -137,7 +156,7 @@ class TestValidation:
     def test_a_filename_that_is_not_a_usable_id_is_rejected(self, tmp_path):
         (tmp_path / "members").mkdir()
         (tmp_path / "members" / "who is this.yaml").write_text(
-            'name: "가"\ntop_n: 5\nresearch_profile: "p"\nkeywords: ["LLM"]\n',
+            'name: "가"\ntop_n: 5\nresearch_profile: "p"\nquery: "LLM"\n',
             encoding="utf-8",
         )
         with pytest.raises(MemberConfigError, match="not a usable member ID"):
@@ -179,12 +198,11 @@ class TestEffectiveConfig:
 
         lab = Config(days_back=30, max_papers_to_rank=1500, top_n=99)
         member = Member(member_id="a", name="가", research_profile="내 프로필",
-                        keywords=["political bias"], top_n=7)
+                        query=parse("political bias"), top_n=7)
 
         merged = effective_config(lab, member)
         assert merged.research_profile == "내 프로필"
         assert merged.top_n == 7
-        assert merged.keywords == ["political bias"]
         # Lab-wide fields survive untouched.
         assert merged.days_back == 30
         assert merged.max_papers_to_rank == 1500
@@ -231,7 +249,7 @@ class TestRelevanceCutoff:
     """A member can raise their own bar without moving anyone else's.
 
     The lab default of 5 means "arguably related", and whether that is right
-    depends on the field. A member whose keywords cover a whole conference track
+    depends on the field. A member whose query covers a whole conference track
     cleared it with 120 papers in one month while a narrower member got 26 —
     same cutoff, very different reading loads.
     """

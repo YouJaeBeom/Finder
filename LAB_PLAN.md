@@ -111,20 +111,25 @@ name: "유재범"                    # Notion 하위 페이지 제목
 
 research_profile: |
   (2~6문장. 관련도 채점과 "내 연구와의 연결점" 작성에 함께 쓰임)
+
+query: |                        # 선택. 느슨한 1차 필터
+  "political bias" OR stereotype
+  OR ((LLM OR "language model") AND (bias OR fairness OR evaluation))
 ```
 
 이게 전부다. `enabled` 와 `top_n` 은 선택이고 기본값이 각각 켜짐과 무제한이다.
 
-**`keywords` 는 느슨한 1차 필터다.** 논문을 찾을 때 데이터베이스를 키워드로 먼저
-검색하는 것과 같은 단계이고, 여기 걸린 것만 관련도 채점으로 넘어간다.
+**`query` 는 느슨한 1차 필터다.** 논문을 찾을 때 데이터베이스를 검색식으로 먼저
+훑는 것과 같은 단계이고, 문법도 그 검색식(Scopus·Web of Science) 그대로다.
+여기 걸린 것만 관련도 채점으로 넘어간다.
 
-느슨함이 핵심이고 이건 실측 결과다. 정밀하게 쓴 규칙(프로필에서 자동 생성한 것도,
-손으로 정밀하게 쓴 것도)은 채점 모델이 8~9점을 줬을 논문을 버렸다 —
+느슨함이 핵심이고 이건 실측 결과다. 정밀하게 쓴 쿼리(프로필에서 자동 생성한 것도,
+손으로 정밀하게 쓴 것도)는 채점 모델이 8~9점을 줬을 논문을 버렸다 —
 "Evaluation Validity in Information Retrieval" 이 정보 검색 연구자에게서 잘렸다.
 초록에 "bias" 도 "diversity" 도 없기 때문이다.
 
 **주제가 아니라 분야를 잡으면** 그런 논문이 살아남으면서도 풀의 70~77% 가 걸러진다
-(실측: 2,087편 → 멤버당 477~622편, 인당 월 $0.15~0.20). `keywords` 를 빼면 수집된
+(실측: 2,087편 → 멤버당 477~622편, 인당 월 $0.15~0.20). `query` 를 빼면 수집된
 전부가 채점된다 — 누락 0, 비용 네 배.
 
 **연구 주제는 한 명당 1개.** `research_profile` 하나.
@@ -205,7 +210,7 @@ state.json               Notion 좌표 캐시 (뉴스 DB + 멤버별 페이지/D
 state/scored/<id>.json   멤버별 채점 캐시
 ```
 
-`config.yaml`에서 **제거**되는 것: `keywords`, `research_profile`, `top_n`,
+`config.yaml`에서 **제거**되는 것: `query`(구 `keywords`), `research_profile`, `top_n`,
 `notion_database_id` — 전부 멤버 소유이거나 `state.json`이 관리한다.
 
 `config.yaml`에 **추가**되는 것:
@@ -235,7 +240,7 @@ gpt-5.6-terra 기준 ($2/$12 per MTok). 채점 배치(20편) $0.0129, 노트 1�
 | 뉴스 (공용) | 20편 × $0.0115 | $0.23 |
 | **합계** | | **≈ $6.3 / 월** |
 
-채점 대상은 멤버의 느슨한 `keywords` 를 통과한 것뿐이다 (실측: 풀 2,087편 →
+채점 대상은 멤버의 느슨한 `query` 를 통과한 것뿐이다 (실측: 풀 2,087편 →
 멤버당 477~622편). 필터를 빼면 인당 $0.64 로 올라간다 — 누락은 0 이 되지만 네 배다.
 
 상한까지 갔을 때(`max_papers_to_rank: 5000`) 10명이면 채점만 월 $15 이다. 이것이
@@ -269,9 +274,9 @@ gpt-5.6-terra 기준 ($2/$12 per MTok). 채점 배치(20편) $0.0129, 노트 1�
 
 | 파일 | 변경 |
 |---|---|
-| `config.py` | `keywords`/`research_profile`/`top_n` 제거, `members_dir` + `limits` 추가 |
+| `config.py` | `query`/`research_profile`/`top_n` 제거, `members_dir` + `limits` 추가 |
 | `notion_writer.py` | 멤버 페이지·개인 DB·뉴스 DB 생성, 스키마 2종 (논문/뉴스) |
-| `keywords.py` | `select_for_keywords` 추가 — 멤버별 **독립 복사본** 반환 |
+| `query.py` | 검색식 파서 + `select_papers` — 멤버별 **독립 복사본** 반환 |
 | `pipeline.py` | `run_monthly` = 수집 1회 + 뉴스 1회 + 멤버 순차 루프 |
 | `dedup.py` | 채점 캐시 전용으로 축소 (경로 파라미터화) |
 | `__main__.py` | `members list` / `members validate`, `run --member <id>` |

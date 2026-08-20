@@ -51,9 +51,9 @@ class TestMembersCommands:
         err = capsys.readouterr().err
         assert "broken.yaml" in err
         assert "research_profile" in err
-        # Not keywords: those are generated from the profile now, so a member
-        # file that omits them is complete, not broken.
-        assert "'keywords' must be" not in err
+        # Not the query: a member file that omits it is complete, not broken —
+        # it means "score every collected paper".
+        assert "'query'" not in err
 
     def test_it_needs_no_secrets(self, tmp_path, monkeypatch):
         """Checking a YAML file must not require a token."""

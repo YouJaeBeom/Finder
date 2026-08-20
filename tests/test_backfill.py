@@ -24,7 +24,7 @@ from tests.conftest import (
     write_member,
 )
 
-KEYWORDS = ["political bias"]
+QUERY = "political bias"
 PROFILE = "LLM political bias 연구"
 
 
@@ -62,7 +62,7 @@ def one_member(tmp_path, monkeypatch, fake_notion) -> str:
     monkeypatch.setenv("NOTION_TOKEN", "t")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
     write_member(tmp_path / "members", "pol", name="유재범", top_n=30,
-                 keywords=KEYWORDS, profile=PROFILE)
+                 query=QUERY, profile=PROFILE)
     return write_lab_config(tmp_path, members=(), parent=PARENT_PAGE_RAW)
 
 
@@ -152,7 +152,7 @@ class TestMemberScoping:
         for member_id, name in (("pol", "유재범"), ("newbie", "신입"),
                                 ("other", "다른사람")):
             write_member(tmp_path / "members", member_id, name=name, top_n=30,
-                         keywords=KEYWORDS, profile=PROFILE)
+                         query=QUERY, profile=PROFILE)
         return write_lab_config(tmp_path, members=(), parent=PARENT_PAGE_RAW)
 
     def test_without_member_every_member_is_backfilled(self, three_members):

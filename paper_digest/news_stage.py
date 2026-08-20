@@ -103,7 +103,7 @@ def run_news(
     logger.info("News: %d collected, %d unique, %d not yet written",
                 len(collected), len(unique), len(fresh))
 
-    top = select_news(fresh, cfg.news.keywords, cfg.news.top_n)
+    top = select_news(fresh, cfg.news.query, cfg.news.top_n)
     if not top:
         return []
 

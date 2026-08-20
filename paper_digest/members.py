@@ -8,16 +8,16 @@ A member file is the entire definition of a person in this system::
         top_n: 20
         research_profile: |
           ...
-        keywords:
-          - "political bias"
-          - all: [["LLM", "language model"], ["robustness"]]
+        query: |
+          "political bias" OR partisan
+          OR ((LLM OR "language model") AND (bias OR robustness))
 
 The filename stem is the member ID. It never appears in Notion — it names the
 member's scoring-cache file and identifies them on the command line, so it has
 to be filesystem-safe, while *name* is free to be anything Notion accepts.
 
-**One research topic per member.** A member has one profile and one keyword set,
-not a list of topics. Multiple topics per person would mean either mixing them
+**One research topic per member.** A member has one profile and one query, not a
+list of topics. Multiple topics per person would mean either mixing them
 into one relevance judgement (which defeats the point of separating them) or
 splitting a person across several databases — both are decisions this design
 deliberately defers until someone actually needs it.
@@ -31,11 +31,11 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, List, Optional, Sequence
+from typing import TYPE_CHECKING, List, Optional, Sequence
 
 import yaml
 
-from .keywords import compile_rules
+from .query import Query, QueryError, parse
 
 if TYPE_CHECKING:  # avoids a config <-> members import cycle at runtime
     from .config import Config
@@ -61,8 +61,8 @@ class Member:
     member_id: str
     name: str
     research_profile: str
-    keywords: List[Any]     # loose first pass; empty = score everything
-    top_n: Optional[int]   # None = every paper that clears the relevance cutoff
+    query: Optional[Query] = None   # loose first pass; None = score everything
+    top_n: Optional[int] = None     # None = every paper past the relevance cutoff
     min_relevance: Optional[int] = None   # None = the lab default
     enabled: bool = True
     source_path: str = ""
@@ -108,35 +108,7 @@ def _read_one(path: Path, problems: List[str]) -> Member | None:
             "'내 연구와의 연결점' note are both written against it"
         )
 
-    # The member's loose first pass. Optional — left out, every collected paper
-    # is scored against their profile, which costs about four times as much.
-    #
-    # "Loose" is the operative word and it is not a style preference: rules
-    # written for precision were measured dropping papers the relevance model
-    # scored 8 and 9. Rules that catch the member's *field* keep those and still
-    # remove three quarters of the pool.
-    keywords = raw.get("keywords")
-    keywords_ok = True
-    if keywords is None:
-        keywords = []
-    elif not isinstance(keywords, list) or not keywords:
-        problems.append(
-            f"{path}: 'keywords' must be a non-empty list when present — leave "
-            "the key out entirely to score every collected paper"
-        )
-        keywords_ok = False
-        keywords = []
-    else:
-        # compile_rules drops malformed entries with a warning rather than
-        # raising, which is right at runtime and wrong at registration time: a
-        # rule silently dropped here is a member quietly receiving less.
-        usable = len(compile_rules(keywords))
-        if usable < len(keywords):
-            problems.append(
-                f"{path}: {len(keywords) - usable} of {len(keywords)} keyword "
-                "entries are malformed and would be ignored — see the warnings above"
-            )
-            keywords_ok = False
+    query, query_ok = _read_query(path, raw, problems)
 
     # Absent means unlimited. A cap is the wrong default here: the point of the
     # digest is not to miss things, and the relevance cutoff already decides what
@@ -167,19 +139,74 @@ def _read_one(path: Path, problems: List[str]) -> Member | None:
         problems.append(f"{path}: 'enabled' must be true or false, got {enabled!r}")
         enabled = False
 
-    if not (name and profile and keywords_ok and top_n_ok):
+    if not (name and profile and query_ok and top_n_ok):
         return None
 
     return Member(
         member_id=member_id,
         name=name,
         research_profile=profile,
-        keywords=keywords,
+        query=query,
         top_n=top_n,
         min_relevance=cutoff,
         enabled=enabled,
         source_path=str(path),
     )
+
+
+def _read_query(
+    path: Path, raw: dict, problems: List[str]
+) -> tuple[Optional[Query], bool]:
+    """The member's loose first pass, or None when they did not write one.
+
+    Optional — left out, every collected paper is scored against their profile,
+    which costs about four times as much and misses nothing.
+
+    "Loose" is the operative word and it is not a style preference: queries
+    written for precision were measured dropping papers the relevance model then
+    scored 8 and 9. A query that catches the member's *field* keeps those and
+    still removes three quarters of the pool.
+
+    Every problem here is reported rather than tolerated. A query is the one
+    thing in this file that can fail quietly — a member whose query cannot be
+    read would simply receive less, on a monthly schedule, with nobody looking.
+    """
+    if "keywords" in raw:
+        problems.append(
+            f"{path}: 'keywords' was replaced by 'query', which is written the "
+            'way a database search is:\n'
+            '        query: |\n'
+            '          "political bias" OR partisan\n'
+            '          OR ((LLM OR "language model") AND (bias OR fairness))'
+        )
+        return None, False
+
+    source = raw.get("query")
+    if source is None:
+        return None, True
+
+    if not isinstance(source, str) or not source.strip():
+        problems.append(
+            f"{path}: 'query' must be a search query in text form — leave the "
+            "key out entirely to score every collected paper"
+        )
+        return None, False
+
+    try:
+        query = parse(source)
+    except QueryError as exc:
+        problems.append(f"{path}: 'query' could not be read — {exc}")
+        return None, False
+
+    if query.is_negative_only():
+        problems.append(
+            f"{path}: 'query' only says what to exclude, so it matches every "
+            "paper that is not excluded — add what you are looking for, or "
+            "leave the key out to score everything on purpose"
+        )
+        return None, False
+
+    return query, True
 
 
 def load_members(
@@ -271,7 +298,6 @@ def effective_config(cfg: "Config", member: Member) -> "Config":
 
     overrides = dict(
         research_profile=member.research_profile,
-        keywords=member.keywords,
         top_n=member.top_n,
     )
     if member.min_relevance is not None:

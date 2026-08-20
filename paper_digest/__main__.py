@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import textwrap
 
 
 def _add_config_arg(parser: argparse.ArgumentParser) -> None:
@@ -119,6 +120,16 @@ def _members_command(action: str, config_path: str) -> int:
 
     if action == "validate":
         print(f"✓ {len(members)} member(s) in {cfg.members_dir}/ — no problems found")
+        # Each query as the parser read it. A missing pair of parentheses is
+        # invisible in the source and obvious here, and the whole point of
+        # validating is to see that before Monday rather than after.
+        for member in members:
+            print(f"\n{member.member_id} ({member.name})")
+            if member.query is None:
+                print("  no query — every collected paper is scored")
+                continue
+            print(textwrap.fill(member.query.describe(), width=96,
+                                initial_indent="  ", subsequent_indent="  "))
         return 0
 
     total = 0
@@ -127,7 +138,7 @@ def _members_command(action: str, config_path: str) -> int:
         cap = "no limit" if member.top_n is None else str(member.top_n)
         # Everything collected is scored for this member unless they narrowed
         # it themselves, so say which of the two it is.
-        scope = (f"{len(member.keywords)} keyword rules" if member.keywords
+        scope = (f"query, {len(member.query.terms())} terms" if member.query
                  else "every collected paper")
         print(f"{member.member_id:16} {member.name:14} top_n={cap:<9} "
               f"scores={scope:<22} {member.source_path}")

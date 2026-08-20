@@ -5,13 +5,13 @@ The shape of a run, and why it is this shape:
     1. Notion first        a wrong token costs two seconds here, not a full
                            collection run and a ranking bill
     2. Collect once        Semantic Scholar is queried by venue and date, never
-                           by keyword, so ten members cost exactly what one does
+                           by query, so ten members cost exactly what one does
     3. News once           shared by everyone, written to the main page
-    4. Members in turn     keyword filter → already-received → rank → note → write
+    4. Members in turn     query filter → already-received → rank → note → write
 
 Step 2 is what makes the lab version cheap. Nothing about collection depends on
 who is reading: the venue allowlist and the date window are lab-wide, and each
-member's keywords are applied afterwards as a local string match. Adding a
+member's query is applied afterwards as a local string match. Adding a
 member adds zero external requests to the collection stage.
 
 Members are processed **sequentially in one process**, not as parallel GitHub
@@ -29,7 +29,7 @@ from typing import List, Optional, Sequence, Set, Tuple
 from .collectors.semantic_scholar import collect_venue_papers
 from .config import PLACEHOLDERS, Config, load_config
 from .dedup import DedupStore, deduplicate_collected
-from .keywords import select_for_keywords
+from .query import select_papers
 from .llm.base import LLMProvider
 from .llm.factory import create_provider
 from .members import Member, MemberConfigError, effective_config, load_members
@@ -290,21 +290,21 @@ def _serve_member(
                         database_id=space.database_id)
 
     # The member's own first pass, deliberately loose — the same move as
-    # searching a database by keyword before reading anything.
+    # searching a database before reading anything.
     #
-    # How loose matters, and it was measured. A precise rule set (generated from
+    # How loose matters, and it was measured. A precise query (generated from
     # the profile, or written by hand for precision) threw away papers the
     # relevance model then scored 8 and 9: "Evaluation Validity in Information
     # Retrieval" dropped for a member who studies exactly that, because the
-    # abstract says neither "bias" nor "diversity". A rule set built to catch a
+    # abstract says neither "bias" nor "diversity". A query built to catch a
     # *field* rather than a topic keeps those and still cuts roughly three
     # quarters of the pool, which is the whole point — the ranking model reads
     # what survives, and rejecting an off-topic paper there costs a fraction of
     # a cent while a paper dropped here is never seen by anything again.
     #
-    # No keywords means no first pass: everything collected gets scored.
-    candidates = (select_for_keywords(pool, member.keywords)
-                  if member.keywords else list(pool))
+    # No query means no first pass: everything collected gets scored.
+    candidates = (select_papers(pool, member.query)
+                  if member.query else list(pool))
     fresh = [p for p in candidates
              if not index.contains(p) and not scored.is_seen(p)]
 
@@ -335,8 +335,8 @@ def _serve_member(
     if not top:
         # Two ways to get here, and only one of them is a fault.
         if not any(p.abstract for p in fresh):
-            # A collapse in abstract coverage: candidates cleared the keyword
-            # filter and not one could be judged. This is the failure that let
+            # A collapse in abstract coverage: candidates cleared the query
+            # and not one could be judged. This is the failure that let
             # the old OpenAlex source return nothing for weeks while every run
             # reported success, so it must not pass silently.
             outcome.error = (

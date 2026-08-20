@@ -6,7 +6,7 @@
 # 멤버가 쓸 것은 셋입니다:
 #   name              Notion 하위 페이지 제목
 #   research_profile  자연어 연구 소개. 관련도 채점과 노트 작성에 쓰입니다
-#   keywords          느슨한 1차 필터. 여기 걸린 것만 채점으로 넘어갑니다
+#   query             느슨한 1차 필터. 여기 걸린 것만 채점으로 넘어갑니다
 
 name: "유재범"
 
@@ -25,38 +25,56 @@ research_profile: |
   프롬프트 엔지니어링 기법.
 
 # ── 느슨한 1차 필터 ───────────────────────────────────────────────────────────
-# 여기 걸린 논문만 관련도 채점으로 넘어갑니다. 정밀할 필요 없습니다 — 관련 없는
-# 것은 뒤에서 5점 미만으로 떨어지고, 여기서 놓친 것은 아무도 다시 보지 않습니다.
-# 그래서 애매하면 넣는 쪽이 맞습니다.
+# 논문 데이터베이스(Scopus, Web of Science)에서 쓰는 검색식 그대로입니다.
 #
-# 항목끼리는 OR. 실측(2026-08)으로 이 셋은 풀 1,807편 중 약 400편을 남깁니다.
-keywords:
+#   political bias          붙어 있는 단어는 그대로 구(句)입니다
+#                           — "political bias" 와 같고, AND 가 아닙니다
+#   "search and rescue"     따옴표는 괄호나 대문자 AND/OR/NOT 이 든 구에만 필요합니다
+#   a OR b                  둘 중 하나
+#   a AND b                 둘 다
+#   a NOT b                 a 이면서 b 는 아닌 것 (= a AND NOT b)
+#   (a OR b) AND (c OR d)   괄호로 묶습니다
+#   politic*                잘라 쓰기 — political, politics, politician 을 한 번에
+#   # 부터 줄 끝까지          주석입니다
+#
+# `*` 는 **철자 변형**에 쓰세요 (polariz* / polaris*, behavio*). 뜻을 넓히는 데
+# 쓰면 엉뚱한 게 딸려옵니다 — retriev* 는 지나가듯 "retrieve" 한 논문까지,
+# polari* 는 감성 분석의 "polarity" 까지 걸립니다.
+#
+# 연산자는 **대문자** AND / OR / NOT 뿐입니다. 소문자 and 는 그냥 단어이고
+# ("search and rescue" 가 되라고), 실수로 보이면 오류로 잡아줍니다.
+# 우선순위는 NOT > AND > OR — `a AND b OR c` 는 `(a AND b) OR c` 입니다.
+#
+# 제목과 초록에서 찾습니다. 대소문자와 하이픈은 무시하므로
+# retrieval-augmented 와 retrieval augmented 는 같습니다. 단어의 **앞쪽** 경계만
+# 보기 때문에 bias 는 biased·biases 에 걸리고, RAG 는 storage 에 걸리지 않습니다.
+#
+# `query: |` 로 쓰세요. `>` 는 줄을 하나로 합쳐서 주석이 그 뒤를 다 먹어버립니다.
+#
+# 쓰고 나면 확인하세요:
+#   python -m paper_digest members validate   괄호가 어떻게 묶였는지 보여줍니다
+#
+# **느슨하게** 쓰는 게 맞습니다. 정밀할 필요 없습니다 — 관련 없는 것은 뒤에서
+# 5점 미만으로 떨어지고, 여기서 놓친 것은 아무도 다시 보지 않습니다. 애매하면
+# 넣는 쪽입니다. query 를 아예 빼면 수집된 전부가 채점됩니다 (누락 0, 비용 4배).
+#
+# 실측(2026-08)으로 이 쿼리는 풀 1,807편 중 약 400편을 남깁니다.
+query: |
   # 이 분야 고유 표현 — 단독으로도 충분히 좁습니다
-  - "political bias"
-  - "ideological bias"
-  - "partisan"
-  - "political orientation"
-  - "political stance"
-  - "stereotype"
-  - "sycophancy"
-  - "jailbreak"
-  - "persona"
-  - "value alignment"
-  - "moral judgment"
-  - "public opinion"
+  "political bias" OR "ideological bias" OR partisan OR "political orientation"
+  OR "political stance" OR stereotype OR sycophancy OR jailbreak OR persona
+  OR "value alignment" OR "moral judgment" OR "public opinion"
 
   # 모델 이야기 × 편향·공정성·평가 이야기
-  - all:
-      - ["LLM", "large language model", "language model", "foundation model",
-         "chatbot", "GPT", "instruction tuned", "aligned model"]
-      - ["bias", "biased", "fairness", "unfair", "discrimination", "harm",
-         "toxicity", "safety", "alignment", "robustness", "consistency",
-         "sensitivity", "evaluation", "benchmark", "audit", "red team"]
+  OR ( (LLM OR "large language model" OR "language model" OR "foundation model"
+        OR chatbot OR GPT OR "instruction tuned" OR "aligned model")
+       AND (bias OR fairness OR unfair OR discrimination OR harm OR toxicity
+            OR safety OR alignment OR robustness OR consistency OR sensitivity
+            OR evaluation OR benchmark OR audit OR "red team") )
 
   # 정치·사회 맥락 × 계산적 방법
-  - all:
-      - ["political", "politics", "ideology", "ideological", "election",
-         "democracy", "polarization", "polarisation", "misinformation",
-         "disinformation", "news"]
-      - ["model", "LLM", "annotation", "dataset", "corpus", "classifier",
-         "measurement", "survey", "experiment", "audit"]
+  OR ( (politic* OR ideolog* OR election OR democracy
+        OR polariz* OR polaris*      # polarity(감성 극성)까지 걸리지 않게 끊어서
+        OR misinformation OR disinformation OR news)
+       AND (model OR LLM OR annotation OR dataset OR corpus OR classifier
+            OR measurement OR survey OR experiment OR audit) )

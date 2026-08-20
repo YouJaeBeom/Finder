@@ -67,7 +67,6 @@ def _member(member_id: str, top_n: int) -> Member:
         member_id=member_id,
         name=member_id,
         research_profile="profile",
-        keywords=["LLM"],
         top_n=top_n,
     )
 

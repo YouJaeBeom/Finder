@@ -38,9 +38,9 @@ ROOT = PARENT_PAGE_ID
 
 # ── Fixtures for the pool ──────────────────────────────────────────────────────
 
-# Each entry is (title, abstract, which member's keywords it is written to hit).
+# Each entry is (title, abstract, which member's query it is written to hit).
 # Keeping that mapping explicit is what lets a test assert "this paper belongs to
-# exactly one member" without guessing at the keyword rules.
+# exactly one member" without guessing at the queries.
 _TOPICS = [
     ("Political Bias in Large Language Models",
      "We measure political bias and ideological bias in large language models.", "pol"),
@@ -68,19 +68,22 @@ _TOPICS = [
      "Data provenance and dataset curation for a web corpus built by a web crawler.", "web"),
 ]
 
-# The keyword sets the tests register members with — narrow on purpose so a
-# paper written for one member cannot drift into another's.
-KEYWORDS = {
-    "pol": ["political bias", "ideological bias", "sycophancy", "political stance",
-            "political leaning", "partisan", "prompt sensitivity"],
-    "ir": ["filter bubble", "echo chamber", "retrieval-augmented generation",
-           "information diversity", "viewpoint diversity", "selective exposure",
-           "result diversification", "personalized search"],
-    "web": ["web crawling", "web crawler", "common crawl", "corpus construction",
-            "web corpus", "data provenance", "dataset curation",
-            {"all": [["large-scale", "large scale", "scalable"],
-                     ["data collection", "crawling pipeline"]]},
-            {"all": [["reproducible"], ["data collection"]]}],
+# The queries the tests register members with — narrow on purpose so a paper
+# written for one member cannot drift into another's.
+QUERIES = {
+    "pol": ('"political bias" OR "ideological bias" OR sycophancy '
+            'OR "political stance" OR "political leaning" OR partisan '
+            'OR "prompt sensitivity"'),
+    "ir": ('"filter bubble" OR "echo chamber" OR "retrieval-augmented generation" '
+           'OR "information diversity" OR "viewpoint diversity" '
+           'OR "selective exposure" OR "result diversification" '
+           'OR "personalized search"'),
+    "web": ('"web crawling" OR "web crawler" OR "common crawl" '
+            'OR "corpus construction" OR "web corpus" OR "data provenance" '
+            'OR "dataset curation" '
+            'OR (("large scale" OR scalable) '
+            '    AND ("data collection" OR "crawling pipeline")) '
+            'OR (reproducible AND "data collection")'),
 }
 
 
@@ -157,15 +160,15 @@ def lab(tmp_path, monkeypatch, fake_notion):
 
     members_dir = tmp_path / "members"
     write_member(members_dir, "pol", name="유재범", top_n=5,
-                 keywords=KEYWORDS["pol"])
+                 query=QUERIES["pol"])
     write_member(members_dir, "ir", name="샘플-검색RAG", top_n=5,
-                 keywords=KEYWORDS["ir"])
+                 query=QUERIES["ir"])
     write_member(members_dir, "web", name="샘플-웹데이터", top_n=5,
-                 keywords=KEYWORDS["web"])
+                 query=QUERIES["web"])
 
     config_path = write_lab_config(
         tmp_path,
-        members=(),  # member files written above, with their own keyword sets
+        members=(),  # member files written above, with their own queries
         parent=PARENT_PAGE_RAW,
         days_back=30,
     )
@@ -257,7 +260,7 @@ class TestPerMemberDelivery:
     def test_top_n_caps_what_a_member_receives(self, lab):
         # One member's cap is lowered below their candidate count.
         write_member(lab["tmp"] / "members", "pol", name="유재범", top_n=2,
-                     keywords=KEYWORDS["pol"])
+                     query=QUERIES["pol"])
         _, report = run_monthly_mocked(lab)
         rows = {r["member_id"]: r for r in report["members"]}
         assert rows["pol"]["candidates"] == 4
@@ -341,7 +344,7 @@ class TestOverlapReporting:
     def test_a_paper_two_members_receive_is_reported_as_overlap(self, lab):
         # Give the IR member a keyword that also hits a political-bias paper.
         write_member(lab["tmp"] / "members", "ir", name="샘플-검색RAG", top_n=5,
-                     keywords=KEYWORDS["ir"] + ["political bias"])
+                     query=QUERIES["ir"] + ' OR "political bias"')
         _, report = run_monthly_mocked(lab)
 
         overlap = report["overlap"]
@@ -546,7 +549,7 @@ class TestMonthlyCadence:
 
     def test_a_member_with_no_cap_receives_every_qualifying_paper(self, lab):
         write_member(lab["tmp"] / "members", "pol", name="유재범", top_n=None,
-                     keywords=KEYWORDS["pol"])
+                     query=QUERIES["pol"])
         _, report = run_monthly_mocked(lab)
         rows = {r["member_id"]: r for r in report["members"]}
         # All four of this member's candidates score above the cutoff, and with
@@ -579,7 +582,7 @@ class TestMonthlyCadence:
         for member_id, name in (("pol", "유재범"), ("ir", "샘플-검색RAG"),
                                 ("web", "샘플-웹데이터")):
             write_member(lab["tmp"] / "members", member_id, name=name,
-                         top_n=None, keywords=KEYWORDS[member_id])
+                         top_n=None, query=QUERIES[member_id])
         cfg_path = Path(lab["config"])
         cfg_path.write_text(
             cfg_path.read_text(encoding="utf-8").replace(
@@ -594,7 +597,7 @@ class TestMonthlyCadence:
     def test_hitting_the_ceiling_is_reported_not_silent(self, lab, caplog):
         """A cap that trims the tail quietly reads as 'there was nothing else'."""
         write_member(lab["tmp"] / "members", "pol", name="유재범", top_n=None,
-                     keywords=KEYWORDS["pol"])
+                     query=QUERIES["pol"])
         cfg_path = Path(lab["config"])
         cfg_path.write_text(
             cfg_path.read_text(encoding="utf-8").replace(
@@ -620,7 +623,7 @@ class TestEveryPaperIsScored:
 
     def test_a_member_without_keywords_sees_the_whole_pool(self, lab):
         write_member(lab["tmp"] / "members", "pol", name="유재범", top_n=None,
-                     keywords=None)
+                     query=None)
         _, report = run_monthly_mocked(lab)
         rows = {r["member_id"]: r for r in report["members"]}
 
@@ -631,7 +634,7 @@ class TestEveryPaperIsScored:
     def test_hand_written_keywords_still_narrow_it(self, lab):
         """The escape hatch for someone whose ranking bill actually matters."""
         write_member(lab["tmp"] / "members", "pol", name="유재범", top_n=None,
-                     keywords=KEYWORDS["pol"])
+                     query=QUERIES["pol"])
         _, report = run_monthly_mocked(lab)
         rows = {r["member_id"]: r for r in report["members"]}
 
@@ -642,7 +645,7 @@ class TestEveryPaperIsScored:
         """Sharing a candidate set must not merge what they receive."""
         for member_id, name in (("pol", "유재범"), ("ir", "샘플-검색RAG")):
             write_member(lab["tmp"] / "members", member_id, name=name,
-                         top_n=None, keywords=None)
+                         top_n=None, query=None)
         _, report = run_monthly_mocked(lab)
         rows = {r["member_id"]: r for r in report["members"]}
 

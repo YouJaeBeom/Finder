@@ -1,7 +1,7 @@
 """News selection — which stories get a Korean note, decided without an LLM.
 
 Papers need the cheap-model relevance gate because the venue allowlist admits
-every field its venues publish, and a keyword can match a paper that has nothing
+every field its venues publish, and a query can match a paper that has nothing
 to do with the research profile. News does not have that problem: Hacker News is
 already filtered by community score, and the RSS feeds are hand-picked by the
 user. Almost everything collected is on-topic by construction, so paying a
@@ -9,7 +9,7 @@ model to re-confirm relevance buys nothing and costs a call per story.
 
 Selection is therefore mechanical:
 
-    keyword filter (optional) → order within each source → round-robin → top_n
+    query filter (optional) → order within each source → round-robin → top_n
 
 The round-robin matters. A busy feed like TechCrunch publishes ~20 items a day
 and would otherwise take every slot in the digest, burying the Hacker News
@@ -19,10 +19,10 @@ the monthly digest mixed.
 from __future__ import annotations
 
 import logging
-from typing import Dict, List
+from typing import Dict, List, Optional
 
-from .keywords import filter_by_keywords
 from .models import Paper
+from .query import Query, filter_papers
 
 logger = logging.getLogger(__name__)
 
@@ -68,26 +68,26 @@ def _round_robin(groups: List[List[Paper]], limit: int) -> List[Paper]:
 
 def select_news(
     items: List[Paper],
-    keywords: List[str],
+    query: Optional[Query],
     top_n: int,
 ) -> List[Paper]:
     """Pick up to *top_n* news items to write up, with no LLM involved.
 
-    An empty *keywords* list means "keep everything" — the sources are already
-    curated, so a user who wants the whole firehose summarised just clears the
-    list rather than editing code.
+    No *query* means "keep everything" — the sources are already curated, so a
+    lab that wants the whole firehose summarised just leaves the key out rather
+    than editing code.
     """
     if top_n <= 0 or not items:
         return []
 
-    candidates = filter_by_keywords(items, keywords) if keywords else list(items)
+    candidates = filter_papers(items, query) if query else list(items)
     if not candidates:
-        logger.info("News: %d collected, none matched the keyword filter", len(items))
+        logger.info("News: %d collected, none matched news.query", len(items))
         return []
 
     selected = _round_robin(_group_by_source(candidates), top_n)
     logger.info(
-        "News: %d collected → %d after keywords → %d selected (%s)",
+        "News: %d collected → %d after news.query → %d selected (%s)",
         len(items),
         len(candidates),
         len(selected),

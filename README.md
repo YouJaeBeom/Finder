@@ -115,17 +115,15 @@ research_profile: |
   본인 연구 주제를 2~6문장으로. 무엇을 연구하는지, 구체적으로 어떤 주제에
   관심이 있는지, 그리고 관련도가 낮은 것은 무엇인지까지 적으면 좋습니다.
 
-keywords:                       # 느슨한 1차 필터
-  - "political bias"
-  - "stereotype"
-  - all:
-      - ["LLM", "language model", "chatbot"]
-      - ["bias", "fairness", "evaluation", "robustness", "audit"]
+query: |                        # 느슨한 1차 필터
+  "political bias" OR stereotype
+  OR ((LLM OR "language model" OR chatbot)
+      AND (bias OR fairness OR evaluation OR robustness OR audit))
 ```
 
-두 가지를 씁니다. `research_profile`은 **관련도 채점과 노트 작성**에 쓰이고, `keywords`는 그 앞의 **느슨한 1차 필터**입니다 — 논문을 찾을 때 데이터베이스를 키워드로 먼저 검색하는 것과 같은 단계입니다.
+두 가지를 씁니다. `research_profile`은 **관련도 채점과 노트 작성**에 쓰이고, `query`는 그 앞의 **느슨한 1차 필터**입니다 — 논문을 찾을 때 데이터베이스에서 검색식으로 먼저 훑는 것과 같은 단계이고, 문법도 그 검색식 그대로입니다 ([1차 필터 쿼리](#1차-필터-쿼리-and--or--not) 참고).
 
-**`keywords`는 느슨해야 합니다.** 이건 취향이 아니라 실측 결과입니다. 정밀하게 쓴 규칙은 채점 모델이 8점·9점을 줬을 논문을 버렸습니다:
+**`query`는 느슨해야 합니다.** 이건 취향이 아니라 실측 결과입니다. 정밀하게 쓴 규칙은 채점 모델이 8점·9점을 줬을 논문을 버렸습니다:
 
 ```
 9.0  [SIGIR] Evaluation Validity in Information Retrieval
@@ -136,7 +134,7 @@ keywords:                       # 느슨한 1차 필터
 
 느슨하게 잡아도 풀의 70~77%가 걸러집니다 (실측: 2,087편 → 멤버당 477~622편). 채점 비용은 인당 월 $0.15~0.20이고, 필터가 없으면 $0.64입니다.
 
-`keywords`를 아예 빼면 수집된 전부가 채점됩니다 — 누락은 0이지만 비용이 네 배입니다.
+`query`를 아예 빼면 수집된 전부가 채점됩니다 — 누락은 0이지만 비용이 네 배입니다.
 
 `enabled: false`로 수집만 중단할 수 있고, `top_n: 20`처럼 적으면 상한이 생깁니다. 둘 다 선택 사항입니다.
 
@@ -229,7 +227,7 @@ GitHub `Actions` 탭 → `Monthly paper digest` → **Run workflow**.
 | 수집 기간 조정 | 랩 | `days_back` (기본 30). 넓혀도 LLM 비용은 안 늘어납니다 — 중복 제거가 랭킹 전에 돌기 때문입니다 |
 | LLM을 ChatGPT로 바꾸기 | 랩 | `llm.provider: "openai"` + `OPENAI_API_KEY` 시크릿 등록 |
 | 뉴스 소스 추가 | 랩 | `news.rss_feeds`에 피드 URL 추가 (코드 수정 불필요) |
-| 뉴스 키워드 / 개수 / 끄기 | 랩 | `news.keywords` (빈 리스트 = 전부) / `news.top_n` / `news.enabled: false` |
+| 뉴스 필터 / 개수 / 끄기 | 랩 | `news.query` (키를 빼면 전부) / `news.top_n` / `news.enabled: false` |
 | 뉴스 브리핑의 관점 | 랩 | `lab_profile` — 뉴스는 공용이라 "누구의 연구와의 연결점"을 쓸 대상이 없습니다. 이 글이 그 자리입니다 (비우면 멤버 프로필을 이어붙임) |
 | 지출 상한 조정 | 랩 | `limits.max_notes_per_run` 등. 넘으면 **경고가 아니라 실행 거부** |
 | 지금 당장 한 번 돌리기 | — | Actions 탭 → `Monthly paper digest` → Run workflow |
@@ -293,27 +291,60 @@ GitHub `Actions` 탭 → `Monthly paper digest` → **Run workflow**.
 
 백필은 **랭킹한 논문을 전부 캐시에 기록합니다** — 쓴 것만이 아니라 떨어뜨린 것까지. 그래서 두 번 돌려도 두 번째는 아무 일도 안 하고, 이후 매월 실행은 진짜 새 논문만 봅니다. 대신 1년치를 멤버 수만큼 랭킹하는 건 수백~수천 번의 모델 호출이라 실행이 몇 시간 걸릴 수 있습니다 (워크플로 타임아웃 300분). 실행 시작 시 예상 비용을 로그에 찍습니다.
 
-### 키워드 문법 (AND / OR / 제외)
+### 1차 필터 쿼리 (AND / OR / NOT)
 
-목록의 **항목끼리는 OR**입니다. 항목 하나는 아래 네 형태 중 하나입니다.
+Scopus·Web of Science에서 쓰는 검색식 그대로입니다. 새로 배울 문법이 아니라, 이미 쓰던 걸 그대로 옮겨 적으면 됩니다.
 
 ```yaml
-keywords:
-  - "instruction tuning"           # 이 구절이 있으면 매치
+query: |
+  # 이 분야 고유 표현 — 단독으로도 충분히 좁습니다
+  "political bias" OR stereotype OR sycophancy
 
-  - all: ["LLM", "alignment"]      # 둘 다 있어야 매치
-
-  - any: ["RLHF", "DPO"]           # 하나라도 있으면 매치
-
-  - all:                           # 중첩 리스트 = "이 중 하나"
-      - ["LLM", "large language model"]   #   (모델 용어 중 하나)
-      - ["alignment", "safety"]           #   AND (주제 용어 중 하나)
-    not: ["survey"]                # 단, survey 가 있으면 제외
+  # 넓은 단어는 주제어와 묶습니다
+  OR ( (LLM OR "large language model" OR chatbot)
+       AND (bias OR fairness OR evaluation OR audit) )
+  NOT survey
 ```
 
-대소문자는 무시하고, **제목과 초록을 합쳐서** 봅니다.
+| 쓰는 법 | 뜻 |
+|---|---|
+| `political bias` | 붙어 있는 단어는 **구(句)** 입니다 — `"political bias"`와 같고, AND가 아닙니다 |
+| `"search and rescue"` | 따옴표는 괄호나 대문자 AND/OR/NOT이 든 구에만 필요합니다 |
+| `a OR b` | 둘 중 하나 |
+| `a AND b` | 둘 다 (제목과 초록에 나눠 있어도 됩니다) |
+| `a NOT b` | a이면서 b는 아닌 것 (`a AND NOT b`와 같습니다) |
+| `(a OR b) AND (c OR d)` | 괄호로 묶기. 우선순위는 **NOT > AND > OR** — `a AND b OR c`는 `(a AND b) OR c` |
+| `politic*` | 잘라 쓰기 — political, politics, politician을 한 번에 |
+| `# 부터 줄 끝까지` | 주석 |
 
-`"LLM"` 하나만 넣으면 요즘 NLP 논문 대부분이 걸립니다 — 넓은 단어는 `all`로 주제어와 묶으세요. 실제로 지금 설정에서:
+- `*`는 **철자 변형**에 쓰세요 (`polariz*`/`polaris*`, `behavio*`). 뜻을 넓히는 데 쓰면 엉뚱한 게 딸려옵니다 — `retriev*`는 지나가듯 "retrieve"한 논문까지, `polari*`는 감성 분석의 "polarity"까지 걸립니다.
+- 연산자는 **대문자** `AND` / `OR` / `NOT`뿐입니다. 소문자 `and`는 그냥 단어이고(그래야 `"search and rescue"`가 됩니다), 실수처럼 보이면 오류로 잡아줍니다.
+- **제목과 초록을 합쳐서**, 대소문자와 하이픈을 무시하고 봅니다 (`retrieval-augmented` = `retrieval augmented`). 단어의 **앞쪽** 경계만 보므로 `bias`는 biased·biases에 걸리고 `RAG`는 storage에 걸리지 않습니다.
+- YAML은 `query: |` 로 쓰세요. `>`는 줄을 하나로 합쳐서 주석이 그 뒤를 다 먹어버립니다.
+
+읽을 수 없는 쿼리는 **어디가 문제인지 짚어서** 거부합니다. 조용히 무시하면 그 사람만 한 달치를 덜 받게 되기 때문입니다.
+
+```
+$ python -m paper_digest members validate
+1 problem(s) in the member configuration:
+  - members/jaebeom.yaml: 'query' could not be read — 'and' is an operator only in
+    capitals — write AND, or quote the phrase if you meant the word
+      LLM and bias
+          ^
+```
+
+문제가 없으면 **파서가 실제로 어떻게 묶었는지**를 보여줍니다. 괄호를 하나 빠뜨린 건 원문에서는 안 보이고 여기서는 보입니다.
+
+```
+$ python -m paper_digest members validate
+✓ 3 member(s) in members/ — no problems found
+
+jaebeom (유재범)
+  "political bias" OR stereotype OR ((LLM OR "large language model" OR chatbot)
+  AND (bias OR fairness OR evaluation OR audit)) AND NOT survey
+```
+
+`LLM` 하나만 넣으면 요즘 NLP 논문 대부분이 걸립니다 — 넓은 단어는 `AND`로 주제어와 묶으세요:
 
 ```
 통과  Scaling LLM alignment with human feedback      ['LLM', 'alignment']

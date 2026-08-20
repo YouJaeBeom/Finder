@@ -18,6 +18,7 @@ from paper_digest.models import Paper, PaperIdentifiers, ResearchNote, normalize
 from paper_digest.news_select import select_news
 from paper_digest.notes import generate_note
 from paper_digest.notion_query import WrittenIndex
+from paper_digest.query import parse
 from paper_digest.news_stage import run_news
 from paper_digest.ranking import _is_rankable
 
@@ -101,24 +102,24 @@ class TestNewsSelection:
         paper = Paper(identifiers=PaperIdentifiers(), title="T", abstract=None)
         assert _is_rankable(paper) is False
 
-    def test_empty_keywords_keeps_everything(self):
-        """Clearing the list is the documented way to say 'summarise it all'."""
+    def test_no_query_keeps_everything(self):
+        """Leaving news.query out is how the lab says 'summarise it all'."""
         items = [_news_item(f"Story {i}", f"https://e.com/{i}") for i in range(3)]
-        assert len(select_news(items, keywords=[], top_n=10)) == 3
+        assert len(select_news(items, query=None, top_n=10)) == 3
 
-    def test_keywords_filter_and_record_what_matched(self):
+    def test_the_query_filters_and_records_what_matched(self):
         items = [
             _news_item("New LLM benchmark", "https://e.com/1"),
             _news_item("Sourdough starter tips", "https://e.com/2"),
         ]
-        selected = select_news(items, keywords=["LLM"], top_n=10)
+        selected = select_news(items, query=parse("LLM"), top_n=10)
         assert [item.title for item in selected] == ["New LLM benchmark"]
         assert selected[0].matched_keywords == ["LLM"]
 
     def test_higher_scoring_story_wins_within_a_source(self):
         low = _news_item("AI story low", "https://e.com/1", points=120)
         high = _news_item("AI story high", "https://e.com/2", points=900)
-        assert select_news([low, high], keywords=["AI"], top_n=1) == [high]
+        assert select_news([low, high], query=parse("AI"), top_n=1) == [high]
 
     def test_busy_feed_cannot_crowd_out_the_other_sources(self):
         """The whole point of the round-robin: TechCrunch posts ~20 items a day."""
@@ -128,7 +129,7 @@ class TestNewsSelection:
         ]
         hn = [_news_item("AI on HN", "https://e.com/hn", points=500)]
 
-        selected = select_news(feed + hn, keywords=["AI"], top_n=4)
+        selected = select_news(feed + hn, query=parse("AI"), top_n=4)
 
         assert len(selected) == 4
         assert hn[0] in selected, "Hacker News must still get a slot"
@@ -139,7 +140,7 @@ class TestNewsSelection:
         provider = MagicMock()
         items = [_news_item("AI thing", "https://e.com/1")]
 
-        select_news(items, keywords=["AI"], top_n=5)
+        select_news(items, query=parse("AI"), top_n=5)
 
         provider.complete.assert_not_called()
 
@@ -172,6 +173,34 @@ class TestNewsNoteShape:
 
 # ── News pipeline stage ───────────────────────────────────────────────────────
 
+class TestNewsQueryInTheLabConfig:
+    """news.query is compiled at load, so a typo stops the run before it spends."""
+
+    def _load(self, tmp_path, news_block: str):
+        from paper_digest.config import load_config
+
+        path = tmp_path / "config.yaml"
+        path.write_text(f'notion_parent_page_id: "x"\nnews:\n{news_block}',
+                        encoding="utf-8")
+        return load_config(str(path))
+
+    def test_a_query_is_compiled_at_load(self, tmp_path):
+        cfg = self._load(tmp_path, '  enabled: true\n  query: |\n    AI OR LLM\n')
+        assert cfg.news.query.terms() == ["AI", "LLM"]
+
+    def test_no_query_means_keep_everything(self, tmp_path):
+        assert self._load(tmp_path, "  enabled: true\n").news.query is None
+
+    def test_a_broken_query_names_the_file_and_the_spot(self, tmp_path):
+        with pytest.raises(ValueError, match="news.query could not be read"):
+            self._load(tmp_path, '  query: "(AI OR LLM"\n')
+
+    def test_the_old_keywords_key_is_pointed_at_its_replacement(self, tmp_path):
+        """Ignoring it would silently widen the news digest to everything."""
+        with pytest.raises(ValueError, match="news.keywords was replaced"):
+            self._load(tmp_path, '  keywords: ["AI"]\n')
+
+
 class TestNewsStage:
     @pytest.fixture(autouse=True)
     def _cwd(self, tmp_path, monkeypatch):
@@ -180,10 +209,9 @@ class TestNewsStage:
     def _cfg(self, **news_kw) -> Config:
         defaults = dict(enabled=True, hacker_news_enabled=True,
                         hacker_news_min_points=100, rss_feeds=[], top_n=3,
-                        keywords=["AI", "LLM"])
+                        query=parse("AI OR LLM"))
         defaults.update(news_kw)
         return Config(
-            keywords=["large language model"],  # paper keywords, unused by news
             research_profile="LLM 정렬 연구",
             notion_token="tok",
             anthropic_api_key="key",
@@ -225,7 +253,7 @@ class TestNewsStage:
         assert provider.complete.call_count == 2
         assert all(item.relevance_score == 0.0 for item in written)
 
-    def test_stories_missing_every_keyword_are_dropped(self):
+    def test_stories_the_query_misses_are_dropped(self):
         stories = [_news_item("Sourdough starter tips", "https://e.com/bread")]
         with (
             patch("paper_digest.news_stage.collect_hackernews_stories", return_value=stories),
@@ -276,7 +304,7 @@ class TestNewsProfile:
         from paper_digest.members import Member
 
         return Member(member_id=member_id, name=name, research_profile=profile,
-                      keywords=["AI"], top_n=5)
+                      query=parse("AI"), top_n=5)
 
     def test_every_member_is_represented(self):
         """Members here work on different things, so all of them have to appear.
@@ -316,7 +344,7 @@ class TestNewsProfile:
         from paper_digest.config import Config, NewsConfig
 
         cfg = Config(notion_token="t",
-                     news=NewsConfig(enabled=True, top_n=2, keywords=["LLM"]))
+                     news=NewsConfig(enabled=True, top_n=2, query=parse("LLM")))
         stories = [_news_item("New LLM benchmark released", "https://e.com/1")]
 
         prompts = []

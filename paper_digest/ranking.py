@@ -115,8 +115,8 @@ def rank_papers(
         return []
 
     # Truncate to max_papers_to_rank. Papers are dropped in collection order,
-    # which is arbitrary — so this is a warning, not a note. With no keyword
-    # gate ahead of it this cap is the only thing that can silently shorten a
+    # which is arbitrary — so this is a warning, not a note. With no query
+    # ahead of it this cap is the only thing that can silently shorten a
     # member's month.
     if len(rankable) > cfg.max_papers_to_rank:
         logger.warning(

@@ -90,9 +90,9 @@ def venue_collector(conference: List[Paper] = (), journal: List[Paper] = ()):
 
 # ── Lab config fixtures ────────────────────────────────────────────────────────
 
-# The keyword set and profile every pipeline test used before the lab split. It
-# now lives in a member file rather than in config.yaml, which is the whole point
-# of the split — but the terms are unchanged so the tests' expectations about what
+# The query and profile every pipeline test used before the lab split. It now
+# lives in a member file rather than in config.yaml, which is the whole point of
+# the split — but the terms are unchanged so the tests' expectations about what
 # matches are still the expectations they were written with.
 # preflight requires a real Notion ID, so the fixtures use one. The raw form is
 # what a user pastes; the dashed form is what parent_page_id() normalizes it to
@@ -100,11 +100,11 @@ def venue_collector(conference: List[Paper] = (), journal: List[Paper] = ()):
 PARENT_PAGE_RAW = "3bc1256e056180898608c39506c43463"
 PARENT_PAGE_ID = "3bc1256e-0561-8089-8608-c39506c43463"
 
-DEFAULT_KEYWORDS = [
-    "large language model", "LLM", "RLHF", "alignment", "transformer",
-    "retrieval augmented generation", "RAG", "instruction tuning",
-    "chain of thought", "reasoning",
-]
+DEFAULT_QUERY = (
+    '"large language model" OR LLM OR RLHF OR alignment OR transformer\n'
+    'OR "retrieval augmented generation" OR RAG OR "instruction tuning"\n'
+    'OR "chain of thought" OR reasoning'
+)
 
 DEFAULT_PROFILE = (
     "내 연구는 대형 언어 모델(LLM)의 정렬(alignment)과 안전성에 초점을 맞추고 있습니다.\n"
@@ -137,7 +137,7 @@ news:
 
 
 # Distinguishes "the caller said nothing" from "the caller wants the key gone".
-# keywords=None has to mean the second, since omitting it is now the normal case.
+# query=None has to mean the second, since omitting it is now the normal case.
 _KEEP = object()
 
 
@@ -146,7 +146,7 @@ def write_member(
     member_id: str,
     name: str = None,
     top_n=10,          # None writes no top_n key at all, i.e. no limit
-    keywords=_KEEP,    # None writes no keywords key, i.e. score everything
+    query=_KEEP,       # None writes no query key, i.e. score everything
     profile: str = None,
     enabled: bool = True,
     min_relevance=None,
@@ -159,10 +159,10 @@ def write_member(
         "enabled": enabled,
         "research_profile": profile or DEFAULT_PROFILE,
     }
-    if keywords is _KEEP:
-        payload["keywords"] = list(DEFAULT_KEYWORDS)
-    elif keywords is not None:
-        payload["keywords"] = list(keywords)
+    if query is _KEEP:
+        payload["query"] = DEFAULT_QUERY
+    elif query is not None:
+        payload["query"] = query
     if top_n is not None:
         payload["top_n"] = top_n
     if min_relevance is not None:

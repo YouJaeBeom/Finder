@@ -8,6 +8,8 @@ from typing import Dict, List, Optional
 
 import yaml
 
+from .query import Query, QueryError, parse
+
 # Notion IDs are UUIDs that appear with or without dashes depending on where you
 # copied them from.
 _NOTION_ID_RE = re.compile(
@@ -89,10 +91,10 @@ class NewsConfig:
     hacker_news_min_points: int = 100
     rss_feeds: List[str] = field(default_factory=list)
     top_n: int = 5
-    # Empty means no filter: keep everything collected. The sources are already
+    # Unset means no filter: keep everything collected. The sources are already
     # curated (HN score floor, hand-picked feeds), so "summarise all of it" is a
     # legitimate setting rather than a misconfiguration.
-    keywords: List[str] = field(default_factory=list)
+    query: Optional[Query] = None
 
 
 @dataclass
@@ -114,7 +116,7 @@ class VenueSourceConfig:
     include: List[str] = field(default_factory=list)
     exclude: List[str] = field(default_factory=list)
     # Generous on purpose. Collection costs requests, not money — the bill is
-    # set by max_papers_to_rank, which caps ranking after the keyword filter has
+    # set by max_papers_to_rank, which caps ranking after the member's query has
     # already cut the pool. A tighter limit truncates in venue order, which
     # silently drops whole conferences in the week their proceedings land: a
     # measured SIGIR week collected 474 papers against a limit of 400.
@@ -142,9 +144,8 @@ class LimitsConfig:
 class Config:
     """Lab-wide configuration — everything that is *not* per member.
 
-    Three fields here belong to a member rather than to the lab and are left as
-    injection points rather than YAML keys: *research_profile*, *keywords* and
-    *top_n*. :func:`paper_digest.members.effective_config` fills them in per
+    Two fields here belong to a member rather than to the lab and are left as
+    injection points rather than YAML keys: *research_profile* and *top_n*. :func:`paper_digest.members.effective_config` fills them in per
     person, which is what lets ranking.py and notes.py stay unaware that this
     tool serves more than one researcher.
     """
@@ -156,7 +157,6 @@ class Config:
     members_dir: str = "members"
 
     # ── Injected per member, never read from config.yaml ──
-    keywords: List[str] = field(default_factory=list)
     research_profile: str = ""
 
     # The lab's shared context, used for the *news* briefing only. News is
@@ -179,7 +179,7 @@ class Config:
     # a member may raise or lower it in their own file.
     #
     # 5 means "arguably related". Whether that is the right line depends on the
-    # field: a member whose keywords cover a whole conference track can clear it
+    # field: a member whose query covers a whole conference track can clear it
     # with 120 papers in a month, which stops being a digest, while a narrower
     # member gets 26. The number is here rather than in the code so that is an
     # adjustment instead of a patch.
@@ -253,6 +253,30 @@ class Config:
         )
 
 
+def _news_query(news_data: dict, path: str) -> Optional[Query]:
+    """``news.query``, compiled, or None when the lab wants everything kept.
+
+    Compiled here rather than at the news stage so a typo fails the run at
+    startup, before anything has been collected or paid for.
+    """
+    if "keywords" in news_data:
+        raise ValueError(
+            f"{path}: news.keywords was replaced by news.query, which is "
+            'written the way a database search is:\n'
+            '  news:\n'
+            '    query: |\n'
+            '      AI OR LLM OR "machine learning"'
+        )
+
+    source = news_data.get("query")
+    if source is None or not str(source).strip():
+        return None
+    try:
+        return parse(str(source))
+    except QueryError as exc:
+        raise ValueError(f"{path}: news.query could not be read — {exc}") from exc
+
+
 def load_config(path: str = "config.yaml") -> Config:
     """Load configuration from YAML file and inject secrets from environment."""
     with open(path, encoding="utf-8") as fh:
@@ -276,7 +300,7 @@ def load_config(path: str = "config.yaml") -> Config:
         hacker_news_min_points=hn_data.get("min_points", 100),
         rss_feeds=news_data.get("rss_feeds", []) or [],
         top_n=news_data.get("top_n", 5),
-        keywords=news_data.get("keywords", []) or [],
+        query=_news_query(news_data, path),
     )
 
     def venue_source(key: str, default_max: int) -> VenueSourceConfig:
